@@ -1,0 +1,20 @@
+{
+  "name": "@dynamicforms/dynamicforms-vue-grid-docs",
+  "version": "1.0.0",
+  "description": "Documentation for @dynamicforms/dynamicforms-vue-grid",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.19",
+    "vuetify": "^3.8"
+  },
+  "devDependencies": {
+    "sass": "^1.85.1",
+    "vitepress": "^1.6.3"
+  }
+}
