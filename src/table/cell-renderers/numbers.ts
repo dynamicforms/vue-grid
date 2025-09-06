@@ -87,10 +87,9 @@ export const float = (value: number | string, options: CellOptionsInternal<IntOp
     options.redrawColumn();
   }
 
-  const result = v
+  return v
     .replace(/^(0+)(?=\d)/, (match: any) => `<span style="opacity: .5">${match}</span>`)
     .replace(/\D\d*?(0+)$/, (match, zeros) => match.replace(zeros, `<span style="opacity: .5">${zeros}</span>`));
-  return `<span>${result}</span>`;
 };
 
 export const int = (value: number | string, options: CellOptionsInternal<IntOptions>): string => {

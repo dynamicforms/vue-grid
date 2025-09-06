@@ -1,12 +1,26 @@
 <template>
-  <df-grid :records="records" height="70em" key-field="id"/>
+  <df-grid :columns="columns" :records="records" height="70em" key-field="id"/>
 </template>
 
 <script setup lang="ts">
-import { DfGrid } from '../../src';
+import { createColumn, DfGrid } from '../../src';
 import { generateMusicLibrary } from './data-generator';
 
-const records = generateMusicLibrary(10000);
+const records = generateMusicLibrary(10);
+
+const columns = [
+  createColumn('id', 'int'),
+  createColumn('title', 'plain'),
+  createColumn('artist', 'plain'),
+  createColumn('year', 'int'),
+  createColumn('duration', 'plain'), // TODO refactor to time
+  createColumn('genres', 'plain'),
+  createColumn('rating', 'int'),
+  createColumn('favorite', 'checkbox'),
+  createColumn('play_count', 'int'),
+  createColumn('moods', 'plain'),
+  createColumn('language', 'plain'),
+];
 </script>
 
 <style scoped>

@@ -1,1 +1,1 @@
-export * from './table';
+export { DfGrid, GridCard } from './table';

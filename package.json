@@ -1,7 +1,7 @@
 {
   "name": "@dynamicforms/dynamicforms-vue-grid",
   "private": false,
-  "version": "0.1.0",
+  "version": "0.1.3",
   "type": "module",
   "description": "A (not so) simple, (but hopefully) fast vue grid component.",
   "author": "Jure Erznožnik",
@@ -14,7 +14,8 @@
     ".": {
       "require": "./dist/dynamicforms-vue-grid.umd.cjs",
       "import": "./dist/dynamicforms-vue-grid.js"
-    }
+    },
+    "./styles.css": "./dist/style.css"
   },
   "workspaces": [
     "docs"
@@ -41,7 +42,7 @@
   },
   "issues": "https://github.com/velis74/dynamicforms-vue-grid/issues",
   "peerDependencies": {
-    "@dynamicforms/vue-forms": "^0.4.0",
+    "@dynamicforms/vue-forms": "^0.4.3",
     "date-fns": "^4.1.0",
     "lodash-es": "^4.17.12",
     "vue": "^3.4",

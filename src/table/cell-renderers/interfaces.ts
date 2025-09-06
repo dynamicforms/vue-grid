@@ -20,8 +20,8 @@ interface CellOptionsInt {
 
 export type CellOptionsInternal<T extends CellOptions = CellOptions> = T & CellOptionsInt;
 
-export type CellRendererTransformer = (
+export type CellRendererTransformer<T extends CellOptions = CellOptions> = (
   value: any,
   rowValue: RowValue,
-  options: CellOptionsInternal,
+  options: CellOptionsInternal<T>,
 ) => RenderableValue;

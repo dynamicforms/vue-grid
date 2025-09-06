@@ -43,7 +43,8 @@ function checkShadowGridColumns() {
 
 function* idxAndItem() {
   nextTick(() => checkShadowGridColumns());
-  for (let i = 0; i < props.count; i++) {
+  const mx = Math.min(props.count, props.records.length);
+  for (let i = 0; i < mx; i++) {
     const itm = props.records[i + props.offset];
     yield { item: itm, field: 'df-grid-card-break-item' };
     for (const idx of Object.keys(itm)) {
@@ -53,7 +54,7 @@ function* idxAndItem() {
 }
 </script>
 
-<style scoped>
+<style>
 .df-grid.shadow-grid {
   position: absolute;
   top: 0;

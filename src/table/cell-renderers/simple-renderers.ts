@@ -1,6 +1,7 @@
 import { formatDate, parseISO } from 'date-fns';
 
 import './simple-renderers.css';
+import { CellOptions, CellOptionsInternal } from '@/table/cell-renderers/interfaces';
 
 export const color = (value: any): string => `<div class="df-cell-color" style="background-color: ${value};"/>`;
 
@@ -69,7 +70,16 @@ export const ip = (value: string): string => {
   return ip4(value);
 };
 
-export const date = (value: string | Date, defaultFormat: string, options?: Record<string, any>): string => {
+export interface DateTimeOptions extends CellOptions {
+  format?: string;
+  parseISOPrefix?: string;
+}
+
+export const date = (
+  value: string | Date,
+  defaultFormat: string,
+  options: CellOptionsInternal<DateTimeOptions>,
+): string => {
   if (value instanceof Date) return formatDate(value, options?.format ?? defaultFormat);
-  return formatDate(parseISO(value), options?.format ?? defaultFormat);
+  return formatDate(parseISO((options.parseISOPrefix ?? '') + value), options?.format ?? defaultFormat);
 };

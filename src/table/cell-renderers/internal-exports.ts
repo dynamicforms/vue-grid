@@ -1,1 +1,1 @@
-export { columnIdOption, columnNameOption, gridIdOption } from './interfaces';
+export { type CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './interfaces';

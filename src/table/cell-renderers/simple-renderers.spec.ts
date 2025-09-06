@@ -1,4 +1,5 @@
-import { color, checkbox, link, email, ip4, ip6, ip, date } from './simple-renderers';
+import { CellOptionsInternal, gridIdOption, columnIdOption, columnNameOption } from './internal-exports';
+import { color, checkbox, link, email, ip4, ip6, ip, date, DateTimeOptions } from './simple-renderers';
 
 describe('simple-renderers.ts', () => {
   describe('color renderer', () => {
@@ -14,6 +15,7 @@ describe('simple-renderers.ts', () => {
 
     it('should handle any value type', () => {
       const result = color(123);
+      // noinspection CssInvalidPropertyValue
       expect(result).toBe('<div class="df-cell-color" style="background-color: 123;"/>');
     });
   });
@@ -193,38 +195,44 @@ describe('simple-renderers.ts', () => {
   describe('date renderer', () => {
     const mockDate = new Date('2023-12-25T10:30:00Z');
     const mockISOString = '2023-12-25T10:30:00Z';
+    const mockOptions = {
+      redrawColumn: () => {},
+      [gridIdOption]: Symbol('test-grid'),
+      [columnNameOption]: 'test-column',
+      [columnIdOption]: Symbol('test-column-id'),
+    } as CellOptionsInternal<DateTimeOptions>;
 
     it('should format Date object with default format', () => {
-      const result = date(mockDate, 'yyyy-MM-dd');
+      const result = date(mockDate, 'yyyy-MM-dd', mockOptions);
       expect(result).toBe('2023-12-25');
     });
 
     it('should format Date object with options format', () => {
-      const result = date(mockDate, 'yyyy-MM-dd', { format: 'dd/MM/yyyy' });
+      const result = date(mockDate, 'yyyy-MM-dd', { ...mockOptions, format: 'dd/MM/yyyy' });
       expect(result).toBe('25/12/2023');
     });
 
     it('should format ISO string with options format', () => {
-      const result = date(mockISOString, 'yyyy-MM-dd', { format: 'dd/MM/yyyy' });
+      const result = date(mockISOString, 'yyyy-MM-dd', { ...mockOptions, format: 'dd/MM/yyyy' });
       expect(result).toBe('25/12/2023');
     });
 
     it('should use default format for ISO string without options', () => {
-      const result = date(mockISOString, 'yyyy-MM-dd');
+      const result = date(mockISOString, 'yyyy-MM-dd', mockOptions);
       expect(result).toBe('2023-12-25');
     });
 
     it('should handle different date formats', () => {
-      const result = date(mockDate, 'dd.MM.yyyy HH:mm');
+      const result = date(mockDate, 'dd.MM.yyyy HH:mm', mockOptions);
       expect(result).toMatch(/25\.12\.2023 \d{2}:\d{2}/);
     });
 
     it('should handle invalid date strings gracefully', () => {
-      expect(() => date('invalid-date', 'yyyy-MM-dd')).toThrow();
+      expect(() => date('invalid-date', 'yyyy-MM-dd', mockOptions)).toThrow();
     });
 
     it('should handle empty options object', () => {
-      const result = date(mockDate, 'yyyy-MM-dd', {});
+      const result = date(mockDate, 'yyyy-MM-dd', mockOptions);
       expect(result).toBe('2023-12-25');
     });
   });
