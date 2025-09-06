@@ -1,15 +1,21 @@
 <template>
-  <df-table :records="records" height="70em" key-field="id"/>
+  <df-grid :records="records" height="70em" key-field="id"/>
 </template>
 
 <script setup lang="ts">
-import { DfTable } from '../../src';
+import { DfGrid } from '../../src';
 import { generateMusicLibrary } from './data-generator';
 
 const records = generateMusicLibrary(10000);
 </script>
 
 <style scoped>
+:deep(.df-grid.card.even) {
+  background-color: #b0b0b040;
+}
+:deep(.df-grid.card.odd) {
+  background-color: #60606040;
+}
 :deep(.df-grid.card) {
   display: grid;
   grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em);
@@ -17,7 +23,6 @@ const records = generateMusicLibrary(10000);
 
   padding: 0.5em;
   border: 1px solid #808080ff;
-  background-color: #80808020;
   border-radius: 6px;
   font-size: 0.85rem;
   margin-bottom: .5em;

@@ -41,8 +41,11 @@
   },
   "issues": "https://github.com/velis74/dynamicforms-vue-grid/issues",
   "peerDependencies": {
+    "@dynamicforms/vue-forms": "^0.4.0",
+    "date-fns": "^4.1.0",
     "lodash-es": "^4.17.12",
     "vue": "^3.4",
+    "vue-markdown-render": "^2.3.0",
     "vue-virtual-scroller": "^2.0.0-beta.8"
   },
   "devDependencies": {

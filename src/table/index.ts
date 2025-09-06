@@ -1,2 +1,2 @@
-export { default as DfTable } from './df-table.vue';
-export { default as DfTableCard } from './table-card.vue';
+export { default as DfGrid } from './df-grid.vue';
+export { default as GridCard } from './grid-card.vue';
