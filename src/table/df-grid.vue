@@ -1,5 +1,11 @@
 <template>
-  <div class="df-grid container" :style="`height: ${height}`">
+  <div
+    class="df-grid container"
+    :style="`height: ${height}`"
+    @click="($event) => processMouse('click', $event)"
+    @dblclick="($event) => processMouse('dblclick', $event)"
+    @keydown.enter="void (0)"
+  >
     <dynamic-scroller
       v-slot="{ item, index, active }"
       class="cards-grid"
@@ -26,6 +32,7 @@
           :class="{ even: index % 2 === 0, odd: index % 2 === 1 }"
           :style="`${templateColumns}`"
           :data-pk="item[keyField]"
+          :data-idx="index"
         />
       </dynamic-scroller-item>
     </dynamic-scroller>
@@ -63,9 +70,27 @@ interface GridProps {
 
 const props = withDefaults(defineProps<GridProps>(), { mainShadowCount: 100, columns: () => [] });
 
+export interface GridEmits {
+  (e: 'click', rowIdx: number, key: any, rowData: RowValue | undefined, columnClasses: string[]): void;
+  (e: 'dblclick', rowIdx: number, key: any, rowData: RowValue | undefined, columnClasses: string[]): void;
+}
+
+const emit = defineEmits<GridEmits>();
+
 const mainShadowOffset = ref(0);
 const templateColumns = ref('');
 const gridId = Symbol('df-grid');
+
+function processMouse(eType: 'click' | 'dblclick', event: MouseEvent) {
+  const target = event.target as HTMLElement;
+
+  const column = target.closest('.df-grid.cell');
+  const row = target?.closest('.df-grid.card');
+  const colClasses = [...(column?.classList ?? [])].filter((c: any) => !['df-grid', 'cell'].includes(c));
+  const rowId = Number.parseInt(row?.getAttribute('data-idx') ?? '-1', 10);
+  const rowData = rowId === -1 ? undefined : props.records[rowId];
+  emit(eType as any, rowId, rowData?.[props.keyField], rowData, colClasses);
+}
 
 const updateRenderedRows = throttle(
   (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => {

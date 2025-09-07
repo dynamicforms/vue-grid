@@ -1,7 +1,7 @@
 {
   "name": "@dynamicforms/dynamicforms-vue-grid",
   "private": false,
-  "version": "0.1.4",
+  "version": "0.1.6",
   "type": "module",
   "description": "A (not so) simple, (but hopefully) fast vue grid component.",
   "author": "Jure Erznožnik",
