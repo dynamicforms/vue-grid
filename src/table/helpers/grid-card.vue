@@ -1,44 +1,29 @@
 <template>
-  <div class="df-grid card">
+  <messages-widget v-if="noWrapperItem" :message="formattedData" classes="df-grid cell"/>
+  <div v-else class="df-grid card">
     <messages-widget :message="formattedData" classes="df-grid cell"/>
   </div>
 </template>
 
 <script setup lang="ts">
 import { MessagesWidget } from '@dynamicforms/vue-forms';
-import { computed } from 'vue';
 
-import { RendererOptionsMap, RenderersMap, RowValue } from './cell-renderers';
-import { ColumnDefinition } from './columns';
+import { FormattedDataProps, useFormattedData } from './use-formatted-data';
 
-interface CardProps {
-  item: RowValue;
-  columns: ColumnDefinition<keyof RendererOptionsMap>[];
-  renderers: RenderersMap;
+interface CardProps extends FormattedDataProps {
+  noWrapperItem?: boolean;
 }
-const props = defineProps<CardProps>();
+const props = withDefaults(defineProps<CardProps>(), { addRowResetItem: false, noWrapperItem: false });
 
-const formattedData = computed(() => {
-  const item = props.item;
-  const renderers = props.renderers;
-
-  return props.columns.map((column) => {
-    const value = item[column.fieldName];
-    let renderer = props.renderers[column.renderer ?? 'plain'];
-    const rendererOptions = column.rendererOptions;
-    const nullHandler = column.rendererOptions?.nullHandler as keyof RenderersMap;
-
-    if (value == null && nullHandler != null) renderer = renderers[nullHandler];
-    const res = renderer(value, item, rendererOptions as any);
-    res.classes = column.fieldName;
-    return res;
-  });
-});
+const { formattedData } = useFormattedData(props);
 </script>
 
-<style scoped>
-.card {
+<style>
+.df-grid.card {
   /* production */
   transition: grid-template-columns 2s ease;
+}
+.df-grid.cell.df-grid-card-break-item {
+  grid-column: 1 / -1;
 }
 </style>

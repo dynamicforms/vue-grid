@@ -6,7 +6,7 @@
 import { createColumn, DfGrid } from '../../src';
 import { generateMusicLibrary } from './data-generator';
 
-const records = generateMusicLibrary(10);
+const records = generateMusicLibrary(10000);
 
 const columns = [
   createColumn('id', 'int'),

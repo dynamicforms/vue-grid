@@ -5,6 +5,7 @@ import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import { DynamicFormsVueGrid } from '../../../src';
+import VueMarkdown from 'vue-markdown-render';
 
 export default {
   extends: DefaultTheme,
@@ -19,6 +20,7 @@ export default {
 
     app.use(vuetify);
     app.use(DynamicFormsVueGrid);
+    app.component('VueMarkdown', VueMarkdown);
   },
   Layout: () => {
     return h(DefaultTheme.Layout, null, {

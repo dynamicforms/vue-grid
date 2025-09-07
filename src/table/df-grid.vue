@@ -31,6 +31,8 @@
     </dynamic-scroller>
     <shadow-grid
       :records="records"
+      :columns="columnRendererOptionsInternal"
+      :renderers="DefaultRenderers"
       :count="mainShadowCount"
       :offset="mainShadowOffset"
       :key-field="keyField"
@@ -44,6 +46,7 @@ import { throttle } from 'lodash-es';
 import { computed, onUnmounted, ref } from 'vue';
 // @ts-ignore
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller';
+import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 
 import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap, RowValue } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';

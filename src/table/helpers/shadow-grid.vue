@@ -1,23 +1,31 @@
 <template>
   <div ref="shadowGridRef" class="df-grid shadow-grid card">
-    <div
-      v-for="{ item, field } in idxAndItem()"
-      :key="`${item[keyField]}-${field}`"
-      v-memo="[`${item[keyField]}-${field}`]"
-      :class="`df-grid cell ${field}`"
-    >
-      {{ item[field] }}
-    </div>
+    <grid-card
+      v-for="item in idxAndItem()"
+      :key="`${item[keyField]}`"
+      v-memo="[`${item[keyField]}`]"
+      :item="item"
+      :columns="columns"
+      :renderers="renderers"
+      :add-row-reset-item="true"
+      :no-wrapper-item="true"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { nextTick, ref } from 'vue';
 
+import { RendererOptionsMap, RenderersMap, RowValue } from '../cell-renderers';
+import { ColumnDefinition } from '../columns';
+
+import GridCard from './grid-card.vue';
 import { ShadowGridMeasurements } from './shadow-grid-types';
 
 interface GridProps {
-  records: Record<string, any>[];
+  records: RowValue[];
+  columns: ColumnDefinition<keyof RendererOptionsMap>[];
+  renderers: RenderersMap;
   count: number;
   offset: number;
   keyField: string;
@@ -45,11 +53,7 @@ function* idxAndItem() {
   nextTick(() => checkShadowGridColumns());
   const mx = Math.min(props.count, props.records.length);
   for (let i = 0; i < mx; i++) {
-    const itm = props.records[i + props.offset];
-    yield { item: itm, field: 'df-grid-card-break-item' };
-    for (const idx of Object.keys(itm)) {
-      yield { item: itm, field: idx as keyof typeof itm };
-    }
+    yield props.records[i + props.offset];
   }
 }
 </script>
@@ -65,8 +69,5 @@ function* idxAndItem() {
   overflow-y: scroll;
   overflow-x: hidden;
   visibility: hidden;
-}
-:deep(.df-grid.cell.df-grid-card-break-item) {
-  grid-column: 1 / -1;
 }
 </style>
