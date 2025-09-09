@@ -7,6 +7,8 @@ import * as directives from 'vuetify/directives'
 import { DynamicFormsVueGrid } from '../../../src';
 import VueMarkdown from 'vue-markdown-render';
 
+import 'vuetify/dist/vuetify.css';
+
 export default {
   extends: DefaultTheme,
   enhanceApp({ app }) {

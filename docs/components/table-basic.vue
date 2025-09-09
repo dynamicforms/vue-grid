@@ -1,5 +1,5 @@
 <template>
-  <df-grid :columns="columns" :records="records" height="70em" key-field="id"/>
+  <df-grid :columns="columns" :records="records" style="height: 70em" key-field="id"/>
 </template>
 
 <script setup lang="ts">
@@ -9,21 +9,24 @@ import { generateMusicLibrary } from './data-generator';
 const records = generateMusicLibrary(10000);
 
 const columns = [
-  createColumn('id', 'int'),
-  createColumn('title', 'plain'),
-  createColumn('artist', 'plain'),
-  createColumn('year', 'int'),
-  createColumn('duration', 'plain'), // TODO refactor to time
-  createColumn('genres', 'plain'),
-  createColumn('rating', 'int'),
-  createColumn('favorite', 'checkbox'),
-  createColumn('play_count', 'int'),
-  createColumn('moods', 'plain'),
-  createColumn('language', 'plain'),
+  createColumn('id', 'Id', 'int', { cssClass: 'text-right' }),
+  createColumn('title', 'Title', 'plain'),
+  createColumn('artist', 'Artist', 'plain'),
+  createColumn('year', 'Year', 'int', { cssClass: 'text-right' }),
+  createColumn('duration', 'Duration', 'plain', { cssClass: 'text-right' }), // TODO refactor to time
+  createColumn('genres', 'Genres', 'plain'),
+  createColumn('rating', 'Rating', 'int', { cssClass: 'text-right' }),
+  createColumn('favorite', 'Favorite', 'checkbox'),
+  createColumn('play_count', 'Play count', 'int', { cssClass: 'text-right' }),
+  createColumn('moods', 'Moods', 'plain'),
+  createColumn('language', 'Language', 'plain'),
 ];
 </script>
 
 <style scoped>
+:deep(.df-grid.header) {
+  font-weight: bold;
+}
 :deep(.df-grid.card.even) {
   background-color: #b0b0b040;
 }
@@ -64,5 +67,7 @@ const columns = [
   grid-column: 5;
   grid-row: 2;
 }
-
+:deep(.df-grid.cell.favorite) {
+  text-align: center;
+}
 </style>

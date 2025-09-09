@@ -1,20 +1,35 @@
 <template>
   <div
-    class="df-grid container"
-    :style="`height: ${height}`"
+    class="df-grid container d-flex flex-column"
     @click="($event) => processMouse('click', $event)"
     @dblclick="($event) => processMouse('dblclick', $event)"
     @keydown.enter="void (0)"
   >
+    <div
+      ref="headerRef"
+      class="df-grid header"
+      :style="{ 'overflow-y': 'hidden', 'scrollbar-gutter': 'stable', minHeight: `${headerHeight}px` }"
+    >
+      <slot name="header" :item="headerItem">
+        <grid-card
+          :item="headerItem"
+          :columns="headerOptions"
+          :renderers="DefaultRenderers"
+          class="df-grid card header"
+          :style="`${templateColumns}`"
+          data-pk="header"
+          data-idx="header"
+        />
+      </slot>
+    </div>
     <dynamic-scroller
       v-slot="{ item, index, active }"
-      class="cards-grid"
+      class="cards-grid flex-1-1 overflow-y-scroll"
       :items="records"
       :min-item-size="30"
       :key-field="keyField"
       :buffer="1000"
       :emit-update="true"
-      style="height: 100%; overflow-y: auto"
       @update="updateRenderedRows"
     >
       <dynamic-scroller-item
@@ -24,16 +39,18 @@
         :data-index="index"
         class="df-grid dynamic-scroller-item"
       >
-        <grid-card
-          v-if="active"
-          :item="item"
-          :columns="columnRendererOptionsInternal"
-          :renderers="DefaultRenderers"
-          :class="{ even: index % 2 === 0, odd: index % 2 === 1 }"
-          :style="`${templateColumns}`"
-          :data-pk="item[keyField]"
-          :data-idx="index"
-        />
+        <slot name="item" :item="item" :index="index" :active="active">
+          <grid-card
+            v-if="active"
+            :item="item"
+            :columns="columnRendererOptionsInternal"
+            :renderers="DefaultRenderers"
+            :class="{ even: index % 2 === 0, odd: index % 2 === 1 }"
+            :style="`${templateColumns}`"
+            :data-pk="item[keyField]"
+            :data-idx="index"
+          />
+        </slot>
       </dynamic-scroller-item>
     </dynamic-scroller>
     <shadow-grid
@@ -50,7 +67,7 @@
 
 <script setup lang="ts">
 import { throttle } from 'lodash-es';
-import { computed, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, onUpdated, ref } from 'vue';
 // @ts-ignore
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller';
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
@@ -63,7 +80,6 @@ import { GridCard, ShadowGrid } from './helpers';
 interface GridProps {
   columns: ColumnDefinition<keyof RendererOptionsMap>[];
   records: RowValue[];
-  height: string | number;
   keyField: string;
   mainShadowCount?: number;
 }
@@ -71,8 +87,10 @@ interface GridProps {
 const props = withDefaults(defineProps<GridProps>(), { mainShadowCount: 100, columns: () => [] });
 
 export interface GridEmits {
-  (e: 'click', rowIdx: number, key: any, rowData: RowValue | undefined, columnClasses: string[]): void;
-  (e: 'dblclick', rowIdx: number, key: any, rowData: RowValue | undefined, columnClasses: string[]): void;
+  (e: 'click', rowIdx: number, key: any, rowData: RowValue | undefined, columnClasses: string[], event: MouseEvent)
+    : void;
+  (e: 'dblclick', rowIdx: number, key: any, rowData: RowValue | undefined, columnClasses: string[], event: MouseEvent)
+    : void;
 }
 
 const emit = defineEmits<GridEmits>();
@@ -89,7 +107,7 @@ function processMouse(eType: 'click' | 'dblclick', event: MouseEvent) {
   const colClasses = [...(column?.classList ?? [])].filter((c: any) => !['df-grid', 'cell'].includes(c));
   const rowId = Number.parseInt(row?.getAttribute('data-idx') ?? '-1', 10);
   const rowData = rowId === -1 ? undefined : props.records[rowId];
-  emit(eType as any, rowId, rowData?.[props.keyField], rowData, colClasses);
+  emit(eType as any, rowId, rowData?.[props.keyField], rowData, colClasses, event);
 }
 
 const updateRenderedRows = throttle(
@@ -99,6 +117,30 @@ const updateRenderedRows = throttle(
   },
   250,
 );
+
+const headerItem = computed(() => (
+  Object.fromEntries(props.columns.map((column) => [column.fieldName, column.label]))
+));
+
+const headerOptions = computed(() => props.columns.map((column) => {
+  const opt: CellOptionsInternal = { nullHandler: 'null-null', redrawColumn: () => null } as CellOptionsInternal;
+  opt[gridIdOption] = gridId;
+  opt[columnNameOption] = column.fieldName;
+  opt[columnIdOption] = Symbol('grid-column-header');
+
+  gridColumnCreate(gridId, 'plain', opt);
+  return { ...column, renderer: 'plain', rendererOptions: opt };
+}));
+
+const headerRef = ref();
+const headerHeight = ref(0);
+
+function calcHeaderHeight() {
+  if (headerRef.value) headerHeight.value = headerRef.value.scrollHeight;
+}
+
+onUpdated(() => calcHeaderHeight());
+onMounted(() => calcHeaderHeight());
 
 const columnRendererOptionsInternal = computed(() => props.columns.map((column) => {
   const opt: CellOptionsInternal = (column.rendererOptions ?? { nullHandler: 'null-null' }) as CellOptionsInternal;

@@ -3,15 +3,15 @@
 ## **Core Data Management**
 - [ ] API-based data management (CRUD operations)
 - [ ] Pagination support (results + next URL format)
-- [ ] Primary key for unique row identification
+- [x] Primary key for unique row identification
 - [ ] Row control data for additional CSS styles and actions
 
 ## **Column Management**
 - [ ] Dynamic column configuration via JSON definitions
-- [ ] Column alignment (left, right, center, decimal)
-- [ ] CSS classes for columns (table_classes)
-- [ ] Column width and responsiveness
-- [ ] Visibility control (table vs form display)
+- [?] Column alignment (left, right, center, decimal) - this may already be done by design as you specify the grid layout yourself - and thus also the alignments
+- [x] CSS classes for columns (table_classes)
+- [x] Column width and responsiveness
+- [\] Visibility control (table vs form display) - not supported any more: table is table, form is form. each has its own settings
 
 ## **Sorting & Filtering**
 - [ ] Column sorting with header click
@@ -28,7 +28,7 @@
 ## **Row Operations**
 - [ ] Row selection (single/multiple)
 - [ ] Row hover effects and cursor changes
-- [ ] Row click handlers
+- [x] Row click handlers
 - [ ] Custom CSS styling for rows
 - [x] Zebra striping (even/odd row colors)
 
@@ -39,7 +39,7 @@
 - [ ] Header actions
 
 ## **Visual Features**
-- [ ] Custom cell renderers
+- [x] Custom cell renderers
 - [ ] Loading indicator
 - [x] CSS theming (light/dark mode) - this was solved via actually rendering each card yourself as you provide the CSS
   and / or the actual card itself
