@@ -9,9 +9,11 @@ const s = (vHtml: string): SimpleComponentDef => ({
   componentVHtml: vHtml,
 });
 
-function rv(value: string): RenderableValue {
-  return new RenderableValue(s(value));
-}
+const rv = (value: string): RenderableValue => new RenderableValue(s(value));
+
+const t = (value: any, rowValue: RowValue, options: CellOptions) => (
+  options?.transform ? options.transform(value, rowValue) : value
+);
 
 const file = (value: any): SimpleComponentDef | string => {
   if (value) {
@@ -56,22 +58,38 @@ export const DefaultRenderers: RenderersMap = {
   'null-null': () => new RenderableValue(
     { componentName: 'div', componentVHtml: 'null', componentProps: { class: 'df-cell-null' } },
   ),
-  plain: (value: any) => rv(value),
-  md: (value: any) => new RenderableValue(new MdString(value)),
-  color: (value: any) => rv(color(value)),
-  checkbox: (value: any) => rv(checkbox(value)),
-  link: (value: any) => rv(link(value)),
-  email: (value: any) => rv(email(value)),
-  file: (value: any) => new RenderableValue(file(value)),
-  ip4: (value: any) => rv(ip4(value)),
-  ip6: (value: any) => rv(ip6(value)),
-  ip: (value: any) => rv(ip(value)),
-  date: (value: any, _: RowValue, options: CellOptionsInternal<DateTimeOptions>) => rv(date(value, 'P', options)),
-  time: (value: any, _: RowValue, options: CellOptionsInternal<DateTimeOptions>) => rv(date(value, 'p', options)),
-  datetime: (value: any, _: RowValue, options: CellOptionsInternal<DateTimeOptions>) => rv(date(value, 'P p', options)),
-  int: (value: any, _: RowValue, options: CellOptionsInternal<IntOptions>) => rv(int(value, options)),
-  float: (value: any, _: RowValue, options: CellOptionsInternal<IntOptions>) => rv(float(value, options)),
-  decimal: (value: any, _: RowValue, options: CellOptionsInternal<IntOptions>) => rv(float(value, options)),
+  plain: (value: any, rowValue: RowValue, options: CellOptionsInternal) => rv(t(value, rowValue, options)),
+  md: (value: any, rowValue: RowValue, options: CellOptionsInternal) => (
+    new RenderableValue(new MdString(t(value, rowValue, options)))
+  ),
+  color: (value: any, rowValue: RowValue, options: CellOptionsInternal) => rv(color(t(value, rowValue, options))),
+  checkbox: (value: any, rowValue: RowValue, options: CellOptionsInternal) => rv(checkbox(t(value, rowValue, options))),
+  link: (value: any, rowValue: RowValue, options: CellOptionsInternal) => rv(link(t(value, rowValue, options))),
+  email: (value: any, rowValue: RowValue, options: CellOptionsInternal) => rv(email(t(value, rowValue, options))),
+  file: (value: any, rowValue: RowValue, options: CellOptionsInternal) => (
+    new RenderableValue(file(t(value, rowValue, options)))
+  ),
+  ip4: (value: any, rowValue: RowValue, options: CellOptionsInternal) => rv(ip4(t(value, rowValue, options))),
+  ip6: (value: any, rowValue: RowValue, options: CellOptionsInternal) => rv(ip6(t(value, rowValue, options))),
+  ip: (value: any, rowValue: RowValue, options: CellOptionsInternal) => rv(ip(t(value, rowValue, options))),
+  date: (value: any, rowValue: RowValue, options: CellOptionsInternal<DateTimeOptions>) => (
+    rv(date(t(value, rowValue, options), 'P', options))
+  ),
+  time: (value: any, rowValue: RowValue, options: CellOptionsInternal<DateTimeOptions>) => (
+    rv(date(t(value, rowValue, options), 'p', options))
+  ),
+  datetime: (value: any, rowValue: RowValue, options: CellOptionsInternal<DateTimeOptions>) => (
+    rv(date(t(value, rowValue, options), 'P p', options))
+  ),
+  int: (value: any, rowValue: RowValue, options: CellOptionsInternal<IntOptions>) => (
+    rv(int(t(value, rowValue, options), options))
+  ),
+  float: (value: any, rowValue: RowValue, options: CellOptionsInternal<IntOptions>) => (
+    rv(float(t(value, rowValue, options), options))
+  ),
+  decimal: (value: any, rowValue: RowValue, options: CellOptionsInternal<IntOptions>) => (
+    rv(float(t(value, rowValue, options), options))
+  ),
 };
 
 export const setCellRenderer = (dataType: keyof RendererOptionsMap, transform: CellRendererTransformer) => {

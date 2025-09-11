@@ -1,11 +1,20 @@
-import { RendererOptionsMap, RowValue } from './cell-renderers';
-import { ColumnDefinition } from './columns';
+import { RowValue } from './cell-renderers';
+import { type ResponsiveColumnDefinitions } from './columns';
+import { GridClickEvent } from './df-grid-mouse-events';
 
 export interface GridProps {
-  columns: ColumnDefinition<keyof RendererOptionsMap>[];
+  columns: ResponsiveColumnDefinitions;
+  activeColumns?: string;
   records: RowValue[];
   keyField: string;
   mainShadowCount?: number;
+  secondaryShadowCount?: number;
 }
 
 export type RowIndex = number | 'header';
+
+export interface GridEmits {
+  (e: 'click', data: GridClickEvent): void;
+  (e: 'dblclick', data: GridClickEvent) : void;
+  (e: 'update:activeColumns', newValue: string): void;
+}

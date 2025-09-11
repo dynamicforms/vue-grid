@@ -4,6 +4,7 @@ export type RowValue = Record<string | symbol, any>;
 
 export interface CellOptions {
   nullHandler?: string; // undefined (or null) means the renderer will handle null rendering itself
+  transform?: (value: any, rowValue: RowValue) => any;
 }
 
 export const gridIdOption = Symbol('gridId');

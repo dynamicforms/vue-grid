@@ -51,11 +51,16 @@ function checkShadowGridColumns() {
 
 function* idxAndItem() {
   nextTick(() => checkShadowGridColumns());
-  const mx = Math.min(props.count, props.records.length);
+  const mx = Math.min(props.offset + props.count, props.records.length) - props.offset;
   for (let i = 0; i < mx; i++) {
     yield props.records[i + props.offset];
   }
 }
+
+function reMeasure() {
+  checkShadowGridColumns();
+}
+defineExpose({ reMeasure });
 </script>
 
 <style>

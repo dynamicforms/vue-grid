@@ -1,9 +1,17 @@
 <template>
-  <df-grid :columns="columns" :records="records" style="height: 70em" key-field="id"/>
+  <df-grid
+    v-model:active-columns="activeColumDef"
+    :columns="columnsResponsive"
+    :records="records"
+    style="position: fixed; inset: 0; z-index: 999; color: white; background: black"
+    key-field="id"
+  />
 </template>
 
 <script setup lang="ts">
-import { createColumn, DfGrid } from '../../src';
+import { ref } from 'vue';
+
+import { createColumn, DfGrid, filterColumns, ResponsiveColumnDefinitions } from '../../src';
 import { generateMusicLibrary } from './data-generator';
 
 const records = generateMusicLibrary(10000);
@@ -13,6 +21,7 @@ const columns = [
   createColumn('title', 'Title', 'plain'),
   createColumn('artist', 'Artist', 'plain'),
   createColumn('year', 'Year', 'int', { cssClass: 'text-right' }),
+  createColumn('year', 'Year', 'int', { cssClass: 'text-right', rendererOptions: { transform: (v) => v % 100 } }),
   createColumn('duration', 'Duration', 'plain', { cssClass: 'text-right' }), // TODO refactor to time
   createColumn('genres', 'Genres', 'plain'),
   createColumn('rating', 'Rating', 'int', { cssClass: 'text-right' }),
@@ -21,6 +30,14 @@ const columns = [
   createColumn('moods', 'Moods', 'plain'),
   createColumn('language', 'Language', 'plain'),
 ];
+const columnsResponsive = [
+  { cssClass: 'single-line', columns: filterColumns(columns, [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11]) },
+  { cssClass: 'three-row', columns: filterColumns(columns, [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11]) },
+  { cssClass: 'narrow-1', columns: filterColumns(columns, [0, 1, 2, 5, 6]) },
+  { cssClass: 'narrow-2', columns: filterColumns(columns, ['id', 'title', 'artist', 'genres', { year: 1 }]) },
+  { cssClass: 'single-column', columns: columns },
+] as ResponsiveColumnDefinitions;
+const activeColumDef = ref('three-row');
 </script>
 
 <style scoped>
@@ -43,6 +60,23 @@ const columns = [
   border-radius: 6px;
   font-size: 0.85rem;
   margin-bottom: .5em;
+}
+:deep(.df-grid.card.single-column) {
+  grid-template-columns: auto;
+}
+:deep(.df-grid.card.single-column > *) {
+  grid-column: 1 !important;
+  grid-row: auto !important;
+  grid-area: auto !important;
+}
+:deep(.df-grid.card.single-line) {
+  /* column before last 1fr so that it stretches to remaining available space */
+  grid-template-columns: repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content);
+}
+:deep(.df-grid.card.single-line > *) {
+  grid-column: auto !important;
+  grid-row: auto !important;
+  grid-area: auto !important;
 }
 :deep(.df-grid.cell) {
   border: 1px solid darkgray;

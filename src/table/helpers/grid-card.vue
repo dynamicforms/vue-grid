@@ -20,10 +20,9 @@ const { formattedData } = useFormattedData(props);
 
 <style>
 .df-grid.card {
-  /* production */
-  transition: grid-template-columns 2s ease;
+  transition: grid-template-columns 1s ease;
 }
-.df-grid.cell.df-grid-card-break-item {
-  grid-column: 1 / -1;
+.df-grid.shadow-grid.card > .df-grid.cell.df-grid-card-break-item {
+  grid-column: -2 / -1 !important;
 }
 </style>

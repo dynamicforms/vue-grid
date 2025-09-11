@@ -3,6 +3,7 @@
     ref="headerRef"
     class="df-grid header"
     :style="{
+      'overflow-x': 'hidden',
       'overflow-y': 'hidden',
       'scrollbar-gutter': 'stable',
       minHeight: `${headerHeight}px`,
@@ -13,7 +14,7 @@
         :item="headerItem"
         :columns="headerOptions"
         :renderers="DefaultRenderers"
-        class="df-grid card header"
+        :class="['df-grid', 'card', 'header', gridClass]"
         :style="`${templateColumns}`"
         data-pk="header"
         data-idx="header"
@@ -30,10 +31,14 @@ import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } f
 import { ColumnDefinition } from './columns';
 import { GridCard } from './helpers';
 
+type CssClassTypes = string | string[] | Record<string, boolean>;
+type CssClasses = CssClassTypes | CssClassTypes[];
+
 interface HeaderProps {
   columns: ColumnDefinition<keyof RendererOptionsMap>[];
   gridId: symbol;
   templateColumns: string;
+  gridClass: CssClasses;
 }
 
 const props = defineProps<HeaderProps>();
@@ -43,13 +48,16 @@ const headerItem = computed(() => (
 ));
 
 const headerOptions = computed(() => props.columns.map((column) => {
-  const opt: CellOptionsInternal = { nullHandler: 'null-null', redrawColumn: () => null } as CellOptionsInternal;
-  opt[gridIdOption] = props.gridId;
-  opt[columnNameOption] = column.fieldName;
-  opt[columnIdOption] = Symbol('grid-column-header');
+  const opt: CellOptionsInternal = {
+    nullHandler: 'null-null',
+    redrawColumn: () => null,
+    [gridIdOption]: props.gridId,
+    [columnNameOption]: column.fieldName,
+    [columnIdOption]: Symbol('grid-column-header'),
+  } as CellOptionsInternal;
 
-  gridColumnCreate(props.gridId, 'plain', opt);
-  return { ...column, renderer: 'plain', rendererOptions: opt };
+  gridColumnCreate(props.gridId, 'plain' as keyof RendererOptionsMap, opt);
+  return { ...column, renderer: 'plain' as keyof RendererOptionsMap, rendererOptions: opt };
 }));
 
 const headerRef = ref();

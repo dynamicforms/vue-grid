@@ -1,5 +1,7 @@
+import { Ref } from 'vue';
+
 import { RowValue } from './cell-renderers';
-import type { RowIndex, GridProps } from './df-grid-types';
+import type { RowIndex, GridProps, GridEmits } from './df-grid-types';
 
 export interface GridClickEvent {
   rowId: RowIndex;
@@ -9,12 +11,7 @@ export interface GridClickEvent {
   event: MouseEvent;
 }
 
-export interface GridEmits {
-  (e: 'click', data: GridClickEvent): void;
-  (e: 'dblclick', data: GridClickEvent) : void;
-}
-
-export function useGridMouseEvents(emit: GridEmits, props: GridProps) {
+export function useGridMouseEvents(emit: GridEmits, props: GridProps, headerRef: Ref) {
   function processMouse(eType: 'click' | 'dblclick', event: MouseEvent) {
     const target = event.target as HTMLElement;
 
