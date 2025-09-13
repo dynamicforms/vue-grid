@@ -1,15 +1,22 @@
 <template>
-  <df-grid
-    v-model:active-columns="activeColumDef"
-    :columns="columnsResponsive"
-    :records="records"
-    style="position: fixed; inset: 0; z-index: 999; color: white; background: black"
-    key-field="id"
-  />
+  <div :class="fullScreenClass" style="display: flex; flex-direction: column">
+    <div class="py-4 text-center">
+      <v-btn @click="fullScreenClass = fullScreenClass === '' ? 'full-screen' : ''">
+        {{ fullScreenButtonText }}
+      </v-btn>
+    </div>
+    <df-grid
+      v-model:active-columns="activeColumDef"
+      :columns="columnsResponsive"
+      :records="records"
+      class="grid-class"
+      key-field="id"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { createColumn, DfGrid, filterColumns, ResponsiveColumnDefinitions } from '../../src';
 import { generateMusicLibrary } from './data-generator';
@@ -33,14 +40,31 @@ const columns = [
 const columnsResponsive = [
   { cssClass: 'single-line', columns: filterColumns(columns, [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11]) },
   { cssClass: 'three-row', columns: filterColumns(columns, [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11]) },
-  { cssClass: 'narrow-1', columns: filterColumns(columns, [0, 1, 2, 5, 6]) },
-  { cssClass: 'narrow-2', columns: filterColumns(columns, ['id', 'title', 'artist', 'genres', { year: 1 }]) },
+  // { cssClass: 'narrow-1', columns: filterColumns(columns, [0, 1, 2, 5, 6]) },
+  // { cssClass: 'narrow-2', columns: filterColumns(columns, ['id', 'title', 'artist', 'genres', { year: 1 }]) },
   { cssClass: 'single-column', columns: columns },
 ] as ResponsiveColumnDefinitions;
 const activeColumDef = ref('three-row');
+const fullScreenClass = ref('');
+const fullScreenButtonText = computed(
+  () => (fullScreenClass.value === '' ? 'Stretch grid to window' : "restore grid to original size"),
+);
 </script>
 
 <style scoped>
+.full-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  color: white;
+  background: black;
+}
+.grid-class {
+  height: 60em;
+}
+.full-screen .grid-class {
+  flex: 1;
+}
 :deep(.df-grid.header) {
   font-weight: bold;
 }

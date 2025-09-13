@@ -44,8 +44,8 @@
 - [x] CSS theming (light/dark mode) - this was solved via actually rendering each card yourself as you provide the CSS
   and / or the actual card itself
 - [x] Striped table styling
-- [ ] Column groups
-- [ ] Move card rendering to slot so that the user may render the contents completely themselves
+- [\] Column groups - also not needed any more due to self-layouting
+- [x] Move card rendering to slot so that the user may render the contents completely themselves
 - [ ] Support CSS modes other than grid (e.g. table or flex or maybe even vuetify row / col)
 
 ## **Performance**

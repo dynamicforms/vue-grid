@@ -15,7 +15,6 @@
         :columns="headerOptions"
         :renderers="DefaultRenderers"
         :class="['df-grid', 'card', 'header', gridClass]"
-        :style="`${templateColumns}`"
         data-pk="header"
         data-idx="header"
       />
@@ -37,7 +36,6 @@ type CssClasses = CssClassTypes | CssClassTypes[];
 interface HeaderProps {
   columns: ColumnDefinition<keyof RendererOptionsMap>[];
   gridId: symbol;
-  templateColumns: string;
   gridClass: CssClasses;
 }
 

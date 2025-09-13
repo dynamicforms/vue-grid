@@ -2,6 +2,7 @@
   <div
     ref="containerRef"
     class="df-grid container d-flex flex-column"
+    :style="`--${templateColumns}`"
     @click="($event) => processMouse('click', $event)"
     @dblclick="($event) => processMouse('dblclick', $event)"
     @keydown.enter="void (0)"
@@ -11,7 +12,7 @@
       :columns="uColumns.columns.value"
       :grid-id="gridId"
       :template-columns="templateColumns"
-      :grid-class="{ [uColumns.cssClass.value]: true }"
+      :grid-class="uColumns.cssClass.value"
     >
       <template #header="headerSlotProps"><slot name="header" v-bind="headerSlotProps"/></template>
     </df-grid-header>
@@ -39,7 +40,6 @@
             :columns="columnRendererOptionsInternal"
             :renderers="DefaultRenderers"
             :class="[uColumns.cssClass.value, { even: index % 2 === 0, odd: index % 2 === 1 }]"
-            :style="`${templateColumns}`"
             :data-pk="item[keyField]"
             :data-idx="index"
           />
@@ -55,7 +55,7 @@
       :offset="mainShadowOffset"
       :class="uColumns.cssClass.value"
       :key-field="keyField"
-      @onmeasure="templateColumns = `grid-template-columns: ${$event.columnWidths}`"
+      @onmeasure="(event) => doShadowMeasure(event)"
     />
     <div v-for="colsDef in uColumns.builtColumns.value" :key="colsDef.name">
       <shadow-grid
@@ -69,7 +69,7 @@
         :offset="secondaryShadowOffset"
         :class="colsDef.cssClass"
         :key-field="keyField"
-        @onmeasure="shadowMeasurements[colsDef.name] = $event"
+        @onmeasure="(event) => shadowMeasurements[colsDef.name] = event.totalWidth"
       />
     </div>
   </div>
@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { keys, maxBy, pickBy, throttle } from 'lodash-es';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 // @ts-ignore
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller';
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
@@ -88,7 +88,7 @@ import { useColumns } from './columns';
 import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
 import type { GridEmits, GridProps } from './df-grid-types';
-import { GridCard, ShadowGrid } from './helpers';
+import { GridCard, ShadowGrid, ShadowGridMeasurements } from './helpers';
 
 const props = withDefaults(
   defineProps<GridProps>(),
@@ -121,20 +121,41 @@ const uColumns = useColumns(props, gridId);
 watch(uColumns.active, () => { templateColumns.value = ''; });
 
 const containerRef = ref();
+let lastResizeWasShrink = true;
+let lastResizeWidth = 0;
 const resizeObserver = new ResizeObserver((etries) => {
   etries.forEach((entry) => {
     const { width } = entry.contentRect;
-    const filtered = pickBy(shadowMeasurements, (config) => config.totalWidth <= width);
-    const bestLayout = maxBy(keys(filtered), (key) => filtered[key].totalWidth);
-    templateColumns.value = '';
+    lastResizeWasShrink = width < lastResizeWidth;
+    lastResizeWidth = width;
+    const filtered = pickBy(shadowMeasurements, (config) => config <= width);
+    const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
     shadowRef.value?.reMeasure();
     if (bestLayout != null && bestLayout !== props.activeColumns) {
+      templateColumns.value = '';
       emit('update:activeColumns', <string> bestLayout);
     }
   });
 });
 onMounted(() => { resizeObserver.observe(containerRef.value); });
 onUnmounted(() => { resizeObserver.disconnect(); });
+onUpdated(() => {
+  const targetElement = containerRef.value?.querySelector('.df-grid.dynamic-scroller-item .df-grid.card');
+  if (targetElement != null && !lastResizeWasShrink) {
+    const computedStyle = window.getComputedStyle(targetElement);
+    const totalWidth = Math.ceil(Number.parseFloat(computedStyle.getPropertyValue('width').replace('px', '')));
+    const tSWidth = targetElement.scrollWidth;
+    if (tSWidth > totalWidth && tSWidth > shadowMeasurements[uColumns.active.value]) {
+      // console.log(totalWidth, tSWidth, shadowMeasurements[uColumns.active.value]);
+      shadowMeasurements[uColumns.active.value] = tSWidth;
+    }
+  }
+});
+
+const doShadowMeasure = throttle(
+  (event: ShadowGridMeasurements) => { templateColumns.value = `grid-template-columns: ${event.columnWidths}`; },
+  100,
+);
 
 const columnRendererOptionsInternal = computed(() => uColumns.columns.value.map((column) => {
   const opt: CellOptionsInternal = (column.rendererOptions ?? { nullHandler: 'null-null' }) as CellOptionsInternal;
@@ -150,13 +171,8 @@ onUnmounted(() => gridDestroy(gridId));
 </script>
 
 <style>
-.df-grid.container {
-  position: relative;
-}
-.df-grid.dynamic-scroller-item {
-  /* itemi morajo biti position: absolute, drugače je med njimi dvojni spacing */
-  position:absolute;
-  left: 0;
-  right: 0;
+.df-grid.container .df-grid.card:not(.shadow-grid) {
+  /*noinspection CssUnresolvedCustomProperty*/
+  grid-template-columns: var(--grid-template-columns);
 }
 </style>
