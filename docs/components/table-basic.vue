@@ -89,7 +89,7 @@ const fullScreenButtonText = computed(
   grid-template-columns: auto;
 }
 :deep(.df-grid.card.single-column > *) {
-  grid-column: 1 !important;
+  grid-column: 1 / 2 !important;
   grid-row: auto !important;
   grid-area: auto !important;
 }

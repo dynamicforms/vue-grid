@@ -23,12 +23,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUpdated, ref } from 'vue';
+import { computed, inject, onMounted, onUpdated, Ref, ref } from 'vue';
 
 import { DefaultRenderers, RendererOptionsMap, gridColumnCreate } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { ColumnDefinition } from './columns';
-import { GridCard } from './helpers';
+import { GridCard, useHeaderContent } from './helpers';
 
 type CssClassTypes = string | string[] | Record<string, boolean>;
 type CssClasses = CssClassTypes | CssClassTypes[];
@@ -61,8 +61,12 @@ const headerOptions = computed(() => props.columns.map((column) => {
 const headerRef = ref();
 const headerHeight = ref(0);
 
+const { setHeaderContent } = useHeaderContent();
+
 function calcHeaderHeight() {
   if (headerRef.value) {
+    setHeaderContent(Array.from(headerRef.value.children[0].children));
+    // headerRef.value.children[0].innerHTML;
     headerRef.value.style.minHeight = 'auto';
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     headerRef.value.offsetHeight; // force recalc layout (desktop browsers don't need this)

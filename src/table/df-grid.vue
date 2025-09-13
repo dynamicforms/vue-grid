@@ -58,6 +58,11 @@
       @onmeasure="(event) => doShadowMeasure(event)"
     />
     <div v-for="colsDef in uColumns.builtColumns.value" :key="colsDef.name">
+      <!--
+      we only render secondary shadows once (v-if="!shadowMeasurements[colsDef.name]") to get ballpark width figures.
+      This will cause issues when switching among the dynamic layouts because the initial render might have been
+      too narrow. This may be mitigated by increasing secondaryShadowCount
+      -->
       <shadow-grid
         v-if="!shadowMeasurements[colsDef.name]"
         style="right: auto"
@@ -88,7 +93,7 @@ import { useColumns } from './columns';
 import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
 import type { GridEmits, GridProps } from './df-grid-types';
-import { GridCard, ShadowGrid, ShadowGridMeasurements } from './helpers';
+import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from './helpers';
 
 const props = withDefaults(
   defineProps<GridProps>(),
@@ -103,15 +108,14 @@ const gridId = Symbol('df-grid');
 const headerRef = ref();
 const shadowMeasurements: Record<string, any> = {};
 const shadowRef = ref();
-
 const { processMouse } = useGridMouseEvents(emit, props, headerRef);
+
+useHeaderContent().provideHeaderContent();
 
 const updateRenderedRows = throttle(
   (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => {
     const mid = Math.round((visibleStartIndex + visibleEndIndex) / 2);
     mainShadowOffset.value = Math.max(0, mid - Math.round(props.mainShadowCount / 2));
-    // Maybe we don't update secondary shadows to avoid unnecessary redraws, but, if so, we should increase the count
-    // secondaryShadowOffset.value = Math.max(0, mid - Math.round(props.secondaryShadowCount / 2));
   },
   250,
 );

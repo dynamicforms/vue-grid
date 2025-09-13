@@ -10,6 +10,7 @@
       :add-row-reset-item="true"
       :no-wrapper-item="true"
     />
+    <component :is="() => headerContentVNodes"/>
   </div>
 </template>
 
@@ -20,6 +21,7 @@ import { RendererOptionsMap, RenderersMap, RowValue } from '../cell-renderers';
 import { ColumnDefinition } from '../columns';
 
 import GridCard from './grid-card.vue';
+import { useHeaderContent } from './header-content';
 import { ShadowGridMeasurements } from './shadow-grid-types';
 
 interface GridProps {
@@ -37,8 +39,10 @@ interface Emits {
   (e: 'onmeasure', value: ShadowGridMeasurements): any;
 }
 const emits = defineEmits<Emits>();
-
+const { headerContentVNodes } = useHeaderContent();
 const shadowGridRef = ref();
+
+console.log(headerContentVNodes);
 
 function checkShadowGridColumns() {
   if (!shadowGridRef.value) return;
