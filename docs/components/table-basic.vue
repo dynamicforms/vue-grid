@@ -83,7 +83,14 @@ const fullScreenButtonText = computed(
   border: 1px solid #808080ff;
   border-radius: 6px;
   font-size: 0.85rem;
+  /*
+   * won't work for item measurements, so see the next selector adding negligible padding to parent. That seems to
+   * finally take into account this margin
+   */
   margin-bottom: .5em;
+}
+:deep(.df-grid.dynamic-scroller-item) {
+  padding-bottom: .1px;
 }
 :deep(.df-grid.card.single-column) {
   grid-template-columns: auto;
