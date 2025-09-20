@@ -38,9 +38,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git@github.com:velis74/dynamicforms-vue-grid.git"
+    "url": "git@github.com:dynamicforms/vue-grid.git"
   },
-  "issues": "https://github.com/velis74/dynamicforms-vue-grid/issues",
+  "issues": "https://github.com/dynamicforms/vue-grid/issues",
   "peerDependencies": {
     "@dynamicforms/vue-forms": "^0.4.3",
     "date-fns": "^4.1.0",

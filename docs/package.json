@@ -1,7 +1,7 @@
 {
   "name": "@dynamicforms/dynamicforms-vue-grid-docs",
   "version": "1.0.0",
-  "description": "Documentation for @dynamicforms/dynamicforms-vue-grid",
+  "description": "Documentation for @dynamicforms/vue-grid",
   "type": "module",
   "private": true,
   "scripts": {

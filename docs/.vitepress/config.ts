@@ -30,7 +30,7 @@ export default defineConfig({
       ]
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/velis74/dynamicforms-vue-grid' }
+      { icon: 'github', link: 'https://github.com/dynamicforms/vue-grid' }
     ],
     footer: {
       message: 'Released under the MIT License.',

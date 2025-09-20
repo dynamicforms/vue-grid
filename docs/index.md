@@ -10,7 +10,7 @@ hero:
       link: /guide/getting-started
     - theme: alt
       text: View on GitHub
-      link: https://github.com/velis74/dynamicforms-vuetify-inputs
+      link: https://github.com/dynamicforms/vuetify-inputs
 features:
   - title: DynamicForms Integration
     details: Seamlessly works with @dynamicforms/vue-forms for state management and validation
