@@ -11,7 +11,8 @@
       :records="records"
       class="grid-class"
       key-field="id"
-      @click="(data) => console.log(data)"
+      @click="(data) => console.log('click:', data)"
+      @sort="(data) => console.log('sort:', data)"
     />
   </div>
 </template>

@@ -93,6 +93,17 @@ type SortActionClicked = GridSortEvent['sortActionClicked'];
 
 export type SortEvents = 'click' | 'dblclick' | 'longpress';
 
+function cycleSort(sortConfig: SortConfig, sortColumnState: SortStateColumn): boolean {
+  // This function is called only when column already has sort state (is sorted)
+  // Cycle logic: asc -> desc (if both allowed), otherwise -> unsorted
+  if (sortConfig.direction === 'both' && sortColumnState.direction === 'asc') {
+    sortColumnState.direction = 'desc';
+    return true; // keep in sort
+  }
+  // All other cases: remove from sort (back to unsorted)
+  return false;
+}
+
 export function processSortEvent(
   emit: EmitFn<GridEmits>,
   props: GridProps,
@@ -129,7 +140,13 @@ export function processSortEvent(
         };
         suggestedSort.push(sortColumnState);
       }
-    } else cycleSort(columnSortConfig, sortColumnState);
+    } else {
+      const keepInSort = cycleSort(columnSortConfig, sortColumnState);
+      if (!keepInSort) {
+        const index = suggestedSort.findIndex((c) => c.columnName === sortColumnClicked);
+        if (index !== -1) suggestedSort.splice(index, 1);
+      }
+    }
   }
   if (stopProcessing || (event instanceof MouseEvent && (event.ctrlKey || event.altKey))) {
     // we currently don't support ctrl and alt modifiers, so we do nothing
