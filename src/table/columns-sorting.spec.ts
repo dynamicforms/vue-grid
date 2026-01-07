@@ -1,18 +1,10 @@
-import { computed, nextTick, ref } from 'vue';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { vi } from 'vitest';
+import { computed, nextTick, reactive, ref } from 'vue';
 
-import type { ColumnDefinition } from './columns';
-import {
-  getSortConfig,
-  processSortEvent,
-  sortExternal,
-  type SortConfig,
-  type SortState,
-  type SortStateColumn,
-  useSorting,
-} from './columns-sorting';
-import type { GridEmits, GridProps } from './df-grid-types';
 import type { RowValue } from './cell-renderers';
+import type { ColumnDefinition } from './columns';
+import { getSortConfig, processSortEvent, sortExternal, type SortState, useSorting } from './columns-sorting';
+import type { GridProps } from './df-grid-types';
 
 // Mock data for testing
 const mockRecords: RowValue[] = [
@@ -68,7 +60,6 @@ describe('columns-sorting.ts', () => {
     });
   });
 
-
   describe('processSortEvent', () => {
     let mockEmit: ReturnType<typeof vi.fn>;
     let mockHeaderRef: any;
@@ -82,12 +73,17 @@ describe('columns-sorting.ts', () => {
         columns: computed(() => mockColumns),
         activeColumnsDefinition: computed(() => ({ columns: mockColumns })),
       };
-      mockEvent = {
-        target: document.createElement('div'),
+      mockEvent = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
         shiftKey: false,
         ctrlKey: false,
         altKey: false,
-      } as unknown as MouseEvent;
+      });
+      Object.defineProperty(mockEvent, 'target', {
+        value: document.createElement('div'),
+        writable: true,
+      });
     });
 
     describe('normal click behavior', () => {
@@ -171,7 +167,17 @@ describe('columns-sorting.ts', () => {
 
     describe('shift+click behavior', () => {
       beforeEach(() => {
-        mockEvent.shiftKey = true;
+        mockEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          shiftKey: true,
+          ctrlKey: false,
+          altKey: false,
+        });
+        Object.defineProperty(mockEvent, 'target', {
+          value: document.createElement('div'),
+          writable: true,
+        });
       });
 
       it('should add new column to existing sort', () => {
@@ -311,7 +317,17 @@ describe('columns-sorting.ts', () => {
 
     describe('ctrl/alt modifier keys', () => {
       it('should do nothing on ctrl+click', () => {
-        mockEvent.ctrlKey = true;
+        const ctrlEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          shiftKey: false,
+          ctrlKey: true,
+          altKey: false,
+        });
+        Object.defineProperty(ctrlEvent, 'target', {
+          value: document.createElement('div'),
+          writable: true,
+        });
         const sortState: SortState = [{ columnName: 'title', direction: 'asc' }];
         const sortStateCopy = [...sortState];
 
@@ -323,7 +339,7 @@ describe('columns-sorting.ts', () => {
           undefined,
           ['artist'],
           'click',
-          mockEvent,
+          ctrlEvent,
           'artist',
         );
 
@@ -332,7 +348,17 @@ describe('columns-sorting.ts', () => {
       });
 
       it('should do nothing on alt+click', () => {
-        mockEvent.altKey = true;
+        const altEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          shiftKey: false,
+          ctrlKey: false,
+          altKey: true,
+        });
+        Object.defineProperty(altEvent, 'target', {
+          value: document.createElement('div'),
+          writable: true,
+        });
         const sortState: SortState = [{ columnName: 'title', direction: 'asc' }];
         const sortStateCopy = [...sortState];
 
@@ -344,7 +370,7 @@ describe('columns-sorting.ts', () => {
           undefined,
           ['artist'],
           'click',
-          mockEvent,
+          altEvent,
           'artist',
         );
 
@@ -462,16 +488,19 @@ describe('columns-sorting.ts', () => {
       });
 
       it('should react to external sortState changes', async () => {
-        const externalSortState = ref<SortState>([{ columnName: 'title', direction: 'asc' }]);
-        mockProps.sortState = externalSortState.value;
+        const mockPropsReactive = reactive({
+          records: mockRecords,
+          columns: mockColumns,
+          keyField: 'id',
+          sortState: [{ columnName: 'title', direction: 'asc' }] as SortState,
+        });
 
-        const { sortState, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns);
+        const { sortedRecords } = useSorting(mockPropsReactive, mockEmit, mockUColumns);
 
         expect(sortedRecords.value[0].title).toBe('Apple');
 
         // Change external state
-        externalSortState.value = [{ columnName: 'title', direction: 'desc' }];
-        mockProps.sortState = externalSortState.value;
+        mockPropsReactive.sortState = [{ columnName: 'title', direction: 'desc' }];
         await nextTick();
 
         expect(sortedRecords.value[0].title).toBe('Zebra');
@@ -544,10 +573,13 @@ describe('columns-sorting.ts', () => {
         // Try to sort by unsortable column
         emitWrapper('update:sortState', [{ columnName: 'unsortable', direction: 'asc' }]);
 
+        // Access sortedRecords to trigger computed validation
+        const result = sortedRecords.value;
+
         expect(consoleSpy).toHaveBeenCalledWith(
           expect.stringContaining('unsortable column'),
         );
-        expect(sortedRecords.value).toBe(mockRecords); // should remain unsorted
+        expect(result).toBe(mockRecords); // should remain unsorted
 
         consoleSpy.mockRestore();
       });
