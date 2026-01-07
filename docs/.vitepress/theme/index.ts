@@ -21,7 +21,7 @@ export default {
     })
 
     app.use(vuetify);
-    app.use(DynamicFormsVueGrid);
+    app.use(DynamicFormsVueGrid, { registerComponents: true });
     app.component('VueMarkdown', VueMarkdown);
   },
   Layout: () => {

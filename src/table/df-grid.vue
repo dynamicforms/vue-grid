@@ -1,6 +1,7 @@
 <template>
   <div
     ref="containerRef"
+    v-longpress="($event) => processMouse('longpress', $event)"
     class="df-grid container d-flex flex-column"
     :style="`--${templateColumns}`"
     @click="($event) => processMouse('click', $event)"
@@ -13,13 +14,14 @@
       :grid-id="gridId"
       :template-columns="templateColumns"
       :grid-class="uColumns.cssClass.value"
+      :sort-state="sortState"
     >
       <template #header="headerSlotProps"><slot name="header" v-bind="headerSlotProps"/></template>
     </df-grid-header>
     <dynamic-scroller
       v-slot="{ item, index, active }"
       class="cards-grid flex-1-1 overflow-y-scroll"
-      :items="records"
+      :items="sortedRecords"
       :min-item-size="30"
       :key-field="keyField"
       :buffer="1000"
@@ -48,7 +50,7 @@
     </dynamic-scroller>
     <shadow-grid
       ref="shadowRef"
-      :records="records"
+      :records="sortedRecords"
       :columns="columnRendererOptionsInternal"
       :renderers="DefaultRenderers"
       :count="mainShadowCount"
@@ -67,7 +69,7 @@
         v-if="!shadowMeasurements[colsDef.name]"
         style="right: auto"
 
-        :records="records"
+        :records="sortedRecords"
         :columns="colsDef.columnRenderOptsInternal.value"
         :renderers="DefaultRenderers"
         :count="secondaryShadowCount"
@@ -90,6 +92,7 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { useColumns } from './columns';
+import { useSorting } from './columns-sorting';
 import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
 import type { GridEmits, GridProps } from './df-grid-types';
@@ -101,14 +104,16 @@ const props = withDefaults(
 );
 const emit = defineEmits<GridEmits>();
 
+const gridId = Symbol('df-grid');
 const mainShadowOffset = ref(0);
 const secondaryShadowOffset = ref(0);
 const templateColumns = ref('');
-const gridId = Symbol('df-grid');
+
+const uColumns = useColumns(props, gridId);
+const { sortState, emitWrapper, sortedRecords } = useSorting(props, emit, uColumns);
 const headerRef = ref();
 const shadowMeasurements: Record<string, any> = {};
 const shadowRef = ref();
-const { processMouse } = useGridMouseEvents(emit, props, headerRef);
 
 useHeaderContent().provideHeaderContent();
 
@@ -120,7 +125,7 @@ const updateRenderedRows = throttle(
   250,
 );
 
-const uColumns = useColumns(props, gridId);
+const { processMouse } = useGridMouseEvents(emitWrapper, props, sortState, headerRef, uColumns);
 
 watch(uColumns.active, () => { templateColumns.value = ''; });
 

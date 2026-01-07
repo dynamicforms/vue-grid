@@ -23,11 +23,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, onUpdated, Ref, ref } from 'vue';
+import { isBoolean } from 'lodash-es';
+import { computed, onMounted, onUpdated, ref } from 'vue';
 
-import { DefaultRenderers, RendererOptionsMap, gridColumnCreate } from './cell-renderers';
+import { DefaultRenderers, gridColumnCreate, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { ColumnDefinition } from './columns';
+import type { ColumnSortState, SortState } from './columns-sorting';
 import { GridCard, useHeaderContent } from './helpers';
 
 type CssClassTypes = string | string[] | Record<string, boolean>;
@@ -37,6 +39,7 @@ interface HeaderProps {
   columns: ColumnDefinition<keyof RendererOptionsMap>[];
   gridId: symbol;
   gridClass: CssClasses;
+  sortState: SortState;
 }
 
 const props = defineProps<HeaderProps>();
@@ -46,16 +49,26 @@ const headerItem = computed(() => (
 ));
 
 const headerOptions = computed(() => props.columns.map((column) => {
+  const srtIdx = props.sortState.findIndex((ssi) => ssi.columnName === column.fieldName);
+  const srt = srtIdx === -1 ? null : props.sortState[srtIdx];
+  const singleSegment = props.sortState.length === 1;
+  const sortState: ColumnSortState = {
+    index: srtIdx === -1 ? undefined : srtIdx + (singleSegment ? 0 : 1),
+    sortable: isBoolean(column.sortable) ? column.sortable : column.sortable.direction !== undefined,
+    direction: srt?.direction,
+  };
+
   const opt: CellOptionsInternal = {
     nullHandler: 'null-null',
     redrawColumn: () => null,
+    sortState,
     [gridIdOption]: props.gridId,
     [columnNameOption]: column.fieldName,
     [columnIdOption]: Symbol('grid-column-header'),
   } as CellOptionsInternal;
 
-  gridColumnCreate(props.gridId, 'plain' as keyof RendererOptionsMap, opt);
-  return { ...column, renderer: 'plain' as keyof RendererOptionsMap, rendererOptions: opt };
+  gridColumnCreate(props.gridId, 'header' as keyof RendererOptionsMap, opt);
+  return { ...column, renderer: 'header' as keyof RendererOptionsMap, rendererOptions: opt, sortState };
 }));
 
 const headerRef = ref();

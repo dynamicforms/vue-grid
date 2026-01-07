@@ -42,8 +42,6 @@ const emits = defineEmits<Emits>();
 const { headerContentVNodes } = useHeaderContent();
 const shadowGridRef = ref();
 
-console.log(headerContentVNodes);
-
 function checkShadowGridColumns() {
   if (!shadowGridRef.value) return;
 

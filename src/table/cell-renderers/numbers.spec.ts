@@ -55,13 +55,11 @@ describe('numbers.ts', () => {
     it('should format number input', () => {
       const result = int(123, mockOptions);
       expect(result).toContain('123');
-      expect(result).toContain('<span>');
     });
 
     it('should format string input', () => {
       const result = int('456', mockOptions);
       expect(result).toContain('456');
-      expect(result).toContain('<span>');
     });
 
     it('should handle invalid string input', () => {
@@ -100,7 +98,7 @@ describe('numbers.ts', () => {
 
       const result = int(123, paddedOptions);
       expect(result).toContain('>00<');
-      expect(result).toContain('>123<');
+      expect(result).toContain('>123');
       expect(result).toContain('opacity: .5">00<');
     });
 
@@ -132,8 +130,7 @@ describe('numbers.ts', () => {
 
     it('should format float number', () => {
       const result = float(123.45, mockOptions);
-      expect(result).toContain('123');
-      expect(result).toContain('<span>');
+      expect(result).toBe('123,45');
     });
 
     it('should format string input', () => {

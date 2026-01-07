@@ -1,5 +1,6 @@
 import { MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
 
+import { header, HeaderOptions } from './header-renderers';
 import { CellOptions, CellOptionsInternal, CellRendererTransformer, RowValue } from './interfaces';
 import { float, floatGridColumnCreate, floatGridDestroy, int, IntOptions } from './numbers';
 import { checkbox, color, date, DateTimeOptions, email, ip, ip4, ip6, link } from './simple-renderers';
@@ -32,6 +33,7 @@ export interface RendererOptionsMap {
   'null-empty': CellOptions,
   'null-null': CellOptions,
   plain: CellOptions,
+  header: HeaderOptions,
   md: CellOptions,
   color: CellOptions,
   checkbox: CellOptions,
@@ -59,6 +61,9 @@ export const DefaultRenderers: RenderersMap = {
     { componentName: 'div', componentVHtml: 'null', componentProps: { class: 'df-cell-null' } },
   ),
   plain: (value: any, rowValue: RowValue, options: CellOptionsInternal) => rv(t(value, rowValue, options)),
+  header: (value: any, rowValue: RowValue, options: CellOptionsInternal<HeaderOptions>) => (
+    header(value, rowValue, options)
+  ),
   md: (value: any, rowValue: RowValue, options: CellOptionsInternal) => (
     new RenderableValue(new MdString(t(value, rowValue, options)))
   ),

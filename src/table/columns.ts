@@ -1,8 +1,9 @@
 import { filter, find, isArray, isEmpty, isNumber, isObject, isString } from 'lodash-es';
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 
 import { gridColumnCreate, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
+import { Sortable } from './columns-sorting';
 import { GridProps } from './df-grid-types';
 
 export interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> {
@@ -10,6 +11,7 @@ export interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> 
   label: string;
   renderer?: R;
   rendererOptions?: RendererOptionsMap[R];
+  sortable: Sortable;
   cssClass?: string | undefined;
 }
 
@@ -23,7 +25,16 @@ export function createColumn<R extends keyof RendererOptionsMap>(
   renderer?: R,
   otherOptions?: Omit<ColumnDefinition, 'fieldName' | 'label' | 'renderer'>,
 ): ColumnDefinition<R> {
-  return { fieldName, label, renderer, ...(otherOptions ?? {}) };
+  const result = { fieldName, label, renderer, sortable: true, ...(otherOptions ?? {}) };
+
+  // If renderer is 'header' and rendererOptions doesn't have sortState, add default
+  if (renderer === 'header') {
+    if (result.rendererOptions == null) result.rendererOptions = { };
+    const opts = result.rendererOptions as any;
+    if (opts.sortState === undefined) opts.sortState = { direction: undefined, index: undefined, sortable: true };
+  }
+
+  return result as ColumnDefinition<R>;
 }
 
 export type ColumnFilterSelectors = (number | string | { [key: string]: number })[];
