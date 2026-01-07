@@ -51,8 +51,9 @@ const headerItem = computed(() => (
 const headerOptions = computed(() => props.columns.map((column) => {
   const srtIdx = props.sortState.findIndex((ssi) => ssi.columnName === column.fieldName);
   const srt = srtIdx === -1 ? null : props.sortState[srtIdx];
+  const singleSegment = props.sortState.length === 1;
   const sortState: ColumnSortState = {
-    index: srtIdx === -1 ? undefined : srtIdx,
+    index: srtIdx === -1 ? undefined : srtIdx + (singleSegment ? 0 : 1),
     sortable: isBoolean(column.sortable) ? column.sortable : column.sortable.direction !== undefined,
     direction: srt?.direction,
   };

@@ -24,6 +24,7 @@ const renderLabel = computed(() => [new RenderableValue(props.value)]);
 .df-header-cell {
   display: grid;
   grid-template-columns: auto 1fr 1em;
+  user-select: none;
 }
 .df-grid-sorting-indicator-wrapper {
   margin-inline-start: .25em;
