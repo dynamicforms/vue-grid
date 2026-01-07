@@ -23,7 +23,7 @@ export function useGridMouseEvents(
   headerRef: Ref,
   uColumns: ReturnType<typeof useColumns>,
 ) {
-  function processMouse(eType: SortEvents, event: MouseEvent) {
+  function processMouse(eType: SortEvents, event: TouchEvent | MouseEvent) {
     const target = event.target as HTMLElement;
 
     const column = target.closest('.df-grid.cell');

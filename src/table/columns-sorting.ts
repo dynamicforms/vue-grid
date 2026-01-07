@@ -62,13 +62,15 @@ export type SortState = SortStateColumn[];
 
 export function getSortConfig(sort?: Sortable): SortConfig {
   if (sort === true) return defaultColumnSortConfig;
-  else if (sort === false || sort == null) return {};
-  else if (sort.direction || sort.key || sort.compare || sort.nulls || sort.locale) return {
-    direction: sort.direction ?? defaultColumnSortConfig.direction,
-    nulls: sort.nulls ?? defaultColumnSortConfig.nulls,
-    key: sort.key,
-    locale: sort.locale,
-    compare: sort.compare,
+  if (sort === false || sort == null) return {};
+  if (sort.direction || sort.key || sort.compare || sort.nulls || sort.locale) {
+    return {
+      direction: sort.direction ?? defaultColumnSortConfig.direction,
+      nulls: sort.nulls ?? defaultColumnSortConfig.nulls,
+      key: sort.key,
+      locale: sort.locale,
+      compare: sort.compare,
+    };
   }
   return {};
 }
@@ -182,6 +184,7 @@ export function processSortEvent(
       };
     } else {
       // here we cycle the existing sort order on this column
+      // eslint-disable-next-line no-lonely-if
       if (columnSortConfig.direction !== 'both' || sortColumnState.direction === 'desc') {
         // clicking on the column makes the column unsorted right now
         sortColumnState = undefined;
