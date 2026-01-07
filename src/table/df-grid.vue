@@ -21,7 +21,7 @@
     <dynamic-scroller
       v-slot="{ item, index, active }"
       class="cards-grid flex-1-1 overflow-y-scroll"
-      :items="records"
+      :items="sortedRecords"
       :min-item-size="30"
       :key-field="keyField"
       :buffer="1000"
@@ -50,7 +50,7 @@
     </dynamic-scroller>
     <shadow-grid
       ref="shadowRef"
-      :records="records"
+      :records="sortedRecords"
       :columns="columnRendererOptionsInternal"
       :renderers="DefaultRenderers"
       :count="mainShadowCount"
@@ -69,7 +69,7 @@
         v-if="!shadowMeasurements[colsDef.name]"
         style="right: auto"
 
-        :records="records"
+        :records="sortedRecords"
         :columns="colsDef.columnRenderOptsInternal.value"
         :renderers="DefaultRenderers"
         :count="secondaryShadowCount"
@@ -104,12 +104,13 @@ const props = withDefaults(
 );
 const emit = defineEmits<GridEmits>();
 
-const { sortState, emitWrapper } = useSorting(props, emit);
-
+const gridId = Symbol('df-grid');
 const mainShadowOffset = ref(0);
 const secondaryShadowOffset = ref(0);
 const templateColumns = ref('');
-const gridId = Symbol('df-grid');
+
+const uColumns = useColumns(props, gridId);
+const { sortState, emitWrapper, sortedRecords } = useSorting(props, emit, uColumns);
 const headerRef = ref();
 const shadowMeasurements: Record<string, any> = {};
 const shadowRef = ref();
@@ -124,7 +125,6 @@ const updateRenderedRows = throttle(
   250,
 );
 
-const uColumns = useColumns(props, gridId);
 const { processMouse } = useGridMouseEvents(emitWrapper, props, sortState, headerRef, uColumns);
 
 watch(uColumns.active, () => { templateColumns.value = ''; });

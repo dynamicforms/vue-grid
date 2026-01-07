@@ -1,6 +1,6 @@
-import { cloneDeep } from 'lodash-es';
-import { CompareFn } from 'natural-orderby';
-import { computed, EmitFn, ref, Ref, watch } from 'vue';
+import { cloneDeep, get } from 'lodash-es';
+import { CompareFn, orderBy } from 'natural-orderby';
+import { computed, ComputedRef, EmitFn, ref, Ref, watch } from 'vue';
 
 import { RendererOptionsMap, RowValue } from './cell-renderers';
 import { type ColumnDefinition, type useColumns } from './columns';
@@ -95,10 +95,114 @@ type SortActionClicked = GridSortEvent['sortActionClicked'];
 
 export type SortEvents = 'click' | 'dblclick' | 'longpress';
 
-export function useSorting(props: GridProps, emit: EmitFn<GridEmits>) {
+/**
+ * validateSortState checks if the sortState is valid against the column definitions.
+ * It logs warnings for invalid entries and returns a cleaned sortState.
+ */
+function validateSortState(
+  sortState: SortState,
+  columns: ComputedRef<ColumnDefinition<keyof RendererOptionsMap>[]>,
+): SortState {
+  const validatedState: SortState = [];
+
+  for (const sortCol of sortState) {
+    const colDef = columns.value.find((c) => c.fieldName === sortCol.columnName);
+
+    if (!colDef) {
+      console.warn(`[df-grid] sortState references non-existent column: ${sortCol.columnName}`);
+    } else {
+      const sortConfig = getSortConfig(colDef.sortable);
+
+      if (!sortConfig.direction) {
+        console.warn(`[df-grid] sortState references unsortable column: ${sortCol.columnName}`);
+      } else if (sortConfig.direction !== 'both' && sortConfig.direction !== sortCol.direction) {
+        console.warn(
+          `[df-grid] sortState specifies direction "${sortCol.direction}" for column "${sortCol.columnName}" ` +
+          `but column only allows "${sortConfig.direction}"`,
+        );
+      } else {
+        validatedState.push(sortCol);
+      }
+    }
+  }
+
+  return validatedState;
+}
+
+/**
+ * applySorting performs the actual sorting of records based on sortState and column configurations.
+ * Returns the sorted records array.
+ */
+function applySorting(
+  records: RowValue[],
+  sortState: SortState,
+  columns: ComputedRef<ColumnDefinition<keyof RendererOptionsMap>[]>,
+): RowValue[] {
+  if (sortState.length === 0) return records;
+
+  // Check if any column uses external sorting
+  const hasExternalSort = sortState.some((sortCol) => {
+    const colDef = columns.value.find((c) => c.fieldName === sortCol.columnName);
+    if (!colDef) return false;
+    const sortConfig = getSortConfig(colDef.sortable);
+    return sortConfig.key === sortExternal;
+  });
+
+  // If any column uses external sorting, don't sort locally - backend handles it
+  if (hasExternalSort) return records;
+
+  // Build orderBy configuration for natural-orderby
+  const identifiers: ((row: RowValue) => any)[] = [];
+  const orders: ('asc' | 'desc')[] = [];
+  const compareFns: (CompareFn | undefined)[] = [];
+
+  for (const sortCol of sortState) {
+    const colDef = columns.value.find((c) => c.fieldName === sortCol.columnName);
+    if (colDef) {
+      const sortConfig = getSortConfig(colDef.sortable);
+
+      // Determine the keys to sort by
+      const keys = sortConfig.key === sortExternal ? [sortCol.columnName] : (sortConfig.key ?? [sortCol.columnName]);
+
+      // For each key in this sort column, add an identifier function
+      for (const key of keys) {
+        identifiers.push((row: RowValue) => {
+          const value = get(row, key);
+          // Handle nulls according to config
+          if (value == null) {
+            // Return a special value for null handling
+            return sortConfig.nulls === 'first' ? '\u0000' : '\uFFFF';
+          }
+          return value;
+        });
+
+        orders.push(sortCol.direction);
+        compareFns.push(sortConfig.compare);
+      }
+    }
+  }
+
+  // Clone the array to avoid mutating the original
+  const sorted = [...records];
+
+  // Use natural-orderby's orderBy function
+  return orderBy(sorted, identifiers, orders);
+}
+
+export function useSorting(
+  props: GridProps,
+  emit: EmitFn<GridEmits>,
+  uColumns: ReturnType<typeof useColumns>,
+) {
   const internalSortState = ref<SortState>(props.sortState ?? []);
 
   const sortState = computed(() => props.sortState ?? internalSortState.value);
+
+  // Validated sort state
+  const validatedSortState = computed(() => validateSortState(sortState.value, uColumns.columns));
+
+  // Sorted records
+  const sortedRecords = computed(() => applySorting(props.records, validatedSortState.value, uColumns.columns));
 
   // Watch for external prop changes
   watch(() => props.sortState, (newVal) => { internalSortState.value = newVal ?? []; });
@@ -113,7 +217,7 @@ export function useSorting(props: GridProps, emit: EmitFn<GridEmits>) {
     return emit(event, ...args);
   }) as EmitFn<GridEmits>;
 
-  return { sortState, emitWrapper };
+  return { sortState, emitWrapper, sortedRecords };
 }
 
 function cycleSort(sortConfig: SortConfig, sortColumnState: SortStateColumn): boolean {
@@ -152,10 +256,9 @@ export function processSortEvent(
   let stopProcessing = false;
   if (eType === 'longpress' || (event instanceof MouseEvent && event.shiftKey)) {
     // long press or shift + click will add this column to the sort order if it's not already in the order.
+    stopProcessing = true; // shift+click/longpress always stops further processing
     if (sortColumnState == null) {
-      // if this segment wasn't sorted yet, we add it to sorting order and its processing is complete; as opposed to
-      // the column already being in the sort configuration in which case its sort direction needs to change
-      stopProcessing = true;
+      // if this segment wasn't sorted yet, we add it to sorting order
       if (columnSortConfig.direction != null) {
         sortColumnState = {
           columnName: sortColumnClicked,
@@ -164,6 +267,7 @@ export function processSortEvent(
         suggestedSort.push(sortColumnState);
       }
     } else {
+      // column is already in sort order, so cycle its direction or remove it
       const keepInSort = cycleSort(columnSortConfig, sortColumnState);
       if (!keepInSort) {
         const index = suggestedSort.findIndex((c) => c.columnName === sortColumnClicked);
@@ -173,6 +277,7 @@ export function processSortEvent(
   }
   if (stopProcessing || (event instanceof MouseEvent && (event.ctrlKey || event.altKey))) {
     // we currently don't support ctrl and alt modifiers, so we do nothing
+    // stopProcessing means we've already handled everything above (shift+click or longpress adding new column)
   } else {
     // this is "normal" click on the column where we either do exactly as the user clicked (not supported beyond
     // identifying what the user clicked) or we cycle the sort order in the column;
@@ -194,6 +299,7 @@ export function processSortEvent(
         sortColumnState.direction = 'desc';
       }
     }
+    // For normal click (not shift), replace entire sort with just this column
     suggestedSort.length = 0;
     if (sortColumnState != null) suggestedSort.push(sortColumnState);
   }
