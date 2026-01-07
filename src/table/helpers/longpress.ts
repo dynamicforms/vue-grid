@@ -1,4 +1,4 @@
-import type { Directive, DirectiveBinding } from 'vue'
+import type { Directive, DirectiveBinding } from 'vue';
 
 type LongPressElement = HTMLElement & { $longpress$: { start: (e: TouchEvent | MouseEvent) => void; end: () => void } };
 

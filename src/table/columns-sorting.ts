@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash-es';
 import { CompareFn } from 'natural-orderby';
-import { EmitFn, Ref } from 'vue';
+import { computed, EmitFn, ref, Ref, watch } from 'vue';
 
 import { RendererOptionsMap, RowValue } from './cell-renderers';
 import { type ColumnDefinition, type useColumns } from './columns';
@@ -92,6 +92,33 @@ export interface GridSortEvent {
 type SortActionClicked = GridSortEvent['sortActionClicked'];
 
 export type SortEvents = 'click' | 'dblclick' | 'longpress';
+
+export function useSorting(props: GridProps, emit: EmitFn<GridEmits>) {
+  const internalSortState = ref<SortState>(props.sortState ?? []);
+
+  const sortState = computed(() => props.sortState ?? internalSortState.value);
+
+  // Watch for external prop changes
+  watch(() => props.sortState, (newVal) => {
+    if (newVal != null) {
+      internalSortState.value = newVal;
+    }
+  });
+
+  // Wrap emit to intercept update:sortState and update internal state
+  const emitWrapper = ((event: any, ...args: any[]) => {
+    if (event === 'update:sortState') {
+      if (props.sortState == null) {
+        // No external v-model, update internal state
+        internalSortState.value = args[0];
+      }
+    }
+    // @ts-expect-error
+    return emit(event, ...args);
+  }) as EmitFn<GridEmits>;
+
+  return { sortState, emitWrapper };
+}
 
 function cycleSort(sortConfig: SortConfig, sortColumnState: SortStateColumn): boolean {
   // This function is called only when column already has sort state (is sorted)

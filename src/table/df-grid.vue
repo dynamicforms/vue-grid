@@ -92,6 +92,7 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { useColumns } from './columns';
+import { useSorting } from './columns-sorting';
 import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
 import type { GridEmits, GridProps } from './df-grid-types';
@@ -99,9 +100,11 @@ import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from '
 
 const props = withDefaults(
   defineProps<GridProps>(),
-  { mainShadowCount: 500, secondaryShadowCount: 30, columns: () => [], sortState: () => [] },
+  { mainShadowCount: 500, secondaryShadowCount: 30, columns: () => [] },
 );
 const emit = defineEmits<GridEmits>();
+
+const { sortState, emitWrapper } = useSorting(props, emit);
 
 const mainShadowOffset = ref(0);
 const secondaryShadowOffset = ref(0);
@@ -122,7 +125,7 @@ const updateRenderedRows = throttle(
 );
 
 const uColumns = useColumns(props, gridId);
-const { processMouse } = useGridMouseEvents(emit, props, headerRef, uColumns);
+const { processMouse } = useGridMouseEvents(emitWrapper, props, headerRef, uColumns);
 
 watch(uColumns.active, () => { templateColumns.value = ''; });
 
