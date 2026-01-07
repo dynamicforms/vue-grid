@@ -1,8 +1,8 @@
-import { EmitFn, Ref } from 'vue';
+import { ComputedRef, EmitFn, Ref } from 'vue';
 
 import { RowValue } from './cell-renderers';
 import { type useColumns } from './columns';
-import { processSortEvent, SortEvents } from './columns-sorting';
+import { processSortEvent, SortEvents, SortState } from './columns-sorting';
 import type { RowIndex, GridProps, GridEmits } from './df-grid-types';
 
 export interface GridClickEvent {
@@ -19,6 +19,7 @@ export interface GridClickEvent {
 export function useGridMouseEvents(
   emit: EmitFn<GridEmits>,
   props: GridProps,
+  sortState: ComputedRef<SortState>,
   headerRef: Ref,
   uColumns: ReturnType<typeof useColumns>,
 ) {
@@ -45,7 +46,7 @@ export function useGridMouseEvents(
     const columnNames = new Set(uColumns.activeColumnsDefinition.value.columns.map((c) => c.fieldName));
     const columnName = columnClasses.find((c: any) => columnNames.has(c));
 
-    processSortEvent(emit, props, headerRef, uColumns, rowData, columnClasses, eType, event, columnName);
+    processSortEvent(emit, sortState.value, headerRef, uColumns, rowData, columnClasses, eType, event, columnName);
     const p: GridClickEvent = { rowId, key, rowData, columnClasses, event, columnName };
     emit(eType as 'click', p); // typecast needed to unconfuse TS about what event we're calling
   }

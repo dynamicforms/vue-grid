@@ -125,7 +125,7 @@ const updateRenderedRows = throttle(
 );
 
 const uColumns = useColumns(props, gridId);
-const { processMouse } = useGridMouseEvents(emitWrapper, props, headerRef, uColumns);
+const { processMouse } = useGridMouseEvents(emitWrapper, props, sortState, headerRef, uColumns);
 
 watch(uColumns.active, () => { templateColumns.value = ''; });
 

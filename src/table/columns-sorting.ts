@@ -99,19 +99,13 @@ export function useSorting(props: GridProps, emit: EmitFn<GridEmits>) {
   const sortState = computed(() => props.sortState ?? internalSortState.value);
 
   // Watch for external prop changes
-  watch(() => props.sortState, (newVal) => {
-    if (newVal != null) {
-      internalSortState.value = newVal;
-    }
-  });
+  watch(() => props.sortState, (newVal) => { internalSortState.value = newVal ?? []; });
 
   // Wrap emit to intercept update:sortState and update internal state
   const emitWrapper = ((event: any, ...args: any[]) => {
     if (event === 'update:sortState') {
-      if (props.sortState == null) {
-        // No external v-model, update internal state
-        internalSortState.value = args[0];
-      }
+      // Update internal state - it will be used when sort config is not provided as prop to table
+      internalSortState.value = args[0];
     }
     // @ts-expect-error
     return emit(event, ...args);
@@ -133,7 +127,7 @@ function cycleSort(sortConfig: SortConfig, sortColumnState: SortStateColumn): bo
 
 export function processSortEvent(
   emit: EmitFn<GridEmits>,
-  props: GridProps,
+  sortState: SortState,
   headerRef: Ref,
   uColumns: ReturnType<typeof useColumns>,
   rowData: RowValue | undefined,
@@ -144,7 +138,7 @@ export function processSortEvent(
 ) {
   if (sortColumnClicked == null) return; // We can't sort if we can't identify the column clicked
   const target = event.target as HTMLElement;
-  const previousSort = props.sortState ?? [];
+  const previousSort = sortState;
   const suggestedSort = cloneDeep(previousSort);
   const sortActionClicked = ((
     target.getAttribute('data-sort') || target.closest('[data-sort]')?.getAttribute('data-sort')
