@@ -23,9 +23,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, onUpdated, Ref, ref } from 'vue';
+import { computed, onMounted, onUpdated, ref } from 'vue';
 
-import { DefaultRenderers, RendererOptionsMap, gridColumnCreate } from './cell-renderers';
+import { DefaultRenderers, gridColumnCreate, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { ColumnDefinition } from './columns';
 import { GridCard, useHeaderContent } from './helpers';
