@@ -11,6 +11,7 @@
       :records="records"
       class="grid-class"
       key-field="id"
+      @click="(data) => console.log(data)"
     />
   </div>
 </template>

@@ -28,7 +28,7 @@ export function useFormattedData(props: FormattedDataProps) {
       }
 
       const res = renderer(value, itemValue, rendererOptions as any);
-      res.classes = [column.fieldName, column.cssClass];
+      res.classes = [column.fieldName, column.cssClass ?? ''];
       return res;
     });
 

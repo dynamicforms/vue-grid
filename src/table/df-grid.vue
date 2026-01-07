@@ -1,6 +1,7 @@
 <template>
   <div
     ref="containerRef"
+    v-longpress="($event) => processMouse('longpress', $event)"
     class="df-grid container d-flex flex-column"
     :style="`--${templateColumns}`"
     @click="($event) => processMouse('click', $event)"
@@ -13,6 +14,7 @@
       :grid-id="gridId"
       :template-columns="templateColumns"
       :grid-class="uColumns.cssClass.value"
+      :sort-state="sortState"
     >
       <template #header="headerSlotProps"><slot name="header" v-bind="headerSlotProps"/></template>
     </df-grid-header>
@@ -97,7 +99,7 @@ import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from '
 
 const props = withDefaults(
   defineProps<GridProps>(),
-  { mainShadowCount: 500, secondaryShadowCount: 30, columns: () => [] },
+  { mainShadowCount: 500, secondaryShadowCount: 30, columns: () => [], sortState: () => [] },
 );
 const emit = defineEmits<GridEmits>();
 
@@ -108,7 +110,6 @@ const gridId = Symbol('df-grid');
 const headerRef = ref();
 const shadowMeasurements: Record<string, any> = {};
 const shadowRef = ref();
-const { processMouse } = useGridMouseEvents(emit, props, headerRef);
 
 useHeaderContent().provideHeaderContent();
 
@@ -121,6 +122,7 @@ const updateRenderedRows = throttle(
 );
 
 const uColumns = useColumns(props, gridId);
+const { processMouse } = useGridMouseEvents(emit, props, headerRef, uColumns);
 
 watch(uColumns.active, () => { templateColumns.value = ''; });
 
