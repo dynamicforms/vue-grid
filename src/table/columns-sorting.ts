@@ -1,10 +1,11 @@
 import { cloneDeep, get } from 'lodash-es';
 import { CompareFn, orderBy } from 'natural-orderby';
-import { computed, ComputedRef, EmitFn, ref, Ref, watch } from 'vue';
+import { computed, ComputedRef, EmitFn, ref, Ref, unref, watch } from 'vue';
 
 import { RendererOptionsMap, RowValue } from './cell-renderers';
 import { type ColumnDefinition, type useColumns } from './columns';
 import type { GridEmits, GridProps } from './df-grid-types';
+import type { MaybeRef } from './type-utils';
 
 export const sortExternal = Symbol('sort external');
 
@@ -134,11 +135,12 @@ function validateSortState(
  * Returns the sorted records array.
  */
 function applySorting(
-  records: RowValue[],
+  records: MaybeRef<RowValue[]>,
   sortState: SortState,
   columns: ComputedRef<ColumnDefinition<keyof RendererOptionsMap>[]>,
 ): RowValue[] {
-  if (sortState.length === 0) return records;
+  const recordsArray = unref(records);
+  if (sortState.length === 0) return recordsArray;
 
   // Check if any column uses external sorting
   const hasExternalSort = sortState.some((sortCol) => {
@@ -149,7 +151,7 @@ function applySorting(
   });
 
   // If any column uses external sorting, don't sort locally - backend handles it
-  if (hasExternalSort) return records;
+  if (hasExternalSort) return recordsArray;
 
   // Build orderBy configuration for natural-orderby
   const identifiers: ((row: RowValue) => any)[] = [];
@@ -183,7 +185,7 @@ function applySorting(
   }
 
   // Clone the array to avoid mutating the original
-  const sorted = [...records];
+  const sorted = [...recordsArray];
 
   // Use natural-orderby's orderBy function
   return orderBy(sorted, identifiers, orders);
@@ -193,6 +195,7 @@ export function useSorting(
   props: GridProps,
   emit: EmitFn<GridEmits>,
   uColumns: ReturnType<typeof useColumns>,
+  inputRecords: MaybeRef<RowValue[]>,
 ) {
   const internalSortState = ref<SortState>(props.sortState ?? []);
 
@@ -202,7 +205,7 @@ export function useSorting(
   const validatedSortState = computed(() => validateSortState(sortState.value, uColumns.columns));
 
   // Sorted records
-  const sortedRecords = computed(() => applySorting(props.records, validatedSortState.value, uColumns.columns));
+  const sortedRecords = computed(() => applySorting(inputRecords, validatedSortState.value, uColumns.columns));
 
   // Watch for external prop changes
   watch(() => props.sortState, (newVal) => { internalSortState.value = newVal ?? []; });

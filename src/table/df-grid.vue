@@ -15,8 +15,12 @@
       :template-columns="templateColumns"
       :grid-class="uColumns.cssClass.value"
       :sort-state="sortState"
+      :show-filter-row="showFilterRow"
+      :show-status-bar="showStatusBar"
+      :filter-state="filterState"
     >
       <template #header="headerSlotProps"><slot name="header" v-bind="headerSlotProps"/></template>
+      <template #statusBar="statusBarProps"><slot name="statusBar" v-bind="statusBarProps"/></template>
     </df-grid-header>
     <dynamic-scroller
       v-slot="{ item, index, active }"
@@ -92,6 +96,7 @@ import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { useColumns } from './columns';
+import { useFiltering } from './columns-filtering';
 import { useSorting } from './columns-sorting';
 import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
@@ -100,7 +105,7 @@ import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from '
 
 const props = withDefaults(
   defineProps<GridProps>(),
-  { mainShadowCount: 500, secondaryShadowCount: 30, columns: () => [] },
+  { mainShadowCount: 500, secondaryShadowCount: 30, columns: () => [], showFilterRow: false, showStatusBar: false },
 );
 const emit = defineEmits<GridEmits>();
 
@@ -110,7 +115,13 @@ const secondaryShadowOffset = ref(0);
 const templateColumns = ref('');
 
 const uColumns = useColumns(props, gridId);
-const { sortState, emitWrapper, sortedRecords } = useSorting(props, emit, uColumns);
+
+// Processing pipeline: records → filter → sort → display
+const { filterState, emitWrapper: filterEmitWrapper, filteredRecords } =
+  useFiltering(props, emit, uColumns, props.records);
+const { sortState, emitWrapper: sortEmitWrapper, sortedRecords } =
+  useSorting(props, filterEmitWrapper, uColumns, filteredRecords);
+
 const headerRef = ref();
 const shadowMeasurements: Record<string, any> = {};
 const shadowRef = ref();
@@ -125,7 +136,7 @@ const updateRenderedRows = throttle(
   250,
 );
 
-const { processMouse } = useGridMouseEvents(emitWrapper, props, sortState, headerRef, uColumns);
+const { processMouse } = useGridMouseEvents(sortEmitWrapper, props, sortState, headerRef, uColumns);
 
 watch(uColumns.active, () => { templateColumns.value = ''; });
 

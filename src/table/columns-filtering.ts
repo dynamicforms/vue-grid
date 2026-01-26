@@ -1,9 +1,10 @@
 import { Field, Group } from '@dynamicforms/vue-forms';
-import { computed, ComputedRef, EmitFn, ref, watch } from 'vue';
+import { computed, ComputedRef, EmitFn, ref, unref, watch } from 'vue';
 
-import { RendererOptionsMap } from './cell-renderers';
+import { RendererOptionsMap, RowValue } from './cell-renderers';
 import { type ColumnDefinition, type useColumns } from './columns';
 import type { GridEmits, GridProps } from './df-grid-types';
+import type { MaybeRef } from './type-utils';
 
 export const filterExternal = Symbol('filter external');
 
@@ -96,14 +97,15 @@ export interface GridFilterEvent {
  * Returns the filtered records array.
  */
 function applyFiltering(
-  records: any[],
+  records: MaybeRef<RowValue[]>,
   filterState: FilterState | undefined,
   columns: ComputedRef<ColumnDefinition<keyof RendererOptionsMap>[]>,
-): any[] {
-  if (!filterState) return records;
+): RowValue[] {
+  const recordsArray = unref(records);
+  if (!filterState) return recordsArray;
 
   const filterValues = filterState.value;
-  if (!filterValues) return records;
+  if (!filterValues) return recordsArray;
 
   // Check if any column uses external filtering
   const hasExternalFilter = Object.keys(filterValues).some((fieldName) => {
@@ -114,10 +116,10 @@ function applyFiltering(
   });
 
   // If any column uses external filtering, don't filter locally - backend handles it
-  if (hasExternalFilter) return records;
+  if (hasExternalFilter) return recordsArray;
 
   // Apply local filtering
-  return records.filter((record) => Object.entries(filterValues).every(([fieldName, filterValue]) => {
+  return recordsArray.filter((record) => Object.entries(filterValues).every(([fieldName, filterValue]) => {
     // Record must match all active filters
 
     // Skip empty/null filter values
@@ -135,10 +137,6 @@ function applyFiltering(
     switch (filterConfig.fieldType) {
     case 'boolean':
       // For boolean: only filter if explicitly set to true or false
-      return recordValue === filterValue;
-
-    case 'choices':
-      // For choices: exact match
       return recordValue === filterValue;
 
     case 'number':
@@ -192,13 +190,16 @@ export function useFiltering(
   props: GridProps,
   emit: EmitFn<GridEmits>,
   uColumns: ReturnType<typeof useColumns>,
+  inputRecords: MaybeRef<RowValue[]>,
 ) {
   // Create internal filter state from columns
   const internalFilterState = ref<FilterState | undefined>(
     props.filterState ?? createFilterState(uColumns.columns.value),
   );
 
-  const filterState = computed(() => props.filterState ?? internalFilterState.value);
+  const filterState = computed<FilterState | undefined>(
+    () => (props.filterState ?? internalFilterState.value) as FilterState | undefined,
+  );
 
   // Validate filter state
   watch(
@@ -212,7 +213,7 @@ export function useFiltering(
   );
 
   // Apply filtering
-  const filteredRecords = computed(() => applyFiltering(props.records, filterState.value, uColumns.columns));
+  const filteredRecords = computed(() => applyFiltering(inputRecords, filterState.value, uColumns.columns));
 
   // Watch for external prop changes
   watch(
@@ -228,7 +229,7 @@ export function useFiltering(
     (newValue) => {
       if (newValue) {
         emit('update:filterState', filterState.value as FilterState);
-        emit('filter', { filterState: filterState.value, filterValues: newValue });
+        emit('filter', { filterState: filterState.value, filterValues: newValue } as GridFilterEvent);
       }
     },
     { deep: true },
@@ -240,9 +241,9 @@ export function useFiltering(
       // Update internal state
       internalFilterState.value = args[0];
     }
-    // @ts-expect-error
+    // @ts-expect-error - emit wrapper extends the emit signature
     return emit(event, ...args);
-  }) as EmitFn<GridEmits>;
+  }) as typeof emit;
 
   return { filterState, emitWrapper, filteredRecords };
 }

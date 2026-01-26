@@ -1,7 +1,7 @@
 <template>
   <div
     ref="headerRef"
-    class="df-grid header"
+    class="df-grid header-container"
     :style="{
       'overflow-x': 'hidden',
       'overflow-y': 'hidden',
@@ -9,6 +9,7 @@
       minHeight: `${headerHeight}px`,
     }"
   >
+    <!-- Header row -->
     <slot name="header" :item="headerItem">
       <grid-card
         :item="headerItem"
@@ -19,6 +20,39 @@
         data-idx="header"
       />
     </slot>
+
+    <!-- Filter row -->
+    <div
+      v-if="showFilterRow"
+      class="df-grid card filter-row"
+      :class="gridClass"
+    >
+      <div
+        v-for="column in columns"
+        :key="column.fieldName"
+        class="df-grid cell filter-cell"
+      >
+        <input
+          v-if="getFilterableConfig(column)"
+          :value="filterState?.fields[column.fieldName]?.value ?? ''"
+          :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
+          class="filter-input"
+          @input="onFilterInput(column.fieldName, ($event.target as HTMLInputElement).value)"
+        />
+      </div>
+    </div>
+
+    <!-- Status bar -->
+    <div
+      v-if="showStatusBar"
+      class="df-status-bar"
+    >
+      <slot name="statusBar" :filter-state="filterState">
+        <div class="status-section">
+          Active filters: {{ activeFilterCount }}
+        </div>
+      </slot>
+    </div>
   </div>
 </template>
 
@@ -29,6 +63,7 @@ import { computed, onMounted, onUpdated, ref } from 'vue';
 import { DefaultRenderers, gridColumnCreate, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { ColumnDefinition } from './columns';
+import { FilterState, getFilterConfig } from './columns-filtering';
 import type { ColumnSortState, SortState } from './columns-sorting';
 import { GridCard, useHeaderContent } from './helpers';
 
@@ -40,6 +75,9 @@ interface HeaderProps {
   gridId: symbol;
   gridClass: CssClasses;
   sortState: SortState;
+  showFilterRow?: boolean;
+  showStatusBar?: boolean;
+  filterState?: FilterState;
 }
 
 const props = defineProps<HeaderProps>();
@@ -76,6 +114,27 @@ const headerHeight = ref(0);
 
 const { setHeaderContent } = useHeaderContent();
 
+function getFilterableConfig(column: ColumnDefinition<keyof RendererOptionsMap>) {
+  const config = getFilterConfig((column as any).filterable);
+  return (config.fieldType || config.choices) ? config : null;
+}
+
+function onFilterInput(fieldName: string, value: string) {
+  // FilterState Field.value assignment is allowed - it's designed to be reactive
+  // This doesn't mutate the prop structure, just updates the Field's internal value
+  if (props.filterState?.fields[fieldName]) {
+    // eslint-disable-next-line vue/no-mutating-props
+    props.filterState.fields[fieldName].value = value;
+  }
+}
+
+const activeFilterCount = computed(() => {
+  if (!props.filterState) return 0;
+  const filterValues = props.filterState.value;
+  if (!filterValues) return 0;
+  return Object.values(filterValues).filter((v) => v != null && v !== '' && v !== undefined).length;
+});
+
 function calcHeaderHeight() {
   if (headerRef.value) {
     setHeaderContent(Array.from(headerRef.value.children[0].children));
@@ -93,3 +152,46 @@ onMounted(() => calcHeaderHeight());
 
 defineExpose({ headerItem, headerOptions, headerHeight });
 </script>
+
+<style scoped>
+.df-grid.header-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.df-grid.card.filter-row {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.df-grid.cell.filter-cell {
+  padding: 0.25em;
+}
+
+.filter-input {
+  width: 100%;
+  padding: 0.25em 0.5em;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.25em;
+  font-size: 0.9em;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: rgba(0, 120, 215, 0.6);
+}
+
+.df-status-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5em;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.02);
+  font-size: 0.85em;
+}
+
+.status-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+</style>

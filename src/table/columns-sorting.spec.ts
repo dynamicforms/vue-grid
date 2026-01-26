@@ -480,8 +480,9 @@ describe('columns-sorting.ts', () => {
       it('should use external sortState when provided', () => {
         const externalSortState = ref<SortState>([{ columnName: 'title', direction: 'asc' }]);
         mockProps.sortState = externalSortState.value;
+        const inputRecords = computed(() => mockRecords);
 
-        const { sortState, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns);
+        const { sortState, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
         expect(sortState.value).toEqual(externalSortState.value);
         expect(sortedRecords.value[0].title).toBe('Apple');
@@ -494,8 +495,9 @@ describe('columns-sorting.ts', () => {
           keyField: 'id',
           sortState: [{ columnName: 'title', direction: 'asc' }] as SortState,
         });
+        const inputRecords = computed(() => mockRecords);
 
-        const { sortedRecords } = useSorting(mockPropsReactive, mockEmit, mockUColumns);
+        const { sortedRecords } = useSorting(mockPropsReactive, mockEmit, mockUColumns, inputRecords);
 
         expect(sortedRecords.value[0].title).toBe('Apple');
 
@@ -509,8 +511,9 @@ describe('columns-sorting.ts', () => {
       it('should emit update:sortState and update internal state', () => {
         const externalSortState = ref<SortState>([]);
         mockProps.sortState = externalSortState.value;
+        const inputRecords = computed(() => mockRecords);
 
-        const { emitWrapper } = useSorting(mockProps, mockEmit, mockUColumns);
+        const { emitWrapper } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
         const newState: SortState = [{ columnName: 'title', direction: 'asc' }];
         emitWrapper('update:sortState', newState);
@@ -521,17 +524,20 @@ describe('columns-sorting.ts', () => {
 
     describe('without external sortState prop (internal state)', () => {
       it('should use internal sortState when not provided', () => {
-        const { sortState, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns);
+        const inputRecords = computed(() => mockRecords);
+        const { sortState, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
         expect(sortState.value).toEqual([]);
-        expect(sortedRecords.value).toBe(mockRecords); // unsorted
+        expect(sortedRecords.value).toEqual(mockRecords); // unsorted
       });
 
       it('should update internal state on emit', () => {
+        const inputRecords = computed(() => mockRecords);
         const { sortState, emitWrapper, sortedRecords } = useSorting(
           mockProps,
           mockEmit,
           mockUColumns,
+          inputRecords,
         );
 
         const newState: SortState = [{ columnName: 'title', direction: 'asc' }];
@@ -542,7 +548,8 @@ describe('columns-sorting.ts', () => {
       });
 
       it('should maintain internal state across multiple updates', () => {
-        const { emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns);
+        const inputRecords = computed(() => mockRecords);
+        const { emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
         emitWrapper('update:sortState', [{ columnName: 'title', direction: 'asc' }]);
         expect(sortedRecords.value[0].title).toBe('Apple');
@@ -558,7 +565,8 @@ describe('columns-sorting.ts', () => {
 
     describe('sortedRecords computation', () => {
       it('should return sorted records based on sortState', () => {
-        const { emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns);
+        const inputRecords = computed(() => mockRecords);
+        const { emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
         emitWrapper('update:sortState', [{ columnName: 'title', direction: 'desc' }]);
 
@@ -568,7 +576,8 @@ describe('columns-sorting.ts', () => {
 
       it('should validate sortState before sorting', () => {
         const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        const { emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns);
+        const inputRecords = computed(() => mockRecords);
+        const { emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
         // Try to sort by unsortable column
         emitWrapper('update:sortState', [{ columnName: 'unsortable', direction: 'asc' }]);
@@ -579,23 +588,25 @@ describe('columns-sorting.ts', () => {
         expect(consoleSpy).toHaveBeenCalledWith(
           expect.stringContaining('unsortable column'),
         );
-        expect(result).toBe(mockRecords); // should remain unsorted
+        expect(result).toEqual(mockRecords); // should remain unsorted
 
         consoleSpy.mockRestore();
       });
 
       it('should handle external sort columns', () => {
-        const { emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns);
+        const inputRecords = computed(() => mockRecords);
+        const { emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
         // External sort should not sort locally
         emitWrapper('update:sortState', [{ columnName: 'external', direction: 'asc' }]);
 
-        expect(sortedRecords.value).toBe(mockRecords); // unchanged
+        expect(sortedRecords.value).toEqual(mockRecords); // unchanged
       });
 
       it('should not mutate original records', () => {
         const originalIds = mockRecords.map((r) => r.id);
-        const { emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns);
+        const inputRecords = computed(() => mockRecords);
+        const { emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
         emitWrapper('update:sortState', [{ columnName: 'title', direction: 'asc' }]);
 

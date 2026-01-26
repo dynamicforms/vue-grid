@@ -13,6 +13,8 @@ export interface GridProps {
   secondaryShadowCount?: number;
   sortState?: SortState;
   filterState?: FilterState;
+  showFilterRow?: boolean;
+  showStatusBar?: boolean;
 }
 
 export type RowIndex = number | 'header';
