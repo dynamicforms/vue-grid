@@ -14,8 +14,8 @@
 - [\] Visibility control (table vs form display) - not supported any more: table is table, form is form. each has its own settings
 
 ## **Sorting & Filtering**
-- [ ] Column sorting with header click
-- [ ] Multi-column sorting with ordering segments
+- [x] Column sorting with header click
+- [x] Multi-column sorting with ordering segments
 - [ ] Filter row functionality
 - [ ] Dynamic filter parameters
 

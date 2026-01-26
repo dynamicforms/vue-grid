@@ -3,6 +3,7 @@ import { computed } from 'vue';
 
 import { gridColumnCreate, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
+import { Filterable } from './columns-filtering';
 import { Sortable } from './columns-sorting';
 import { GridProps } from './df-grid-types';
 
@@ -12,6 +13,7 @@ export interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> 
   renderer?: R;
   rendererOptions?: RendererOptionsMap[R];
   sortable: Sortable;
+  filterable?: Filterable;
   cssClass?: string | undefined;
 }
 
