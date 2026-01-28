@@ -193,12 +193,12 @@ export function useFiltering(
   inputRecords: MaybeRef<RowValue[]>,
 ) {
   // Create internal filter state from columns
-  const internalFilterState = ref<FilterState | undefined>(
+  const internalFilterState = ref<FilterState>(
     props.filterState ?? createFilterState(uColumns.columns.value),
   );
 
-  const filterState = computed<FilterState | undefined>(
-    () => (props.filterState ?? internalFilterState.value) as FilterState | undefined,
+  const filterState = computed<FilterState>(
+    () => (props.filterState ?? internalFilterState.value) as FilterState,
   );
 
   // Validate filter state
