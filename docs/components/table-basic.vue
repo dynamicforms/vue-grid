@@ -11,6 +11,7 @@
       :records="records"
       class="grid-class"
       key-field="id"
+      :show-filter-row="true"
       @click="(data) => console.log('click:', data)"
       @sort="(data) => console.log('sort:', data)"
     />

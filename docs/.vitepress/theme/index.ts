@@ -7,6 +7,7 @@ import * as directives from 'vuetify/directives'
 import { DynamicFormsVueGrid } from '../../../src';
 import VueMarkdown from 'vue-markdown-render';
 
+import '@dynamicforms/vuetify-inputs/styles.css';
 import 'vuetify/dist/vuetify.css';
 
 export default {

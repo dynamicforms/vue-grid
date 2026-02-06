@@ -32,13 +32,43 @@
         :key="column.fieldName"
         class="df-grid cell filter-cell"
       >
-        <input
-          v-if="getFilterableConfig(column)"
-          :value="filterState?.fields[column.fieldName]?.value ?? ''"
-          :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
-          class="filter-input"
-          @input="onFilterInput(column.fieldName, ($event.target as HTMLInputElement).value)"
-        />
+        <template v-if="getFilterableConfig(column)">
+          <!-- df-select for choices -->
+          <df-select
+            v-if="getFilterableConfig(column)!.choices"
+            :control="filterState!.fields[column.fieldName]"
+            :options="getFilterableConfig(column)!.choices"
+            :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
+            :clearable="true"
+            :allow-null="true"
+            density="compact"
+          />
+          <!-- df-datetime for date type -->
+          <df-date-time
+            v-else-if="getFilterableConfig(column)!.fieldType === 'date'"
+            :control="filterState!.fields[column.fieldName]"
+            :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
+            :clearable="true"
+            density="compact"
+            input-type="date"
+          />
+          <!-- df-checkbox for boolean type -->
+          <df-checkbox
+            v-else-if="getFilterableConfig(column)!.fieldType === 'boolean'"
+            :control="filterState!.fields[column.fieldName]"
+            :label="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
+            :nullable="true"
+            density="compact"
+          />
+          <!-- df-input for other types (string, number) -->
+          <df-input
+            v-else
+            :control="filterState!.fields[column.fieldName]"
+            :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
+            :input-type="getFilterableConfig(column)!.fieldType === 'number' ? 'number' : 'text'"
+            density="compact"
+          />
+        </template>
       </div>
     </div>
 
@@ -57,6 +87,8 @@
 </template>
 
 <script setup lang="ts">
+import { DfCheckbox, DfDateTime, DfInput, DfSelect } from '@dynamicforms/vuetify-inputs';
+import { Field } from '@dynamicforms/vue-forms';
 import { isBoolean } from 'lodash-es';
 import { computed, onMounted, onUpdated, ref } from 'vue';
 
@@ -119,15 +151,6 @@ function getFilterableConfig(column: ColumnDefinition<keyof RendererOptionsMap>)
   return (config.fieldType || config.choices) ? config : null;
 }
 
-function onFilterInput(fieldName: string, value: string) {
-  // FilterState Field.value assignment is allowed - it's designed to be reactive
-  // This doesn't mutate the prop structure, just updates the Field's internal value
-  if (props.filterState?.fields[fieldName]) {
-    // eslint-disable-next-line vue/no-mutating-props
-    props.filterState.fields[fieldName].value = value;
-  }
-}
-
 const activeFilterCount = computed(() => {
   if (!props.filterState) return 0;
   const filterValues = props.filterState.value;
@@ -165,19 +188,6 @@ defineExpose({ headerItem, headerOptions, headerHeight });
 
 .df-grid.cell.filter-cell {
   padding: 0.25em;
-}
-
-.filter-input {
-  width: 100%;
-  padding: 0.25em 0.5em;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 0.25em;
-  font-size: 0.9em;
-}
-
-.filter-input:focus {
-  outline: none;
-  border-color: rgba(0, 120, 215, 0.6);
 }
 
 .df-status-bar {
