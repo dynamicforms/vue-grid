@@ -3,7 +3,7 @@ import { computed, ComputedRef, EmitFn, ref, unref, watch } from 'vue';
 
 import { RendererOptionsMap, RowValue } from './cell-renderers';
 import { type ColumnDefinition, type useColumns } from './columns';
-import type { GridEmits, GridProps } from './df-grid-types';
+import type { GridEmit, GridEmits, GridProps } from './df-grid-types';
 import type { MaybeRef } from './type-utils';
 
 export const filterExternal = Symbol('filter external');
@@ -20,7 +20,7 @@ export interface FilterConfig {
   // Field type determines which input component to use
   fieldType?: FilterFieldType;
   // For 'choices' type - array of available options
-  choices?: Array<{ value: any; label: string; icon?: string }>;
+  choices?: Array<{ id: any; text: string; icon?: string }>;
   // Specify filterExternal if you want the backend to handle filtering
   // In such case, it's expected that in response to "update:filterState" event,
   // the code issues a BE call that will return filtered data
@@ -131,6 +131,10 @@ function applyFiltering(
     if (!colDef) return true;
 
     const filterConfig = getFilterConfig((colDef as any).filterable);
+    const isMultiSelect = filterConfig.choices != null;
+    if (isMultiSelect && filterValue.length === 0) {
+      return true;
+    }
     const recordValue = record[filterConfig.key as string ?? fieldName];
 
     // Handle different field types
@@ -141,16 +145,21 @@ function applyFiltering(
 
     case 'number':
       // For number: exact match (could be extended to ranges later)
+      if (isMultiSelect) return filterValue.some((v: any) => recordValue === Number(v));
       return recordValue === Number(filterValue);
 
     case 'date':
       // For date: simple equality (could be extended to ranges later)
+      if (isMultiSelect) return filterValue.some((v: any) => recordValue === v);
       return recordValue === filterValue;
 
     case 'string':
     default:
       // For string: case-insensitive substring match
       if (recordValue == null) return false;
+      if (isMultiSelect) {
+        return filterValue.some((v: any) => String(recordValue).toLowerCase() === String(v).toLowerCase());
+      }
       return String(recordValue).toLowerCase().includes(String(filterValue).toLowerCase());
     }
   }));
@@ -236,14 +245,14 @@ export function useFiltering(
   );
 
   // Wrap emit to intercept update:filterState
-  const emitWrapper = ((event: any, ...args: any[]) => {
+  const emitWrapper: GridEmit = ((event: any, ...args: any[]) => {
     if (event === 'update:filterState') {
       // Update internal state
       internalFilterState.value = args[0];
     }
     // @ts-expect-error - emit wrapper extends the emit signature
     return emit(event, ...args);
-  }) as typeof emit;
+  });
 
   return { filterState, emitWrapper, filteredRecords };
 }

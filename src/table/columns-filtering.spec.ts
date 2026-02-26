@@ -1,6 +1,6 @@
 import { Field, Group } from '@dynamicforms/vue-forms';
 import { vi } from 'vitest';
-import { computed, reactive } from 'vue';
+import { computed, EmitFn, reactive } from 'vue';
 
 import type { RowValue } from './cell-renderers';
 import type { ColumnDefinition } from './columns';
@@ -11,7 +11,8 @@ import {
   getFilterConfig,
   useFiltering,
 } from './columns-filtering';
-import type { GridProps } from './df-grid-types';
+import type { GridSortEvent } from './columns-sorting';
+import type { GridEmits, GridProps } from './df-grid-types';
 
 // Mock data for testing
 const mockRecords: RowValue[] = [
@@ -62,12 +63,12 @@ describe('columns-filtering.ts', () => {
         fieldType: 'string',
         placeholder: 'Search...',
         key: 'customKey',
-        choices: [{ value: 1, label: 'Option 1' }],
+        choices: [{ id: 1, text: 'Option 1' }],
       });
       expect(config.fieldType).toBe('string');
       expect(config.placeholder).toBe('Search...');
       expect(config.key).toBe('customKey');
-      expect(config.choices).toEqual([{ value: 1, label: 'Option 1' }]);
+      expect(config.choices).toEqual([{ id: 1, text: 'Option 1' }]);
     });
 
     it('should handle external filter symbol', () => {
@@ -105,7 +106,7 @@ describe('columns-filtering.ts', () => {
 
   describe('useFiltering hook', () => {
     let mockProps: GridProps;
-    let mockEmit: ReturnType<typeof vi.fn>;
+    let mockEmit: EmitFn<GridEmits>;
     let mockUColumns: any;
 
     beforeEach(() => {
@@ -114,7 +115,7 @@ describe('columns-filtering.ts', () => {
         columns: mockColumns,
         keyField: 'id',
       };
-      mockEmit = vi.fn();
+      mockEmit = vi.fn() as unknown as EmitFn<GridEmits>;
       mockUColumns = {
         columns: computed(() => mockColumns),
         activeColumnsDefinition: computed(() => ({ columns: mockColumns })),
@@ -150,7 +151,7 @@ describe('columns-filtering.ts', () => {
         const inputRecords = computed(() => mockRecords);
 
         const { filteredRecords } = useFiltering(
-          mockPropsReactive,
+          mockPropsReactive as GridProps,
           mockEmit,
           mockUColumns,
           inputRecords,
@@ -359,26 +360,48 @@ describe('columns-filtering.ts', () => {
         const inputRecords = computed(() => mockRecords);
         const { emitWrapper } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
-        emitWrapper('click', { rowIndex: 1, columnName: 'title' });
+        const eventData = {
+          rowId: 1,
+          columnName: 'title',
+          key: 'header',
+          rowData: undefined,
+          columnClasses: [],
+          event: {} as MouseEvent,
+        };
+        emitWrapper('click', eventData);
 
-        expect(mockEmit).toHaveBeenCalledWith('click', { rowIndex: 1, columnName: 'title' });
+        expect(mockEmit).toHaveBeenCalledWith('click', eventData);
       });
 
       it('should handle multiple event types', () => {
         const inputRecords = computed(() => mockRecords);
         const { emitWrapper } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
-        emitWrapper('dblclick', { rowIndex: 2 });
-        emitWrapper('sort', { sortColumnClicked: 'title' });
+        const eventDataDblClick = {
+          rowId: 2,
+          key: 'header',
+          rowData: undefined,
+          columnClasses: [],
+          event: {} as MouseEvent,
+        };
+        const eventDataSort = {
+          sortColumnClicked: 'title',
+          previousSort: [{ columnName: 'title', direction: 'asc' }],
+          suggestedSort: [{ columnName: 'title', direction: 'desc' }],
+        } satisfies GridSortEvent;
 
-        expect(mockEmit).toHaveBeenCalledWith('dblclick', { rowIndex: 2 });
-        expect(mockEmit).toHaveBeenCalledWith('sort', { sortColumnClicked: 'title' });
+        emitWrapper('dblclick', eventDataDblClick);
+        emitWrapper('sort', eventDataSort);
+
+        expect(mockEmit).toHaveBeenCalledWith('dblclick', eventDataDblClick);
+        expect(mockEmit).toHaveBeenCalledWith('sort', eventDataSort);
       });
     });
 
     describe('validation warnings', () => {
       it('should warn about non-filterable columns in filterState', async () => {
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
+        });
         const filterStateWithInvalid = new Group({
           id: Field.create({ value: 123 }), // id is not filterable
           title: Field.create({ value: 'test' }),

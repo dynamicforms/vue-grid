@@ -3,7 +3,14 @@ import { computed, nextTick, reactive, ref } from 'vue';
 
 import type { RowValue } from './cell-renderers';
 import type { ColumnDefinition } from './columns';
-import { getSortConfig, processSortEvent, sortExternal, type SortState, useSorting } from './columns-sorting';
+import {
+  getSortConfig,
+  type GridSortEvent,
+  processSortEvent,
+  sortExternal,
+  type SortState,
+  useSorting,
+} from './columns-sorting';
 import type { GridProps } from './df-grid-types';
 
 // Mock data for testing
@@ -620,19 +627,51 @@ describe('columns-sorting.ts', () => {
 
     describe('emitWrapper passthrough', () => {
       it('should pass through non-sortState events', () => {
-        const { emitWrapper } = useSorting(mockProps, mockEmit, mockUColumns);
+        const inputRecords = computed(() => mockRecords);
 
-        emitWrapper('click', { rowId: 1 } as any);
+        const { emitWrapper } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
-        expect(mockEmit).toHaveBeenCalledWith('click', { rowId: 1 });
+        const eventData = {
+          rowId: 1,
+          columnName: 'title',
+          key: 'header',
+          rowData: undefined,
+          columnClasses: [],
+          event: {} as MouseEvent,
+        };
+
+        emitWrapper('click', eventData);
+
+        expect(mockEmit).toHaveBeenCalledWith('click', eventData);
       });
 
       it('should handle multiple event types', () => {
-        const { emitWrapper } = useSorting(mockProps, mockEmit, mockUColumns);
+        const inputRecords = computed(() => mockRecords);
+        const { emitWrapper } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
-        emitWrapper('click', { rowId: 1 } as any);
-        emitWrapper('dblclick', { rowId: 2 } as any);
-        emitWrapper('sort', {} as any);
+        const eventDataClick = {
+          rowId: 1,
+          key: 'header',
+          rowData: undefined,
+          columnClasses: [],
+          event: {} as MouseEvent,
+        };
+        const eventDataDblClick = {
+          rowId: 2,
+          key: 'header',
+          rowData: undefined,
+          columnClasses: [],
+          event: {} as MouseEvent,
+        };
+        const eventDataSort = {
+          sortColumnClicked: 'title',
+          previousSort: [{ columnName: 'title', direction: 'asc' }],
+          suggestedSort: [{ columnName: 'title', direction: 'desc' }],
+        } satisfies GridSortEvent;
+
+        emitWrapper('click', eventDataClick);
+        emitWrapper('dblclick', eventDataDblClick);
+        emitWrapper('sort', eventDataSort);
 
         expect(mockEmit).toHaveBeenCalledTimes(3);
       });

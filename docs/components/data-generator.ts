@@ -138,6 +138,14 @@ export function generateMusicLibrary(count: number = 1000) {
   return musicLibrary;
 }
 
+export const languagesMap = languages.map((language) => {
+    return {
+      text: language,
+      id: language,
+    };
+  }
+);
+
 // Usage:
 // const data = generateMusicLibrary(1000);
 // console.log(data);

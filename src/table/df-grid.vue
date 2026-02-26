@@ -45,7 +45,7 @@
             :item="item"
             :columns="columnRendererOptionsInternal"
             :renderers="DefaultRenderers"
-            :class="[uColumns.cssClass.value, { even: index % 2 === 0, odd: index % 2 === 1 }]"
+            :class="[uColumns.cssClass.value, evenOddClass(index)]"
             :data-pk="item[keyField]"
             :data-idx="index"
           />
@@ -137,6 +137,10 @@ const updateRenderedRows = throttle(
 );
 
 const { processMouse } = useGridMouseEvents(sortEmitWrapper, props, sortState, headerRef, uColumns);
+
+function evenOddClass(index: number) {
+  return index % 2 === 0 ? 'even' : 'odd';
+}
 
 watch(uColumns.active, () => { templateColumns.value = ''; });
 

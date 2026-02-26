@@ -1,5 +1,5 @@
 <template>
-  <div :class="fullScreenClass" style="display: flex; flex-direction: column">
+  <div :class="[fullScreenClass, 'my-demo-app']" style="display: flex; flex-direction: column">
     <div class="py-4 text-center">
       <v-btn @click="fullScreenClass = fullScreenClass === '' ? 'full-screen' : ''">
         {{ fullScreenButtonText }}
@@ -22,23 +22,23 @@
 import { computed, ref } from 'vue';
 
 import { createColumn, DfGrid, filterColumns, ResponsiveColumnDefinitions } from '../../src';
-import { generateMusicLibrary } from './data-generator';
+import { generateMusicLibrary, languagesMap } from './data-generator';
 
 const records = generateMusicLibrary(10000);
 
 const columns = [
   createColumn('id', 'Id', 'int', { cssClass: 'text-right' }),
-  createColumn('title', 'Title', 'plain'),
-  createColumn('artist', 'Artist', 'plain'),
-  createColumn('year', 'Year', 'int', { cssClass: 'text-right' }),
-  createColumn('year', 'Year', 'int', { cssClass: 'text-right', rendererOptions: { transform: (v) => v % 100 } }),
-  createColumn('duration', 'Duration', 'plain', { cssClass: 'text-right' }), // TODO refactor to time
-  createColumn('genres', 'Genres', 'plain'),
-  createColumn('rating', 'Rating', 'int', { cssClass: 'text-right' }),
-  createColumn('favorite', 'Favorite', 'checkbox'),
-  createColumn('play_count', 'Play count', 'int', { cssClass: 'text-right' }),
-  createColumn('moods', 'Moods', 'plain'),
-  createColumn('language', 'Language', 'plain'),
+  createColumn('title', 'Title', 'plain', {filterable: true}),
+  createColumn('artist', 'Artist', 'plain', {filterable: true}),
+  createColumn('year', 'Year', 'int', { cssClass: 'text-right', filterable: {fieldType: 'number'} }),
+  createColumn('year', 'Year', 'int', { cssClass: 'text-right', rendererOptions: { transform: (v) => v % 100 }, filterable: {fieldType: 'number'}}),
+  createColumn('duration', 'Duration', 'plain', { cssClass: 'text-right', filterable: {fieldType: 'date'} }), // TODO refactor to time
+  createColumn('genres', 'Genres', 'plain', {filterable: true}),
+  createColumn('rating', 'Rating', 'int', { cssClass: 'text-right', filterable: {fieldType: 'number'} }),
+  createColumn('favorite', 'Favorite', 'checkbox', { filterable: {fieldType: 'boolean'}}),
+  createColumn('play_count', 'Play count', 'int', { cssClass: 'text-right', filterable: {fieldType: 'number'} }),
+  createColumn('moods', 'Moods', 'plain', {filterable: true}),
+  createColumn('language', 'Languages', 'plain', {filterable: { choices: languagesMap }}),
 ];
 const columnsResponsive = [
   { cssClass: 'single-line', columns: filterColumns(columns, [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11]) },

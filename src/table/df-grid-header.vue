@@ -30,18 +30,20 @@
       <div
         v-for="column in columns"
         :key="column.fieldName"
-        class="df-grid cell filter-cell"
+        :class="['df-grid', 'cell', 'filter-cell', column.fieldName, column.cssClass ?? '']"
       >
         <template v-if="getFilterableConfig(column)">
           <!-- df-select for choices -->
           <df-select
             v-if="getFilterableConfig(column)!.choices"
             :control="filterState!.fields[column.fieldName]"
-            :options="getFilterableConfig(column)!.choices"
+            :choices="getFilterableConfig(column)!.choices"
             :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
             :clearable="true"
             :allow-null="true"
-            density="compact"
+            :multiple="true"
+            :density="filterInputDensity"
+            @focusout="calcHeaderHeight()"
           />
           <!-- df-datetime for date type -->
           <df-date-time
@@ -49,16 +51,16 @@
             :control="filterState!.fields[column.fieldName]"
             :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
             :clearable="true"
-            density="compact"
             input-type="date"
+            :density="filterInputDensity"
           />
           <!-- df-checkbox for boolean type -->
           <df-checkbox
             v-else-if="getFilterableConfig(column)!.fieldType === 'boolean'"
             :control="filterState!.fields[column.fieldName]"
-            :label="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
-            :nullable="true"
-            density="compact"
+            :label="getFilterableConfig(column)?.placeholder ?? ''"
+            :allow-null="true"
+            :density="filterInputDensity"
           />
           <!-- df-input for other types (string, number) -->
           <df-input
@@ -66,7 +68,8 @@
             :control="filterState!.fields[column.fieldName]"
             :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
             :input-type="getFilterableConfig(column)!.fieldType === 'number' ? 'number' : 'text'"
-            density="compact"
+            :density="filterInputDensity"
+            :passthrough-attrs="getFilterableConfig(column)!.fieldType === 'number' ? { controlVariant: 'hidden' } : {}"
           />
         </template>
       </div>
@@ -87,8 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { DfCheckbox, DfDateTime, DfInput, DfSelect } from '@dynamicforms/vuetify-inputs';
-import { Field } from '@dynamicforms/vue-forms';
+import { DfCheckbox, DfDateTime, DfInput, DfSelect, FieldDensity } from '@dynamicforms/vuetify-inputs';
 import { isBoolean } from 'lodash-es';
 import { computed, onMounted, onUpdated, ref } from 'vue';
 
@@ -98,6 +100,8 @@ import { ColumnDefinition } from './columns';
 import { FilterState, getFilterConfig } from './columns-filtering';
 import type { ColumnSortState, SortState } from './columns-sorting';
 import { GridCard, useHeaderContent } from './helpers';
+
+const filterInputDensity = ref<FieldDensity>('inline');
 
 type CssClassTypes = string | string[] | Record<string, boolean>;
 type CssClasses = CssClassTypes | CssClassTypes[];
@@ -182,10 +186,6 @@ defineExpose({ headerItem, headerOptions, headerHeight });
   flex-direction: column;
 }
 
-.df-grid.card.filter-row {
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
 .df-grid.cell.filter-cell {
   padding: 0.25em;
 }
@@ -203,5 +203,14 @@ defineExpose({ headerItem, headerOptions, headerHeight });
   display: flex;
   align-items: center;
   gap: 0.5em;
+}
+
+.filter-cell :deep(.v-checkbox-btn) {
+  justify-content: center;
+  min-height: unset;
+}
+
+.filter-cell :deep(.v-field) {
+  font-size: 0.85em;
 }
 </style>

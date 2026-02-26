@@ -95,6 +95,7 @@ export interface GridSortEvent {
 type SortActionClicked = GridSortEvent['sortActionClicked'];
 
 export type SortEvents = 'click' | 'dblclick' | 'longpress';
+export type PositionEvents = 'leave' | 'enter';
 
 /**
  * validateSortState checks if the sortState is valid against the column definitions.

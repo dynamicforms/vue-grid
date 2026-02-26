@@ -25,6 +25,11 @@ export interface GridEmits {
   sort: [data: GridSortEvent];
   filter: [data: GridFilterEvent];
   'update:activeColumns': [newValue: string];
-  'update:sortState': [newValue: SortState];
   'update:filterState': [newValue: FilterState];
+  'update:sortState': [newValue: SortState];
 }
+
+export type GridEmit = <K extends keyof GridEmits>(
+  event: K,
+  ...args: GridEmits[K]
+) => void;
