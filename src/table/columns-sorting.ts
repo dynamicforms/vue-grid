@@ -156,8 +156,7 @@ function applySorting(
 
   // Build orderBy configuration for natural-orderby
   const identifiers: ((row: RowValue) => any)[] = [];
-  const orders: ('asc' | 'desc')[] = [];
-  const compareFns: (CompareFn | undefined)[] = [];
+  const orders: ('asc' | 'desc' | CompareFn)[] = [];
 
   for (const sortCol of sortState) {
     const colDef = columns.value.find((c) => c.fieldName === sortCol.columnName);
@@ -179,8 +178,8 @@ function applySorting(
           return value;
         });
 
-        orders.push(sortCol.direction);
-        compareFns.push(sortConfig.compare);
+        if (sortConfig.compare != null) orders.push(sortConfig.compare);
+        else orders.push(sortCol.direction);
       }
     }
   }
