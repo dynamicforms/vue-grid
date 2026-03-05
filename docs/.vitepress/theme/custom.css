@@ -1,0 +1,25 @@
+.vp-doc .my-demo-app .v-divider {
+    border-bottom-color: revert;
+    border-bottom-width: 0;
+    border-image-outset: revert;
+    border-image-repeat: revert;
+    border-image-slice: revert;
+    border-image-source: revert;
+    border-image-width: revert;
+    border-left-color: revert;
+    border-left-width: 0;
+    border-right-color: revert;
+    border-right-width: 0;
+    border-top-color: revert;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0;
+}
+
+.vp-doc .my-demo-app .v-divider.v-divider--vertical {
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-right-width: thin;
+    margin-left: 1px;
+}

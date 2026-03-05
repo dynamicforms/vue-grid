@@ -1,4 +1,8 @@
 # DfGrid Component Feature List
+- [ ] The current virtual scroller has a bug where the value for index becomes undefined. 
+The library itself is also poorly maintained. I found two alternatives: https://github.com/pdanpdan/virtual-scroll
+ and https://github.com/kolarorz/vue-virt-list.
+Check if either of them is suitable… also check the performance. Preferably, it should have good performance.
 
 ## **Core Data Management**
 - [ ] API-based data management (CRUD operations)
@@ -14,9 +18,9 @@
 - [\] Visibility control (table vs form display) - not supported any more: table is table, form is form. each has its own settings
 
 ## **Sorting & Filtering**
-- [ ] Column sorting with header click
-- [ ] Multi-column sorting with ordering segments
-- [ ] Filter row functionality
+- [x] Column sorting with header click
+- [x] Multi-column sorting with ordering segments
+- [x] Filter row functionality
 - [ ] Dynamic filter parameters
 
 ## **Responsive Layout**

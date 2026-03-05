@@ -1,9 +1,12 @@
-import { ComputedRef, EmitFn, Ref } from 'vue';
+import { ComputedRef, EmitFn, Ref, ref } from 'vue';
 
-import { RowValue } from './cell-renderers';
+import { type RowValue } from './cell-renderers';
 import { type useColumns } from './columns';
-import { processSortEvent, SortEvents, SortState } from './columns-sorting';
+import { PositionEvents, processSortEvent, SortEvents, SortState } from './columns-sorting';
 import type { RowIndex, GridProps, GridEmits } from './df-grid-types';
+
+const longPress = ref(false);
+const longPressClicked = ref(false);
 
 export interface GridClickEvent {
   rowId: RowIndex; // 'header' or 0-based index of this row
@@ -46,10 +49,35 @@ export function useGridMouseEvents(
     const columnNames = new Set(uColumns.activeColumnsDefinition.value.columns.map((c) => c.fieldName));
     const columnName = columnClasses.find((c: any) => columnNames.has(c));
 
-    processSortEvent(emit, sortState.value, headerRef, uColumns, rowData, columnClasses, eType, event, columnName);
-    const p: GridClickEvent = { rowId, key, rowData, columnClasses, event, columnName };
-    emit(eType as 'click', p); // typecast needed to unconfuse TS about what event we're calling
+    if (key === 'header') {
+      const doSort = (eType === 'click' && !longPress.value) || eType === 'longpress';
+      if (doSort) {
+        processSortEvent(emit, sortState.value, headerRef, uColumns, rowData, columnClasses, eType, event, columnName);
+      }
+      longPress.value = eType === 'longpress';
+      longPressClicked.value = eType === 'longpress';
+    }
+
+    if (eType === 'click') {
+      const p: GridClickEvent = { rowId, key, rowData, columnClasses, event, columnName };
+      emit(eType as 'click', p); // typecast needed to unconfuse TS about what event we're calling
+    }
   }
 
   return { processMouse };
+}
+
+export function useGridMouseEventsPosition() {
+  function processPosition(eType: PositionEvents, event: TouchEvent | MouseEvent) {
+    let buttonOn = false;
+    // eslint-disable-next-line no-bitwise
+    if (event instanceof MouseEvent) buttonOn = (event.buttons & 1) === 1;
+    else if (event instanceof TouchEvent) buttonOn = event.touches.length > 0;
+    if (buttonOn) {
+      if (eType === 'enter' && longPressClicked.value) longPress.value = true;
+      else if (eType === 'leave') longPress.value = false;
+    }
+  }
+
+  return { processPosition };
 }
