@@ -128,7 +128,7 @@ const headerOptions = computed(() => props.columns.map((column) => {
   const singleSegment = props.sortState.length === 1;
   const sortState: ColumnSortState = {
     index: srtIdx === -1 ? undefined : srtIdx + (singleSegment ? 0 : 1),
-    sortable: isBoolean(column.sortable) ? column.sortable : column.sortable.direction !== undefined,
+    sortable: isBoolean(column.sortable) ? column.sortable : column.sortable?.direction !== undefined,
     direction: srt?.direction,
   };
 

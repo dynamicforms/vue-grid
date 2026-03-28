@@ -9,8 +9,8 @@
     @keydown.enter="void (0)"
   >
     <div v-if="$slots['toolbar-start'] || $slots['toolbar-end']" class="df-grid-toolbar">
-      <slot name="toolbar-start" />
-      <slot name="toolbar-end" />
+      <slot name="toolbar-start"/>
+      <slot name="toolbar-end"/>
     </div>
     <df-grid-header
       ref="headerRef"
@@ -57,15 +57,15 @@
       </dynamic-scroller-item>
     </dynamic-scroller>
     <div v-if="$slots['footer-start'] || $slots['footer-end']" class="df-grid-footer">
-      <slot name="footer-start" />
-      <slot name="footer-end" />
+      <slot name="footer-start"/>
+      <slot name="footer-end"/>
     </div>
     <shadow-grid
       ref="shadowRef"
       :records="sortedRecords"
       :columns="columnRendererOptionsInternal"
       :renderers="DefaultRenderers"
-      :count="mainShadowCount"
+      :count="mainShadowCount!"
       :offset="mainShadowOffset"
       :class="uColumns.cssClass.value"
       :key-field="keyField"
@@ -84,7 +84,7 @@
         :records="sortedRecords"
         :columns="colsDef.columnRenderOptsInternal.value"
         :renderers="DefaultRenderers"
-        :count="secondaryShadowCount"
+        :count="secondaryShadowCount!"
         :offset="secondaryShadowOffset"
         :class="colsDef.cssClass"
         :key-field="keyField"

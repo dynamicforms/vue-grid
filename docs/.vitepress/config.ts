@@ -8,7 +8,8 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/getting-started' },
-      { text: 'API', link: '/examples/index' }
+      { text: 'API', link: '/api/index' },
+      { text: 'Examples', link: '/examples/index' },
     ],
     sidebar: {
       '/guide/': [
@@ -20,11 +21,24 @@ export default defineConfig({
           ]
         }
       ],
+      '/api/': [
+        {
+          text: 'API Reference',
+          items: [
+            { text: 'Overview', link: '/api/index' },
+            { text: '<DfGrid> Component', link: '/api/df-grid' },
+            { text: 'Column Definitions', link: '/api/columns' },
+            { text: 'Sorting', link: '/api/sorting' },
+            { text: 'Filtering', link: '/api/filtering' },
+            { text: 'Cell Renderers', link: '/api/renderers' },
+          ]
+        }
+      ],
       '/examples/': [
         {
-          text: 'API with Examples',
+          text: 'Examples',
           items: [
-            { text: 'table', link: '/examples/table' },
+            { text: 'Table', link: '/examples/table' },
           ]
         }
       ]

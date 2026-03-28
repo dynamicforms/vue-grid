@@ -12,7 +12,7 @@ export interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> 
   label: string;
   renderer?: R;
   rendererOptions?: RendererOptionsMap[R];
-  sortable: Sortable;
+  sortable?: Sortable;
   filterable?: Filterable;
   cssClass?: string | undefined;
 }
