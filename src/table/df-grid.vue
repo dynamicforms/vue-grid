@@ -8,6 +8,10 @@
     @dblclick="($event) => processMouse('dblclick', $event)"
     @keydown.enter="void (0)"
   >
+    <div v-if="$slots['toolbar-start'] || $slots['toolbar-end']" class="df-grid-toolbar">
+      <slot name="toolbar-start" />
+      <slot name="toolbar-end" />
+    </div>
     <df-grid-header
       ref="headerRef"
       :columns="uColumns.columns.value"
@@ -52,6 +56,10 @@
         </slot>
       </dynamic-scroller-item>
     </dynamic-scroller>
+    <div v-if="$slots['footer-start'] || $slots['footer-end']" class="df-grid-footer">
+      <slot name="footer-start" />
+      <slot name="footer-end" />
+    </div>
     <shadow-grid
       ref="shadowRef"
       :records="sortedRecords"
@@ -195,6 +203,10 @@ onUnmounted(() => gridDestroy(gridId));
 </script>
 
 <style>
+.df-grid-toolbar, .df-grid-footer {
+  display: flex;
+  justify-content: space-between;
+}
 .df-grid.container .df-grid.card:not(.shadow-grid) {
   /*noinspection CssUnresolvedCustomProperty*/
   grid-template-columns: var(--grid-template-columns);

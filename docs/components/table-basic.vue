@@ -14,7 +14,23 @@
       :show-filter-row="true"
       @click="(data) => console.log('click:', data)"
       @sort="(data) => console.log('sort:', data)"
-    />
+    >
+      <template #toolbar-start>
+        <span style="font-weight: bold; padding: 4px 8px">
+          Music Library Music Library Music Library Music Library
+          Music Library Music Library Music Library Music Library
+        </span>
+      </template>
+      <template #toolbar-end>
+        <span style="padding: 4px 8px">{{ records.length }} records</span>
+      </template>
+      <template #footer-start>
+        <span style="padding: 4px 8px; font-size: 0.8rem; opacity: 0.6">@dynamicforms/vue-grid</span>
+      </template>
+      <template #footer-end>
+        <span style="padding: 4px 8px; font-size: 0.8rem; opacity: 0.6">Active layout: {{ activeColumDef }}</span>
+      </template>
+    </df-grid>
   </div>
 </template>
 

@@ -51,6 +51,8 @@ Check if either of them is suitable… also check the performance. Preferably, i
 - [\] Column groups - also not needed any more due to self-layouting
 - [x] Move card rendering to slot so that the user may render the contents completely themselves
 - [ ] Support CSS modes other than grid (e.g. table or flex or maybe even vuetify row / col)
+- [x] Toolbar slots (toolbar-start, toolbar-end) above the header row
+- [x] Footer slots (footer-start, footer-end) below the scroller
 
 ## **Performance**
 
