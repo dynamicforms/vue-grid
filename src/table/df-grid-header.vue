@@ -185,6 +185,9 @@ defineExpose({ headerItem, headerOptions, headerHeight });
   display: flex;
   flex-direction: column;
 }
+:deep(.df-grid.card.header .df-grid.cell) {
+  user-select: none;
+}
 
 .df-grid.cell.filter-cell {
   padding: 0.25em;
