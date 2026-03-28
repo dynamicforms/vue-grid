@@ -28,7 +28,10 @@ export function useFormattedData(props: FormattedDataProps) {
       }
 
       const res = renderer(value, itemValue, rendererOptions as any);
-      res.classes = [column.fieldName, column.cssClass ?? ''];
+      let extraClasses: any[] = [];
+      if (Array.isArray(res.classes)) extraClasses = res.classes;
+      else if (res.classes) extraClasses = [res.classes];
+      res.classes = [column.fieldName, column.cssClass ?? '', ...extraClasses];
       return res;
     });
 

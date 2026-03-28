@@ -12,6 +12,7 @@
   "dependencies": {
     "vue": "^3.4.19",
     "vuetify": "^3.8",
+    "vue-cached-icon": "^3.0.3",
     "vue-markdown-render": "^2.3.0"
   },
   "devDependencies": {

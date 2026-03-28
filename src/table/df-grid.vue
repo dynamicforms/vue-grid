@@ -211,4 +211,21 @@ onUnmounted(() => gridDestroy(gridId));
   /*noinspection CssUnresolvedCustomProperty*/
   grid-template-columns: var(--grid-template-columns);
 }
+.df-grid.cell.has-pre-post {
+  display: flex;
+  align-items: center;
+}
+.df-grid.cell.has-pre-post > .pre {
+  flex: 0 0 auto;
+  align-content: center;
+}
+.df-grid.cell.has-pre-post > .content {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-content: center;
+}
+.df-grid.cell.has-pre-post > .post {
+  flex: 0 0 auto;
+  align-content: center;
+}
 </style>

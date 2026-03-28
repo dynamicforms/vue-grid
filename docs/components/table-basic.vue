@@ -16,10 +16,7 @@
       @sort="(data) => console.log('sort:', data)"
     >
       <template #toolbar-start>
-        <span style="font-weight: bold; padding: 4px 8px">
-          Music Library Music Library Music Library Music Library
-          Music Library Music Library Music Library Music Library
-        </span>
+        <span style="font-weight: bold; padding: 4px 8px">Music Library</span>
       </template>
       <template #toolbar-end>
         <span style="padding: 4px 8px">{{ records.length }} records</span>
@@ -35,12 +32,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
 
 import { createColumn, DfGrid, filterColumns, ResponsiveColumnDefinitions } from '../../src';
 import { generateMusicLibrary, languagesMap } from './data-generator';
 
-const records = generateMusicLibrary(10000);
+const records = reactive(generateMusicLibrary(10000));
 
 const columns = [
   createColumn('id', 'Id', 'int', { cssClass: 'text-right' }),
@@ -51,7 +49,21 @@ const columns = [
   createColumn('duration', 'Duration', 'plain', { cssClass: 'text-right', filterable: {fieldType: 'date'} }), // TODO refactor to time
   createColumn('genres', 'Genres', 'plain', {filterable: true}),
   createColumn('rating', 'Rating', 'int', { cssClass: 'text-right', filterable: {fieldType: 'number'} }),
-  createColumn('favorite', 'Favorite', 'checkbox', { filterable: {fieldType: 'boolean'}}),
+  createColumn('favorite', 'Favorite', 'checkbox', {
+    rendererOptions: {
+      postRender: (value: any, rowValue: any) => new RenderableValue({
+        componentName: 'CachedIcon',
+        componentProps: {
+          name: 'mdi-shuffle',
+          style: 'cursor: pointer; padding: 0 4px; opacity: 0.7; color: aqua',
+          onClick: (e: MouseEvent) => {
+            e.stopPropagation();
+            rowValue.favorite = !rowValue.favorite;
+          },
+        },
+      } as SimpleComponentDef),
+    },
+  }),
   createColumn('play_count', 'Play count', 'int', { cssClass: 'text-right', filterable: {fieldType: 'number'} }),
   createColumn('moods', 'Moods', 'plain', {filterable: true}),
   createColumn('language', 'Languages', 'plain', {filterable: { choices: languagesMap }}),
