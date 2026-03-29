@@ -38,7 +38,9 @@ export default defineConfig({
         {
           text: 'Examples',
           items: [
-            { text: 'Table', link: '/examples/table' },
+            { text: 'Full-featured Demo',             link: '/examples/table' },
+            { text: 'Server-side Sorting & Filtering', link: '/examples/server-side' },
+            { text: 'Cell Renderers',                  link: '/examples/renderers' },
           ]
         }
       ]

@@ -46,18 +46,28 @@ The `transform` function receives the raw cell value and the full row object, an
 ## Numeric options (`int`, `float`, `decimal`)
 
 ```typescript
+interface LocaleWithOptions {
+  locale?: string;                        // BCP 47 locale string (e.g. 'sl-SI')
+  localeOptions?: Intl.NumberFormatOptions; // passed directly to Intl.NumberFormat
+}
+
 interface IntOptions extends CellOptions {
-  decimalPlaces?: number;  // number of decimal digits (float/decimal only)
-  locale?: string;         // BCP 47 locale string for number formatting
+  locale?: string | LocaleWithOptions;  // formatting locale; defaults to browser locale
+  padToLength?: number | 'auto';        // pad integer part to N digits; 'auto' tracks
+                                        // the widest value in the column and pads all to match
 }
 ```
+
+`padToLength: 'auto'` is useful for keeping numbers visually aligned when the column width varies by content — the grid measures the longest integer encountered and pads shorter values with dim leading zeros.
 
 ## Date/time options (`date`, `time`, `datetime`)
 
 ```typescript
 interface DateTimeOptions extends CellOptions {
-  format?: string;  // date-fns format string (e.g. 'dd.MM.yyyy')
-  locale?: string;  // date-fns locale
+  format?: string;          // date-fns format string; defaults to locale-aware
+                            // 'P' (date), 'p' (time), or 'P p' (datetime)
+  parseISOPrefix?: string;  // string prepended to the raw value before ISO parsing
+                            // (e.g. to attach a fixed timezone offset like '+02:00')
 }
 ```
 

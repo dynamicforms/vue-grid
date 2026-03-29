@@ -96,7 +96,7 @@
 
 <script setup lang="ts">
 import { keys, maxBy, pickBy, throttle } from 'lodash-es';
-import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, onUpdated, ref, toRef, watch } from 'vue';
 // @ts-ignore
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller';
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
@@ -126,7 +126,7 @@ const uColumns = useColumns(props, gridId);
 
 // Processing pipeline: records → filter → sort → display
 const { filterState, emitWrapper: filterEmitWrapper, filteredRecords } =
-  useFiltering(props, emit, uColumns, props.records);
+  useFiltering(props, emit, uColumns, toRef(props, 'records'));
 const { sortState, emitWrapper: sortEmitWrapper, sortedRecords } =
   useSorting(props, filterEmitWrapper, uColumns, filteredRecords);
 

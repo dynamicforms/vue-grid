@@ -25,13 +25,13 @@ export function createColumn<R extends keyof RendererOptionsMap>(
   fieldName: string,
   label: string,
   renderer?: R,
-  otherOptions?: Omit<ColumnDefinition, 'fieldName' | 'label' | 'renderer'>,
+  otherOptions?: Omit<ColumnDefinition<R>, 'fieldName' | 'label' | 'renderer'>,
 ): ColumnDefinition<R> {
   const result = { fieldName, label, renderer, sortable: true, ...(otherOptions ?? {}) };
 
   // If renderer is 'header' and rendererOptions doesn't have sortState, add default
   if (renderer === 'header') {
-    if (result.rendererOptions == null) result.rendererOptions = { };
+    if (result.rendererOptions == null) result.rendererOptions = { } as RendererOptionsMap[R];
     const opts = result.rendererOptions as any;
     if (opts.sortState === undefined) opts.sortState = { direction: undefined, index: undefined, sortable: true };
   }
