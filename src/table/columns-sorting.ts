@@ -2,7 +2,7 @@ import { cloneDeep, get } from 'lodash-es';
 import { CompareFn, orderBy } from 'natural-orderby';
 import { computed, ComputedRef, EmitFn, ref, Ref, unref, watch } from 'vue';
 
-import { RendererOptionsMap, RowValue } from './cell-renderers';
+import type { RendererOptionsMap, RowValue } from './cell-renderers';
 import { type ColumnDefinition, type useColumns } from './columns';
 import type { GridEmits, GridProps } from './df-grid-types';
 import type { MaybeRef } from './type-utils';

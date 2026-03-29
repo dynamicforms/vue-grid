@@ -5,6 +5,7 @@ import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import { DynamicFormsVueGrid } from '../../../src';
+import { CachedIcon } from 'vue-cached-icon';
 import VueMarkdown from 'vue-markdown-render';
 
 import '@mdi/font/css/materialdesignicons.css'
@@ -26,6 +27,7 @@ export default {
     app.use(vuetify);
     app.use(DynamicFormsVueGrid, { registerComponents: true });
     app.component('VueMarkdown', VueMarkdown);
+    app.component('CachedIcon', CachedIcon);
   },
   Layout: () => {
     return h(DefaultTheme.Layout, null, {

@@ -76,7 +76,7 @@ describe('df-grid-mouse-events.ts', () => {
         const touchEvent = new TouchEvent('pointerenter', {
           bubbles: true,
           cancelable: true,
-          touches: [{ identifier: 1, target: document.createElement('div') }],
+          touches: [{ identifier: 1, target: document.createElement('div') } as unknown as Touch],
         });
 
         expect(() => processPosition('enter', touchEvent)).not.toThrow();
@@ -86,7 +86,7 @@ describe('df-grid-mouse-events.ts', () => {
         const touchEvent = new TouchEvent('pointerleave', {
           bubbles: true,
           cancelable: true,
-          touches: [{ identifier: 1, target: document.createElement('div') }],
+          touches: [{ identifier: 1, target: document.createElement('div') } as unknown as Touch],
         });
 
         expect(() => processPosition('leave', touchEvent)).not.toThrow();

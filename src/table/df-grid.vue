@@ -8,6 +8,10 @@
     @dblclick="($event) => processMouse('dblclick', $event)"
     @keydown.enter="void (0)"
   >
+    <div v-if="$slots['toolbar-start'] || $slots['toolbar-end']" class="df-grid-toolbar">
+      <slot name="toolbar-start"/>
+      <slot name="toolbar-end"/>
+    </div>
     <df-grid-header
       ref="headerRef"
       :columns="uColumns.columns.value"
@@ -52,12 +56,16 @@
         </slot>
       </dynamic-scroller-item>
     </dynamic-scroller>
+    <div v-if="$slots['footer-start'] || $slots['footer-end']" class="df-grid-footer">
+      <slot name="footer-start"/>
+      <slot name="footer-end"/>
+    </div>
     <shadow-grid
       ref="shadowRef"
       :records="sortedRecords"
       :columns="columnRendererOptionsInternal"
       :renderers="DefaultRenderers"
-      :count="mainShadowCount"
+      :count="mainShadowCount!"
       :offset="mainShadowOffset"
       :class="uColumns.cssClass.value"
       :key-field="keyField"
@@ -76,7 +84,7 @@
         :records="sortedRecords"
         :columns="colsDef.columnRenderOptsInternal.value"
         :renderers="DefaultRenderers"
-        :count="secondaryShadowCount"
+        :count="secondaryShadowCount!"
         :offset="secondaryShadowOffset"
         :class="colsDef.cssClass"
         :key-field="keyField"
@@ -88,7 +96,7 @@
 
 <script setup lang="ts">
 import { keys, maxBy, pickBy, throttle } from 'lodash-es';
-import { computed, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, onUpdated, ref, toRef, watch } from 'vue';
 // @ts-ignore
 import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller';
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
@@ -118,7 +126,7 @@ const uColumns = useColumns(props, gridId);
 
 // Processing pipeline: records → filter → sort → display
 const { filterState, emitWrapper: filterEmitWrapper, filteredRecords } =
-  useFiltering(props, emit, uColumns, props.records);
+  useFiltering(props, emit, uColumns, toRef(props, 'records'));
 const { sortState, emitWrapper: sortEmitWrapper, sortedRecords } =
   useSorting(props, filterEmitWrapper, uColumns, filteredRecords);
 
@@ -195,8 +203,29 @@ onUnmounted(() => gridDestroy(gridId));
 </script>
 
 <style>
+.df-grid-toolbar, .df-grid-footer {
+  display: flex;
+  justify-content: space-between;
+}
 .df-grid.container .df-grid.card:not(.shadow-grid) {
   /*noinspection CssUnresolvedCustomProperty*/
   grid-template-columns: var(--grid-template-columns);
+}
+.df-grid.cell.has-pre-post {
+  display: flex;
+  align-items: center;
+}
+.df-grid.cell.has-pre-post > .pre {
+  flex: 0 0 auto;
+  align-content: center;
+}
+.df-grid.cell.has-pre-post > .content {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-content: center;
+}
+.df-grid.cell.has-pre-post > .post {
+  flex: 0 0 auto;
+  align-content: center;
 }
 </style>
