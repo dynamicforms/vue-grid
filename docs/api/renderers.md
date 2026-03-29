@@ -32,12 +32,16 @@ All renderers accept these base options via `rendererOptions`:
 
 ```typescript
 interface CellOptions {
-  nullHandler?: string;                          // renderer key to use when value is null/undefined
-  transform?: (value: any, row: RowValue) => any; // transform value before rendering
+  nullHandler?: string;                                                    // renderer key to use when value is null/undefined
+  transform?: (value: any, row: RowValue) => any;                         // transform value before rendering
+  preRender?: (value: any, row: RowValue) => RenderableValue | string | null;  // content rendered before (left of) the cell value
+  postRender?: (value: any, row: RowValue) => RenderableValue | string | null; // content rendered after (right of) the cell value
 }
 ```
 
 The `transform` function receives the raw cell value and the full row object, and returns the value that will actually be rendered.
+
+`preRender` and `postRender` allow injecting additional content to the left or right of the main cell value. When either is set, the cell switches to a flex layout with three zones: `pre`, `content`, and `post`.
 
 ## Numeric options (`int`, `float`, `decimal`)
 

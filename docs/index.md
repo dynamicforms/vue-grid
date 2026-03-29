@@ -1,39 +1,38 @@
 ---
 layout: home
 hero:
-  name: DynamicForms Vuetify
-  text: A powerful collection of Vuetify input components
-  tagline: Beautifully styled form components that integrate with DynamicForms vue-forms package
+  name: DynamicForms Vue Grid
+  text: A fast, virtual-scrolling data grid for Vue 3
+  tagline: Responsive layouts, built-in sorting and filtering, flexible cell renderers — all in one component
   actions:
     - theme: brand
       text: Get Started
       link: /guide/getting-started
     - theme: alt
       text: View on GitHub
-      link: https://github.com/dynamicforms/vuetify-inputs
+      link: https://github.com/dynamicforms/vue-grid
 features:
-  - title: DynamicForms Integration
-    details: Seamlessly works with @dynamicforms/vue-forms for state management and validation
-  - title: Vuetify Based
-    details: Built on top of Vuetify components for beautiful Material Design styling
-  - title: Reactive
-    details: Full Vue reactivity support with both v-model and DynamicForms Field controls
+  - title: Virtual Scrolling
+    details: Handles large datasets efficiently using vue-virtual-scroller — only visible rows are rendered
+  - title: Responsive Layouts
+    details: Define multiple column layouts; the grid automatically activates the best fit based on container width
+  - title: Sorting & Filtering
+    details: Per-column sort and filter configuration with local or server-side (external) support
   - title: TypeScript Support
-    details: Comprehensive type definitions for excellent developer experience
+    details: Fully typed API — column definitions, sort state, filter state, events, and renderer options
 ---
 
-# @dynamicforms/dynamicforms-vue-grid
+# @dynamicforms/vue-grid
 
-A collection of Vuetify-based input components designed to work with @dynamicforms/vue-forms for building powerful, 
-reactive form interfaces.
+A (not so) simple, (but hopefully) fast Vue 3 grid component with virtual scrolling, responsive layouts, and built-in sorting and filtering.
 
 ## Introduction
 
-`@dynamicforms/dynamicforms-vue-grid` provides ...
+`@dynamicforms/vue-grid` provides a single `<DfGrid>` component that renders large tabular datasets efficiently. Column widths are measured automatically via shadow grids, responsive layouts switch based on container width, and sorting and filtering work out of the box — locally or delegated to a backend.
 
 ## Simple Example
 
-Ready to get started? Check out the [Getting Started](/guide/getting-started) guide or dive into the 
+Ready to get started? Check out the [Getting Started](/guide/getting-started) guide or dive into the
 [Examples](/examples/) for more detailed usage patterns.
 
 <script setup>

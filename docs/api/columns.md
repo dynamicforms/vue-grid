@@ -96,5 +96,5 @@ function filterColumns(
 
 Selectors can be:
 - `number` — picks column at that index
-- `string` — picks column by `fieldName`
-- `{ fieldName: index }` — picks column by `fieldName` and places it at `index`
+- `string` — picks the first column with that `fieldName`
+- `{ fieldName: occurrence }` — picks the *n-th* column with that `fieldName` (useful when the same `fieldName` appears more than once)

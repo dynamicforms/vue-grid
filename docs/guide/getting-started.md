@@ -3,20 +3,119 @@
 ## Installation
 
 ```bash
-npm install @dynamicforms/dynamicforms-vue-grid
+npm install @dynamicforms/vue-grid
 ```
 
-In your main.py
+In your `main.ts`:
 ```typescript
-import { DynamicFormsModalFormKit } from '@dynamicforms/dynamicforms-vue-grid';
-import '@dynamicforms/dynamicforms-vue-grid/styles.css';
+import { DynamicFormsVueGrid } from '@dynamicforms/vue-grid';
+import '@dynamicforms/vue-grid/styles.css';
 
-...
 const app = createApp(MyApp);
 app.use(router);
 app.use(vuetify);
 
-app.use(DynamicFormsModalFormKit);
+// registerComponents: true makes DfGrid available globally as a component
+app.use(DynamicFormsVueGrid, { registerComponents: true });
+```
+
+If you prefer to register `<DfGrid>` locally in individual components:
+
+```typescript
+import { DfGrid } from '@dynamicforms/vue-grid';
 ```
 
 ## Basic Usage
+
+```vue
+<template>
+  <df-grid
+    :columns="columns"
+    :records="records"
+    key-field="id"
+  />
+</template>
+
+<script setup lang="ts">
+import { createColumn, DfGrid } from '@dynamicforms/vue-grid';
+
+const columns = [
+  createColumn('id',    'ID',    'int'),
+  createColumn('name',  'Name',  'plain', { sortable: true }),
+  createColumn('email', 'Email', 'email'),
+];
+
+const records = [
+  { id: 1, name: 'Alice', email: 'alice@example.com' },
+  { id: 2, name: 'Bob',   email: 'bob@example.com' },
+];
+</script>
+```
+
+## Sorting
+
+Add `sortable: true` (or a `SortConfig` object) to any column. The grid manages sort state internally; use `v-model:sortState` if you want to control it externally or pre-sort the grid:
+
+```vue
+<df-grid
+  v-model:sortState="sortState"
+  :columns="columns"
+  :records="records"
+  key-field="id"
+/>
+```
+
+```typescript
+import type { SortState } from '@dynamicforms/vue-grid';
+const sortState = ref<SortState>([{ columnName: 'name', direction: 'asc' }]);
+```
+
+See [Sorting](/api/sorting) for the full configuration reference.
+
+## Filtering
+
+Add `filterable: true` (or a `FilterConfig` object) to any column and set `:show-filter-row="true"` on the grid:
+
+```vue
+<df-grid
+  :columns="columns"
+  :records="records"
+  key-field="id"
+  :show-filter-row="true"
+/>
+```
+
+See [Filtering](/api/filtering) for the full configuration reference.
+
+## Responsive layouts
+
+Define multiple column sets and the grid will switch between them automatically as the container is resized:
+
+```typescript
+import { createColumn, filterColumns } from '@dynamicforms/vue-grid';
+import type { ResponsiveColumnDefinitions } from '@dynamicforms/vue-grid';
+
+const allColumns = [
+  createColumn('id',      'ID',      'int'),
+  createColumn('name',    'Name',    'plain'),
+  createColumn('country', 'Country', 'plain'),
+  createColumn('email',   'Email',   'email'),
+];
+
+const columns: ResponsiveColumnDefinitions = [
+  { cssClass: 'wide',   columns: allColumns },
+  { cssClass: 'medium', columns: filterColumns(allColumns, ['id', 'name', 'email']) },
+  { cssClass: 'narrow', columns: filterColumns(allColumns, ['name']) },
+];
+```
+
+```vue
+<df-grid
+  v-model:active-columns="activeLayout"
+  :columns="columns"
+  :records="records"
+  key-field="id"
+/>
+```
+
+See [Column Definitions](/api/columns) for more details.

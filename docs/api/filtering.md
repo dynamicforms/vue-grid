@@ -11,7 +11,7 @@ type Filterable = boolean | FilterConfig;
 
 interface FilterConfig {
   fieldType?: 'string' | 'number' | 'boolean' | 'date'; // determines input widget; default: 'string'
-  choices?: Array<{ value: any; label: string; icon?: string }>; // renders a select instead of free-text input
+  choices?: Array<{ id: any; text: string; icon?: string }>; // renders a multi-select instead of free-text input
   key?: string | typeof filterExternal;  // property path to filter on; default: column's fieldName
   placeholder?: string;                  // input placeholder text
 }
