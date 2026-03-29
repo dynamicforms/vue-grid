@@ -86,7 +86,9 @@ export const DefaultRenderers: RenderersMap = {
   'null-empty': (value, rowValue, options) => wrapWithPrePost(new RenderableValue(''), value, rowValue, options),
   'null-null': (value, rowValue, options) => wrapWithPrePost(
     new RenderableValue({ componentName: 'div', componentVHtml: 'null', componentProps: { class: 'df-cell-null' } }),
-    value, rowValue, options,
+    value,
+    rowValue,
+    options,
   ),
   plain: (value: any, rowValue: RowValue, options: CellOptionsInternal) => (
     wrapWithPrePost(rv(t(value, rowValue, options)), value, rowValue, options)

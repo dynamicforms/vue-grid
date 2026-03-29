@@ -17,12 +17,12 @@ export const header = (
   rowValue: any,
   options: CellOptionsInternal<HeaderOptions>,
 ): RenderableValue => {
-  const preRv = options.icon
-    ? new RenderableValue({
+  const preRv = options.icon ?
+    new RenderableValue({
       componentName: 'CachedIcon',
       componentProps: { name: options.icon, class: 'df-header-icon' },
-    } as SimpleComponentDef)
-    : null;
+    } as SimpleComponentDef) :
+    null;
 
   const postRv = new RenderableValue({
     componentName: 'SortingIndicator',
