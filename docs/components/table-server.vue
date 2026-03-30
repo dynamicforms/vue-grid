@@ -1,5 +1,5 @@
 <template>
-  <div style="display: flex; flex-direction: column; height: 35em">
+  <div style="display: flex; flex-direction: column; height: 40em">
     <df-grid
       v-model:sortState="sortState"
       :columns="columns"
@@ -53,6 +53,7 @@ const columns = [
   createColumn('rating', 'Rating', 'int', {
     cssClass: 'text-right',
     sortable: { key: sortExternal },
+    filterable: { fieldType: 'number', key: filterExternal },
   }),
 ];
 
@@ -77,6 +78,8 @@ function fetchData(sort: SortState, filters: Record<string, any>) {
       result = result.filter(r => r.artist.toLowerCase().includes(String(filters.artist).toLowerCase()));
     if (filters.year != null && filters.year !== '')
       result = result.filter(r => r.year === Number(filters.year));
+    if (filters.rating != null && filters.rating !== '')
+      result = result.filter(r => r.rating === Number(filters.rating));
 
     total.value = result.length;
 
