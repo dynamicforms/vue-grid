@@ -1,5 +1,5 @@
 # DfGrid Component Feature List
-- [ ] The current virtual scroller has a bug where the value for index becomes undefined. 
+- [x] The current virtual scroller has a bug where the value for index becomes undefined. 
 The library itself is also poorly maintained. I found two alternatives: https://github.com/pdanpdan/virtual-scroll
  and https://github.com/kolarorz/vue-virt-list.
 Check if either of them is suitable… also check the performance. Preferably, it should have good performance.
