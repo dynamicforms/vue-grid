@@ -147,22 +147,25 @@ watch(uColumns.active, () => { templateColumns.value = ''; });
 const containerRef = ref();
 let lastResizeWasShrink = true;
 let lastResizeWidth = 0;
-const resizeObserver = new ResizeObserver((etries) => {
-  etries.forEach((entry) => {
-    const { width } = entry.contentRect;
-    lastResizeWasShrink = width < lastResizeWidth;
-    lastResizeWidth = width;
-    const filtered = pickBy(shadowMeasurements, (config) => config <= width);
-    const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
-    shadowRef.value?.reMeasure();
-    if (bestLayout != null && bestLayout !== props.activeColumns) {
-      templateColumns.value = '';
-      emit('update:activeColumns', <string> bestLayout);
-    }
+let resizeObserver: ResizeObserver | null = null;
+onMounted(() => {
+  resizeObserver = new ResizeObserver((etries) => {
+    etries.forEach((entry) => {
+      const { width } = entry.contentRect;
+      lastResizeWasShrink = width < lastResizeWidth;
+      lastResizeWidth = width;
+      const filtered = pickBy(shadowMeasurements, (config) => config <= width);
+      const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
+      shadowRef.value?.reMeasure();
+      if (bestLayout != null && bestLayout !== props.activeColumns) {
+        templateColumns.value = '';
+        emit('update:activeColumns', <string> bestLayout);
+      }
+    });
   });
+  resizeObserver.observe(containerRef.value);
 });
-onMounted(() => { resizeObserver.observe(containerRef.value); });
-onUnmounted(() => { resizeObserver.disconnect(); });
+onUnmounted(() => { resizeObserver?.disconnect(); });
 onUpdated(() => {
   const targetElement = containerRef.value?.querySelector('.df-grid.dynamic-scroller-item .df-grid.card');
   if (targetElement != null && !lastResizeWasShrink) {
