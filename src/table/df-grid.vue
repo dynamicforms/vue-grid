@@ -26,36 +26,29 @@
       <template #header="headerSlotProps"><slot name="header" v-bind="headerSlotProps"/></template>
       <template #statusBar="statusBarProps"><slot name="statusBar" v-bind="statusBarProps"/></template>
     </df-grid-header>
-    <dynamic-scroller
-      v-slot="{ item, index, active }"
+    <virtual-scroll
       class="cards-grid flex-1-1 overflow-y-scroll"
       :items="sortedRecords"
-      :min-item-size="30"
-      :key-field="keyField"
-      :buffer="1000"
-      :emit-update="true"
-      @update="updateRenderedRows"
+      :default-item-size="30"
+      :buffer-before="30"
+      :buffer-after="30"
+      @visible-range-change="updateRenderedRows"
     >
-      <dynamic-scroller-item
-        :item="item"
-        :active="active"
-        :size-dependencies="[]"
-        :data-index="index"
-        class="df-grid dynamic-scroller-item"
-      >
-        <slot name="item" :item="item" :index="index" :active="active">
-          <grid-card
-            v-if="active"
-            :item="item"
-            :columns="columnRendererOptionsInternal"
-            :renderers="DefaultRenderers"
-            :class="[uColumns.cssClass.value, evenOddClass(index)]"
-            :data-pk="item[keyField]"
-            :data-idx="index"
-          />
-        </slot>
-      </dynamic-scroller-item>
-    </dynamic-scroller>
+      <template #item="{ item, index }">
+        <div class="df-grid dynamic-scroller-item">
+          <slot name="item" :item="item" :index="index" :active="true">
+            <grid-card
+              :item="item"
+              :columns="columnRendererOptionsInternal"
+              :renderers="DefaultRenderers"
+              :class="[uColumns.cssClass.value, evenOddClass(index)]"
+              :data-pk="item[keyField]"
+              :data-idx="index"
+            />
+          </slot>
+        </div>
+      </template>
+    </virtual-scroll>
     <div v-if="$slots['footer-start'] || $slots['footer-end']" class="df-grid-footer">
       <slot name="footer-start"/>
       <slot name="footer-end"/>
@@ -95,11 +88,10 @@
 </template>
 
 <script setup lang="ts">
+import { VirtualScroll } from '@pdanpdan/virtual-scroll';
 import { keys, maxBy, pickBy, throttle } from 'lodash-es';
 import { computed, onMounted, onUnmounted, onUpdated, ref, toRef, watch } from 'vue';
-// @ts-ignore
-import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller';
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
+import '@pdanpdan/virtual-scroll/style.css';
 
 import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
@@ -137,8 +129,8 @@ const shadowRef = ref();
 useHeaderContent().provideHeaderContent();
 
 const updateRenderedRows = throttle(
-  (startIndex: number, endIndex: number, visibleStartIndex: number, visibleEndIndex: number) => {
-    const mid = Math.round((visibleStartIndex + visibleEndIndex) / 2);
+  (range: { start: number; end: number }) => {
+    const mid = Math.round((range.start + range.end) / 2);
     mainShadowOffset.value = Math.max(0, mid - Math.round(props.mainShadowCount / 2));
   },
   250,
@@ -155,22 +147,25 @@ watch(uColumns.active, () => { templateColumns.value = ''; });
 const containerRef = ref();
 let lastResizeWasShrink = true;
 let lastResizeWidth = 0;
-const resizeObserver = new ResizeObserver((etries) => {
-  etries.forEach((entry) => {
-    const { width } = entry.contentRect;
-    lastResizeWasShrink = width < lastResizeWidth;
-    lastResizeWidth = width;
-    const filtered = pickBy(shadowMeasurements, (config) => config <= width);
-    const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
-    shadowRef.value?.reMeasure();
-    if (bestLayout != null && bestLayout !== props.activeColumns) {
-      templateColumns.value = '';
-      emit('update:activeColumns', <string> bestLayout);
-    }
+let resizeObserver: ResizeObserver | null = null;
+onMounted(() => {
+  resizeObserver = new ResizeObserver((etries) => {
+    etries.forEach((entry) => {
+      const { width } = entry.contentRect;
+      lastResizeWasShrink = width < lastResizeWidth;
+      lastResizeWidth = width;
+      const filtered = pickBy(shadowMeasurements, (config) => config <= width);
+      const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
+      shadowRef.value?.reMeasure();
+      if (bestLayout != null && bestLayout !== props.activeColumns) {
+        templateColumns.value = '';
+        emit('update:activeColumns', <string> bestLayout);
+      }
+    });
   });
+  resizeObserver.observe(containerRef.value);
 });
-onMounted(() => { resizeObserver.observe(containerRef.value); });
-onUnmounted(() => { resizeObserver.disconnect(); });
+onUnmounted(() => { resizeObserver?.disconnect(); });
 onUpdated(() => {
   const targetElement = containerRef.value?.querySelector('.df-grid.dynamic-scroller-item .df-grid.card');
   if (targetElement != null && !lastResizeWasShrink) {

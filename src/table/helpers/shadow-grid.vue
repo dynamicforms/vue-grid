@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref } from 'vue';
+import { nextTick, ref, toRefs } from 'vue';
 
 import { RendererOptionsMap, RenderersMap, RowValue } from '../cell-renderers';
 import { ColumnDefinition } from '../columns';
@@ -34,6 +34,7 @@ interface GridProps {
 }
 
 const props = defineProps<GridProps>();
+const { keyField } = toRefs(props); // This is necessary because vue 3.4 SSR renderer messes up the v-memo generation
 
 interface Emits {
   (e: 'onmeasure', value: ShadowGridMeasurements): any;

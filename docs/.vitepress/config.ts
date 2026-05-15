@@ -1,4 +1,7 @@
+import vuetify from 'vite-plugin-vuetify';
 import { defineConfig } from 'vitepress';
+
+import ssrCkeditorStub from './ssr-ckeditor-stub';
 
 export default defineConfig({
   title: 'DynamicForms Vue Grid',
@@ -38,7 +41,7 @@ export default defineConfig({
         {
           text: 'Examples',
           items: [
-            { text: 'Full-featured Demo',             link: '/examples/table' },
+            { text: 'Full-featured Demo',              link: '/examples/table' },
             { text: 'Server-side Sorting & Filtering', link: '/examples/server-side' },
             { text: 'Cell Renderers',                  link: '/examples/renderers' },
           ]
@@ -52,6 +55,17 @@ export default defineConfig({
       message: 'Released under the MIT License.',
       copyright: 'Copyright © 2025 Jure Erznožnik'
     }
-  }
+  },
+  vite: {
+    plugins: [vuetify(), ssrCkeditorStub],
+    optimizeDeps: {
+      include: ['vuetify'],
+    },
+    ssr: {
+      noExternal: [
+        /vuetify/,
+      ],
+    }
+  },
 });
 
