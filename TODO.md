@@ -1,11 +1,7 @@
 # DfGrid Component Feature List
 
-## **Core Data Management**
-- [ ] Row control data for additional CSS styles and actions
-
 ## **Row Operations**
 - [ ] Row selection (single/multiple)
-- [ ] Custom CSS styling for rows
 
 ## **Visual Features**
 - [ ] Loading indicator
