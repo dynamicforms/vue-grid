@@ -41,7 +41,7 @@
               :item="item"
               :columns="columnRendererOptionsInternal"
               :renderers="DefaultRenderers"
-              :class="[uColumns.cssClass.value, evenOddClass(index)]"
+              :class="[uColumns.cssClass.value, props.rowClass?.(item, index)]"
               :data-pk="item[keyField]"
               :data-idx="index"
             />
@@ -93,7 +93,7 @@ import { keys, maxBy, pickBy, throttle } from 'lodash-es';
 import { computed, onMounted, onUnmounted, onUpdated, ref, toRef, watch } from 'vue';
 import '@pdanpdan/virtual-scroll/style.css';
 
-import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap } from './cell-renderers';
+import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap, RowValue } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { useColumns } from './columns';
 import { useFiltering } from './columns-filtering';
@@ -105,7 +105,14 @@ import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from '
 
 const props = withDefaults(
   defineProps<GridProps>(),
-  { mainShadowCount: 500, secondaryShadowCount: 30, columns: () => [], showFilterRow: false, showStatusBar: false },
+  {
+    mainShadowCount: 500,
+    secondaryShadowCount: 30,
+    columns: () => [],
+    showFilterRow: false,
+    showStatusBar: false,
+    rowClass: (item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
+  },
 );
 const emit = defineEmits<GridEmits>();
 
@@ -137,10 +144,6 @@ const updateRenderedRows = throttle(
 );
 
 const { processMouse } = useGridMouseEvents(sortEmitWrapper, props, sortState, headerRef, uColumns);
-
-function evenOddClass(index: number) {
-  return index % 2 === 0 ? 'even' : 'odd';
-}
 
 watch(uColumns.active, () => { templateColumns.value = ''; });
 

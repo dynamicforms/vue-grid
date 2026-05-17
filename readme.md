@@ -8,13 +8,23 @@ A (not so) simple, (but hopefully) fast Vue 3 grid component with virtual scroll
 
 ## Features
 
-- Virtual scrolling via `vue-virtual-scroller` — handles large datasets with minimal DOM overhead
+- Virtual scrolling via `virtual-scroll` — handles large datasets with minimal DOM overhead
+- CSS grid layout
 - Responsive column layouts — define multiple column sets, the grid activates the best fit based on container width
 - Built-in sorting — local multi-column sort with `natural-orderby`; external (server-side) sort supported
 - Built-in filtering — local filtering with string/number/boolean/date inputs; external filtering supported
+- Per-row CSS classes via `rowClass` callback — data-driven styling or conditional highlighting; defaults to zebra 
+  striping
 - Flexible cell renderers — plain text, markdown, numbers, dates, links, checkboxes, colors, IP addresses, and more
-- `preRender` / `postRender` hooks for adding prefix/suffix content to any cell
+- `preRender` / `postRender` hooks for adding prefix/suffix content to any cell. Custom cell renderers support
 - Toolbar and footer slots for adding UI above and below the grid
+- Comprehensive events offer all data necessary to correctly identify the exact target of an event. Built-in event 
+  handlers as well as support for handling the events separately
+
+### Features TODO
+
+- Row selection (together with a status row containing status & group actions)
+- Loading indicator
 
 ## Installation
 

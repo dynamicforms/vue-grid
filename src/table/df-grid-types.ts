@@ -15,6 +15,7 @@ export interface GridProps {
   filterState?: FilterState;
   showFilterRow?: boolean;
   showStatusBar?: boolean;
+  rowClass?: (item: RowValue, index: number) => string | string[] | Record<string, boolean>;
 }
 
 export type RowIndex = number | 'header';

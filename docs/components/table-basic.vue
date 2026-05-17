@@ -12,6 +12,7 @@
       class="grid-class"
       key-field="id"
       :show-filter-row="true"
+      :show-status-bar="false"
       @click="(data) => console.log('click:', data)"
       @sort="(data) => console.log('sort:', data)"
     >

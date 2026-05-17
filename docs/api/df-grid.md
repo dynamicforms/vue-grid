@@ -24,6 +24,7 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `showStatusBar` | `boolean` | `false` | Show the status bar below the filter row (displays active filter count). |
 | `mainShadowCount` | `number` | `500` | Number of rows rendered in the main shadow grid used for column width measurement. Rarely needs changing. |
 | `secondaryShadowCount` | `number` | `30` | Number of rows rendered in secondary shadow grids (one per responsive layout). Rarely needs changing. |
+| `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | zebra striping (`'even'`/`'odd'`) | Returns CSS classes applied to each data row card. Receives the row data object and its 0-based index. Return type matches Vue's `:class` binding — a string, an array, or an object. Overriding this prop replaces the default even/odd zebra striping entirely; include the logic yourself if you still want it. |
 
 ## Emits
 
@@ -87,6 +88,32 @@ See [Filtering → GridFilterEvent](./filtering#gridfilterevent).
 ```
 
 Both wrappers use `display: flex; justify-content: space-between` and are only mounted when at least one of their two slots has content.
+
+## Row CSS classes
+
+The `rowClass` prop lets you attach per-row CSS classes based on row data or position. It receives the raw row object and its 0-based index, and its return value is passed directly to Vue's `:class` binding.
+
+```vue
+<!-- Highlight negative amounts in red, keep zebra striping for the rest -->
+<df-grid
+  :columns="columns"
+  :records="records"
+  key-field="id"
+  :row-class="(item, index) => item.amount < 0 ? 'negative' : (index % 2 === 0 ? 'even' : 'odd')"
+/>
+```
+
+```vue
+<!-- Data-driven classes stored in the record itself -->
+<df-grid
+  :columns="columns"
+  :records="records"
+  key-field="id"
+  :row-class="(item) => item.cssClass"
+/>
+```
+
+When `rowClass` is omitted the default is `(item, index) => index % 2 === 0 ? 'even' : 'odd'`, which produces the standard zebra striping. Providing your own function replaces this default entirely.
 
 ### Example
 
