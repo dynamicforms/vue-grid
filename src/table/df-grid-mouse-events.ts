@@ -4,6 +4,7 @@ import { type RowValue } from './cell-renderers';
 import { type useColumns } from './columns';
 import { PositionEvents, processSortEvent, SortEvents, SortState } from './columns-sorting';
 import type { RowIndex, GridProps, GridEmits } from './df-grid-types';
+import type { useSelection } from './selection';
 
 const longPress = ref(false);
 const longPressClicked = ref(false);
@@ -25,6 +26,7 @@ export function useGridMouseEvents(
   sortState: ComputedRef<SortState>,
   headerRef: Ref,
   uColumns: ReturnType<typeof useColumns>,
+  uSelection?: ReturnType<typeof useSelection>,
 ) {
   function processMouse(eType: SortEvents, event: TouchEvent | MouseEvent) {
     const target = event.target as HTMLElement;
@@ -56,9 +58,30 @@ export function useGridMouseEvents(
       }
       longPress.value = eType === 'longpress';
       longPressClicked.value = eType === 'longpress';
+      if (eType === 'click') {
+        const p: GridClickEvent = { rowId, key, rowData, columnClasses, event, columnName };
+        emit(eType as 'click', p); // typecast needed to unconfuse TS about what event we're calling
+      }
+      return;
+    }
+
+    // Data row
+    if (eType === 'longpress') {
+      if (uSelection?.selectionMode.value === null) uSelection?.startSelection(key);
+      else uSelection?.toggleKey(key);
+      return;
     }
 
     if (eType === 'click') {
+      if ((event as MouseEvent).shiftKey && uSelection) {
+        if (uSelection.selectionMode.value === null) uSelection.startSelection(key);
+        else uSelection.toggleKey(key);
+        return;
+      }
+      if (uSelection && uSelection.selectionMode.value !== null) {
+        uSelection.toggleKey(key);
+        return;
+      }
       const p: GridClickEvent = { rowId, key, rowData, columnClasses, event, columnName };
       emit(eType as 'click', p); // typecast needed to unconfuse TS about what event we're calling
     }

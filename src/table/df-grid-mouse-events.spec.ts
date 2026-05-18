@@ -326,6 +326,162 @@ describe('df-grid-mouse-events.ts', () => {
       });
     });
 
+    describe('selection behavior', () => {
+      let mockUSelection: any;
+
+      function createDataRow(dataIdx: string, columnClass = 'title') {
+        const cell = document.createElement('div');
+        cell.className = `df-grid cell ${columnClass}`;
+        const card = document.createElement('div');
+        card.className = 'df-grid card';
+        card.setAttribute('data-idx', dataIdx);
+        card.appendChild(cell);
+        document.body.appendChild(card);
+        return { cell, card };
+      }
+
+      beforeEach(() => {
+        mockUSelection = {
+          selectionMode: { value: null },
+          startSelection: vi.fn(),
+          toggleKey: vi.fn(),
+        };
+      });
+
+      it('long-press on data row calls startSelection with row key', () => {
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+          mockUSelection,
+        );
+        const { cell, card } = createDataRow('1');
+        const event = new MouseEvent('longpress', { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'target', { value: cell, writable: false });
+
+        processMouse('longpress', event);
+
+        expect(mockUSelection.startSelection).toHaveBeenCalledWith(2); // id of mockRecords[1]
+        expect(mockEmit).not.toHaveBeenCalled();
+        document.body.removeChild(card);
+      });
+
+      it('shift+click when selectionMode is null calls startSelection', () => {
+        mockUSelection.selectionMode.value = null;
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+          mockUSelection,
+        );
+        const { cell, card } = createDataRow('0');
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: true });
+        Object.defineProperty(event, 'target', { value: cell, writable: false });
+
+        processMouse('click', event);
+
+        expect(mockUSelection.startSelection).toHaveBeenCalledWith(1); // id of mockRecords[0]
+        expect(mockUSelection.toggleKey).not.toHaveBeenCalled();
+        expect(mockEmit).not.toHaveBeenCalled();
+        document.body.removeChild(card);
+      });
+
+      it('shift+click when selectionMode is active calls toggleKey', () => {
+        mockUSelection.selectionMode.value = 'selection';
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+          mockUSelection,
+        );
+        const { cell, card } = createDataRow('2');
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: true });
+        Object.defineProperty(event, 'target', { value: cell, writable: false });
+
+        processMouse('click', event);
+
+        expect(mockUSelection.toggleKey).toHaveBeenCalledWith(3); // id of mockRecords[2]
+        expect(mockUSelection.startSelection).not.toHaveBeenCalled();
+        expect(mockEmit).not.toHaveBeenCalled();
+        document.body.removeChild(card);
+      });
+
+      it('regular click when selectionMode is active calls toggleKey and does not emit click', () => {
+        mockUSelection.selectionMode.value = 'selection';
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+          mockUSelection,
+        );
+        const { cell, card } = createDataRow('1');
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'target', { value: cell, writable: false });
+
+        processMouse('click', event);
+
+        expect(mockUSelection.toggleKey).toHaveBeenCalledWith(2); // id of mockRecords[1]
+        expect(mockEmit).not.toHaveBeenCalled();
+        document.body.removeChild(card);
+      });
+
+      it('regular click when selectionMode is null emits click normally', () => {
+        mockUSelection.selectionMode.value = null;
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+          mockUSelection,
+        );
+        const { cell, card } = createDataRow('1');
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'target', { value: cell, writable: false });
+
+        processMouse('click', event);
+
+        expect(mockUSelection.toggleKey).not.toHaveBeenCalled();
+        expect(mockEmit).toHaveBeenCalledWith('click', expect.objectContaining({ key: 2 }));
+        document.body.removeChild(card);
+      });
+
+      it('header click emits click even when uSelection is provided', () => {
+        mockUSelection.selectionMode.value = 'selection';
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+          mockUSelection,
+        );
+        const cell = document.createElement('div');
+        cell.className = 'df-grid cell title';
+        const card = document.createElement('div');
+        card.className = 'df-grid card header';
+        card.setAttribute('data-idx', 'header');
+        card.appendChild(cell);
+        document.body.appendChild(card);
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'target', { value: cell, writable: false });
+
+        processMouse('click', event);
+
+        expect(mockEmit).toHaveBeenCalledWith('click', expect.objectContaining({ key: 'header' }));
+        expect(mockUSelection.toggleKey).not.toHaveBeenCalled();
+        document.body.removeChild(card);
+      });
+    });
+
     describe('column name extraction', () => {
       it('should extract correct column name from classes', () => {
         const { processMouse } = useGridMouseEvents(

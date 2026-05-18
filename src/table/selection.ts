@@ -56,5 +56,11 @@ export function useSelection(props: GridProps, emit: EmitFn<GridEmits>) {
     emit('update:selectionKeys', emptyKeys, 'clear');
   }
 
-  return { selectionMode, selectionKeys, isSelected, toggleKey, startSelection, clearSelection };
+  function invertMode(): void {
+    const newMode: SelectionMode = internalSelectionMode.value === 'selection' ? 'exclusion' : 'selection';
+    internalSelectionMode.value = newMode;
+    emit('update:selectionMode', newMode);
+  }
+
+  return { selectionMode, selectionKeys, isSelected, toggleKey, startSelection, clearSelection, invertMode };
 }

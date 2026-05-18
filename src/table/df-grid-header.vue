@@ -77,14 +77,39 @@
 
     <!-- Status bar -->
     <div
-      v-if="showStatusBar"
+      v-if="showStatusBar || selectionMode"
       class="df-status-bar"
+      :class="{ 'selection-bar': selectionMode }"
     >
-      <slot name="statusBar" :filter-state="filterState">
-        <div class="status-section">
-          Active filters: {{ activeFilterCount }}
+      <template v-if="selectionMode">
+        <div class="selection-bar-left">
+          <cached-icon
+            name="mdi-close"
+            class="selection-icon"
+            title="Cancel selection mode"
+            @click="emit('cancel-selection')"
+          />
+          <span class="selection-count">
+            {{ props.selectionKeys?.size ?? 0 }} items {{ selectionMode === 'selection' ? 'selected' : 'excluded' }}
+          </span>
+          <cached-icon
+            name="mdi-shuffle"
+            class="selection-icon"
+            title="Invert selection"
+            @click="emit('invert-selection')"
+          />
         </div>
-      </slot>
+        <div class="selection-group-actions">
+          <slot name="groupActions"/>
+        </div>
+      </template>
+      <template v-else>
+        <slot name="statusBar" :filter-state="filterState">
+          <div class="status-section">
+            Active filters: {{ activeFilterCount }}
+          </div>
+        </slot>
+      </template>
     </div>
   </div>
 </template>
@@ -93,6 +118,7 @@
 import { DfCheckbox, DfDateTime, DfInput, DfSelect, FieldDensity } from '@dynamicforms/vuetify-inputs';
 import { isBoolean } from 'lodash-es';
 import { computed, onMounted, onUpdated, ref } from 'vue';
+import { CachedIcon } from 'vue-cached-icon';
 
 import { DefaultRenderers, gridColumnCreate, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
@@ -100,6 +126,7 @@ import { ColumnDefinition } from './columns';
 import { FilterState, getFilterConfig } from './columns-filtering';
 import type { ColumnSortState, SortState } from './columns-sorting';
 import { GridCard, useHeaderContent } from './helpers';
+import type { SelectionMode } from './selection';
 
 const filterInputDensity = ref<FieldDensity>('inline');
 
@@ -114,9 +141,12 @@ export interface HeaderProps {
   showFilterRow?: boolean;
   showStatusBar?: boolean;
   filterState?: FilterState;
+  selectionMode?: SelectionMode;
+  selectionKeys?: Set<any>;
 }
 
 const props = defineProps<HeaderProps>();
+const emit = defineEmits<{ 'cancel-selection': []; 'invert-selection': [] }>();
 
 const headerItem = computed(() => (
   Object.fromEntries(props.columns.map((column) => [column.fieldName, column.label]))
@@ -196,6 +226,7 @@ defineExpose({ headerItem, headerOptions, headerHeight });
 .df-status-bar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 0.5em;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   background-color: rgba(0, 0, 0, 0.02);
@@ -206,6 +237,40 @@ defineExpose({ headerItem, headerOptions, headerHeight });
   display: flex;
   align-items: center;
   gap: 0.5em;
+}
+
+.df-status-bar.selection-bar {
+  background-color: rgb(var(--v-theme-primary, 25, 118, 210), 0.12);
+  border-top-color: rgb(var(--v-theme-primary, 25, 118, 210), 0.3);
+}
+
+.selection-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.selection-icon {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: background-color 0.15s, opacity 0.15s;
+  margin-top: -.4em;
+}
+
+.selection-icon:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  opacity: 1;
+}
+
+.selection-count {
+  font-weight: 500;
+}
+
+.selection-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  margin-left: auto;
 }
 
 .filter-cell :deep(.v-checkbox-btn) {

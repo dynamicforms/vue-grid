@@ -22,9 +22,14 @@
       :show-filter-row="showFilterRow"
       :show-status-bar="showStatusBar"
       :filter-state="filterState"
+      :selection-mode="uSelection.selectionMode.value"
+      :selection-keys="uSelection.selectionKeys.value"
+      @cancel-selection="uSelection.clearSelection()"
+      @invert-selection="uSelection.invertMode()"
     >
       <template #header="headerSlotProps"><slot name="header" v-bind="headerSlotProps"/></template>
       <template #statusBar="statusBarProps"><slot name="statusBar" v-bind="statusBarProps"/></template>
+      <template #groupActions><slot name="groupActions"/></template>
     </df-grid-header>
     <virtual-scroll
       class="cards-grid flex-1-1 overflow-y-scroll"
@@ -101,6 +106,7 @@ import { useSorting } from './columns-sorting';
 import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
 import type { GridEmits, GridProps } from './df-grid-types';
+import { useSelection } from './selection';
 import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from './helpers';
 
 const props = withDefaults(
@@ -112,6 +118,7 @@ const props = withDefaults(
     showFilterRow: false,
     showStatusBar: false,
     rowClass: (item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
+    selectionMode: null,
   },
 );
 const emit = defineEmits<GridEmits>();
@@ -143,7 +150,8 @@ const updateRenderedRows = throttle(
   250,
 );
 
-const { processMouse } = useGridMouseEvents(sortEmitWrapper, props, sortState, headerRef, uColumns);
+const uSelection = useSelection(props, emit);
+const { processMouse } = useGridMouseEvents(sortEmitWrapper, props, sortState, headerRef, uColumns, uSelection);
 
 watch(uColumns.active, () => { templateColumns.value = ''; });
 

@@ -369,6 +369,120 @@ describe('DfGridHeader.vue', () => {
     });
   });
 
+  describe('selection mode status bar', () => {
+    it('should show status bar when selectionMode is set even without showStatusBar', () => {
+      const wrapper = mount(DfGridHeader, {
+        props: {
+          columns: mockColumns,
+          gridId,
+          gridClass: 'test-class',
+          sortState,
+          showStatusBar: false,
+          selectionMode: 'selection',
+          selectionKeys: new Set([1, 2]),
+        },
+      });
+
+      expect(wrapper.find('.df-status-bar').exists()).toBe(true);
+      expect(wrapper.find('.df-status-bar').classes()).toContain('selection-bar');
+    });
+
+    it('should display item count and "selected" label in selection mode', () => {
+      const wrapper = mount(DfGridHeader, {
+        props: {
+          columns: mockColumns,
+          gridId,
+          gridClass: 'test-class',
+          sortState,
+          selectionMode: 'selection',
+          selectionKeys: new Set([1, 2, 3]),
+        },
+      });
+
+      expect(wrapper.find('.selection-count').text()).toContain('3 items selected');
+    });
+
+    it('should display item count and "excluded" label in exclusion mode', () => {
+      const wrapper = mount(DfGridHeader, {
+        props: {
+          columns: mockColumns,
+          gridId,
+          gridClass: 'test-class',
+          sortState,
+          selectionMode: 'exclusion',
+          selectionKeys: new Set([5]),
+        },
+      });
+
+      expect(wrapper.find('.selection-count').text()).toContain('1 items excluded');
+    });
+
+    it('should emit cancel-selection when X button clicked', async () => {
+      const wrapper = mount(DfGridHeader, {
+        props: {
+          columns: mockColumns,
+          gridId,
+          gridClass: 'test-class',
+          sortState,
+          selectionMode: 'selection',
+          selectionKeys: new Set(),
+        },
+      });
+
+      await wrapper.find('[title="Cancel selection mode"]').trigger('click');
+      expect(wrapper.emitted('cancel-selection')).toBeTruthy();
+    });
+
+    it('should emit invert-selection when Invert button clicked', async () => {
+      const wrapper = mount(DfGridHeader, {
+        props: {
+          columns: mockColumns,
+          gridId,
+          gridClass: 'test-class',
+          sortState,
+          selectionMode: 'selection',
+          selectionKeys: new Set(),
+        },
+      });
+
+      await wrapper.find('[title="Invert selection"]').trigger('click');
+      expect(wrapper.emitted('invert-selection')).toBeTruthy();
+    });
+
+    it('should show filter status bar (not selection UI) when selectionMode is null', () => {
+      const wrapper = mount(DfGridHeader, {
+        props: {
+          columns: mockColumns,
+          gridId,
+          gridClass: 'test-class',
+          sortState,
+          showStatusBar: true,
+          filterState,
+          selectionMode: null,
+        },
+      });
+
+      expect(wrapper.find('.selection-cancel-btn').exists()).toBe(false);
+      expect(wrapper.find('.status-section').exists()).toBe(true);
+    });
+
+    it('should render groupActions slot in selection mode', () => {
+      const wrapper = mount(DfGridHeader, {
+        props: {
+          columns: mockColumns,
+          gridId,
+          gridClass: 'test-class',
+          sortState,
+          selectionMode: 'selection',
+          selectionKeys: new Set(),
+        },
+        slots: { groupActions: '<button type="button" class="delete-btn">Delete</button>' },
+      });
+
+      expect(wrapper.find('.selection-group-actions .delete-btn').exists()).toBe(true);
+    });
+  });
+
   describe('sorting integration', () => {
     it('should render sorting indicators for sorted columns', () => {
       const sortedState: SortState = [{ columnName: 'title', direction: 'asc' }];

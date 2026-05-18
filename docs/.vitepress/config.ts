@@ -33,6 +33,7 @@ export default defineConfig({
             { text: 'Column Definitions', link: '/api/columns' },
             { text: 'Sorting', link: '/api/sorting' },
             { text: 'Filtering', link: '/api/filtering' },
+            { text: 'Selection', link: '/api/selection' },
             { text: 'Cell Renderers', link: '/api/renderers' },
           ]
         }
