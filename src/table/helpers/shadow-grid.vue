@@ -24,7 +24,7 @@ import GridCard from './grid-card.vue';
 import { useHeaderContent } from './header-content';
 import { ShadowGridMeasurements } from './shadow-grid-types';
 
-interface GridProps {
+export interface GridProps {
   records: RowValue[];
   columns: ColumnDefinition<keyof RendererOptionsMap>[];
   renderers: RenderersMap;

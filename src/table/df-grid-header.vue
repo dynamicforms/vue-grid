@@ -106,7 +106,7 @@ const filterInputDensity = ref<FieldDensity>('inline');
 type CssClassTypes = string | string[] | Record<string, boolean>;
 type CssClasses = CssClassTypes | CssClassTypes[];
 
-interface HeaderProps {
+export interface HeaderProps {
   columns: ColumnDefinition<keyof RendererOptionsMap>[];
   gridId: symbol;
   gridClass: CssClasses;
