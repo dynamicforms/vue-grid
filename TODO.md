@@ -22,17 +22,11 @@
 
 ---
 
-## **Status Bar (above body) — existing, needs work**
+## **Status Bar (above body) — existing**
 
-Currently named `showStatusBar` / `statusBar` slot. Sample implementation shows active filter count,
-but the actual intended uses are broader:
-
-- Active filter count (current sample implementation)
-- **Selection mode**: "n items selected" · "Invert selection" · "Cancel selection mode"
-- **Group actions**: list of bulk actions executable on all selected items
-
-- [ ] Fix docs: remove claim that status bar "displays active filter count" — that's only a sample
-- [ ] Design the selection mode API (ties into row selection feature below)
+Named `showStatusBar` / `statusBar` slot. When selection mode is active it switches to the selection
+bar (cancel · count · invert · `#groupActions` slot). Otherwise shows the `statusBar` slot content
+(default: active filter count, which is only a sample).
 
 ---
 
@@ -56,11 +50,6 @@ A refactor to an array seems prudent
 
 - [ ] Refactor props for showing parts of the grid to one single object prop (Record<'body' | 'headers' | ..., boolean>.
       The prop is named 'visible-sections'. Values will start out as `true` for all except filter, status and summary.
-
-## **Row Operations**
-
-- [ ] Row selection (single / multiple)
-  - Drives selection mode content in the status bar (see above)
 
 ---
 
