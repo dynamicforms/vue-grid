@@ -149,9 +149,44 @@ const columns = [
   }),
 ];
 
+// three-row layout: selection + delete icons share the same cell via preRender/postRender (has-pre-post flex)
+const threeRowActionsCol = createColumn('actions', 'Delete', 'plain', {
+  filterable: false,
+  sortable: false,
+  rendererOptions: {
+    postRender: (_value: any, rowValue: any) => {
+      if (selectionMode.value === null) return null;
+      return new RenderableValue({
+        componentName: 'CachedIcon',
+        componentProps: {
+          name: isSelected(rowValue.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
+          class: 'selection-checkbox',
+          onClick: (e: MouseEvent) => {
+            e.stopPropagation();
+            toggleSelection(rowValue.id);
+          },
+        },
+      } as SimpleComponentDef);
+    },
+    preRender: (_value: any, rowValue: any) => new RenderableValue({
+      componentName: 'CachedIcon',
+      componentProps: {
+        name: 'mdi-delete',
+        class: 'shuffle-icon',
+        style: { color: 'red' },
+        onClick: (e: MouseEvent) => {
+          e.stopPropagation();
+          const index = records.findIndex(r => r.id === rowValue.id);
+          if (index !== -1) records.splice(index, 1);
+        },
+      },
+    } as SimpleComponentDef),
+  },
+});
+
 // columnsResponsive is a computed so layouts can include/exclude selectionCol based on selection mode.
 // single-line: checkbox column on the far left
-// three-row:   checkbox column next to delete (selectionCol appended, CSS places it at col 7, delete moves to col 8)
+// three-row:   selection + delete icons combined in one cell via threeRowActionsCol (preRender + postRender)
 // single-column: no structural change – selected state shown via rowClass only
 const columnsResponsive = computed<ResponsiveColumnDefinitions>(() => {
   const inSelection = selectionMode.value !== null;
@@ -164,9 +199,7 @@ const columnsResponsive = computed<ResponsiveColumnDefinitions>(() => {
     },
     {
       cssClass: 'three-row',
-      columns: inSelection
-        ? [...filterColumns(columns, [0, 1, 2, 3, 12, 5, 6, 7, 8, 9, 10, 11]), selectionCol]
-        : filterColumns(columns, [0, 1, 2, 3, 12, 5, 6, 7, 8, 9, 10, 11]),
+      columns: [...filterColumns(columns, [0, 1, 2, 3]), threeRowActionsCol, ...filterColumns(columns, [5, 6, 7, 8, 9, 10, 11])],
     },
     { cssClass: 'single-column', columns },
   ];
@@ -261,22 +294,6 @@ function addRows(count: number) {
   grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em) minmax(min-content, max-content);
 }
 
-/* --- three-row: 8 columns (in selection mode — checkbox at col 7, delete at col 8) --- */
-:deep(.df-grid.container.selection .df-grid.card.three-row) {
-  grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em) auto minmax(min-content, max-content);
-}
-
-:deep(.df-grid.container.selection .df-grid.card.three-row .df-grid.cell.actions) {
-  grid-column: 8;
-}
-
-:deep(.df-grid.container.selection .df-grid.card.three-row .df-grid.cell._selection) {
-  grid-column: 7;
-  grid-row:    1 / 4;
-  display:     flex;
-  align-items: center;
-  justify-content: center;
-}
 
 /* --- base card layout --- */
 :deep(.df-grid.card) {
