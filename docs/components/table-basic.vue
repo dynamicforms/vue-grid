@@ -47,13 +47,13 @@
 import { computed, reactive, ref } from 'vue';
 import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
 
-import { createColumn, DfGrid, filterColumns, ResponsiveColumnDefinitions } from '../../src';
+import { createColumn, DfGrid, filterColumns, ResponsiveColumnDefinitions, SelectionMode } from '../../src';
 import { generateMusicLibrary, languagesMap } from './data-generator';
 
 const records = reactive(generateMusicLibrary(10000));
 
 // --- Selection state ---
-const selectionMode = ref<null | 'selection' | 'exclusion'>(null);
+const selectionMode = ref<SelectionMode>(null);
 const selectionKeys = ref<Set<any>>(new Set());
 
 function isSelected(id: any): boolean {
