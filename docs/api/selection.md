@@ -5,7 +5,7 @@ The grid supports row selection out of the box. Selection is activated by the us
 ## Selection modes
 
 ```typescript
-type SelectionMode = null | 'selection' | 'exclusion';
+type SelectionMode = null | 'selection' | 'exclusion' | 'non-select';
 ```
 
 | Mode | Meaning |
@@ -13,8 +13,11 @@ type SelectionMode = null | 'selection' | 'exclusion';
 | `null` | Selection is inactive. Normal click events fire as usual. |
 | `'selection'` | The set of selected rows is **opt-in**: only rows whose key is in `selectionKeys` are selected. |
 | `'exclusion'` | The set of selected rows is **opt-out**: all rows are considered selected *except* those whose key is in `selectionKeys`. |
+| `'non-select'` | Selection cannot be activated by mouse or touch gestures. The programmer can still switch to another mode programmatically (e.g. via `v-model:selectionMode`). Normal click events fire as usual. |
 
 The distinction matters when you have a very large dataset and the user wants to select "everything except a few items" — exclusion mode lets you store only the exceptions.
+
+`'non-select'` is useful when you want to disable user-initiated selection (e.g. while a batch operation is in progress), or when selection should only be triggered by explicit application logic rather than user gestures.
 
 ## Activating selection
 
@@ -130,6 +133,45 @@ const selectedRecords = computed(() =>
   records.filter(r => selectedKeys.value.has(r.id))
 );
 ```
+
+## CSS classes
+
+The grid exposes CSS classes on the container and on each row card so you can style selection state purely in CSS without any JavaScript logic.
+
+### Container classes
+
+| Class | When applied |
+|-------|-------------|
+| `selection` | Whenever selection mode is active (`'selection'` or `'exclusion'`) |
+| `exclusion` | Additionally when mode is `'exclusion'` (always alongside `selection`) |
+
+### Row card classes
+
+These classes are added to each row card **only while selection mode is active**:
+
+| Class | When applied |
+|-------|-------------|
+| `selected` | Row is currently selected |
+| `unselected` | Row is currently not selected |
+
+```css
+/* highlight selected rows */
+.df-grid.container.selection .df-grid.card.selected {
+  outline: 2px solid blue;
+}
+
+/* dim unselected rows */
+.df-grid.container.selection .df-grid.card.unselected {
+  opacity: 0.5;
+}
+
+/* different style in exclusion mode */
+.df-grid.container.exclusion .df-grid.card.selected {
+  outline-color: orange;
+}
+```
+
+The default `rowClass` prop already adds `even` and `odd` alternating row classes regardless of selection state.
 
 ## Click events and selection
 

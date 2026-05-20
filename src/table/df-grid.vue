@@ -3,6 +3,7 @@
     ref="containerRef"
     v-longpress="($event) => processMouse('longpress', $event)"
     class="df-grid container d-flex flex-column"
+    :class="{ selection: isSelectionActive, exclusion: uSelection.selectionMode.value === 'exclusion' }"
     :style="`--${templateColumns}`"
     @click="($event) => processMouse('click', $event)"
     @dblclick="($event) => processMouse('dblclick', $event)"
@@ -46,7 +47,7 @@
               :item="item"
               :columns="columnRendererOptionsInternal"
               :renderers="DefaultRenderers"
-              :class="[uColumns.cssClass.value, props.rowClass?.(item, index)]"
+              :class="[uColumns.cssClass.value, props.rowClass?.(item, index), isSelectionActive ? (uSelection.isSelected(item[props.keyField]) ? 'selected' : 'unselected') : null]"
               :data-pk="item[keyField]"
               :data-idx="index"
             />
@@ -106,8 +107,8 @@ import { useSorting } from './columns-sorting';
 import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
 import type { GridEmits, GridProps } from './df-grid-types';
-import { useSelection } from './selection';
 import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from './helpers';
+import { useSelection } from './selection';
 
 const props = withDefaults(
   defineProps<GridProps>(),
@@ -152,6 +153,11 @@ const updateRenderedRows = throttle(
 
 const uSelection = useSelection(props, emit);
 const { processMouse } = useGridMouseEvents(sortEmitWrapper, props, sortState, headerRef, uColumns, uSelection);
+
+const isSelectionActive = computed(() => {
+  const mode = uSelection.selectionMode.value;
+  return mode !== null && mode !== 'non-select';
+});
 
 watch(uColumns.active, () => { templateColumns.value = ''; });
 

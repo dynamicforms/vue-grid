@@ -51,6 +51,8 @@ export function useGridMouseEvents(
     const columnNames = new Set(uColumns.activeColumnsDefinition.value.columns.map((c) => c.fieldName));
     const columnName = columnClasses.find((c: any) => columnNames.has(c));
 
+    if (!row) return; // click landed outside any row (e.g. status bar buttons)
+
     if (key === 'header') {
       const doSort = (eType === 'click' && !longPress.value) || eType === 'longpress';
       if (doSort) {
@@ -67,18 +69,20 @@ export function useGridMouseEvents(
 
     // Data row
     if (eType === 'longpress') {
-      if (uSelection?.selectionMode.value === null) uSelection?.startSelection(key);
-      else uSelection?.toggleKey(key);
+      if (uSelection?.selectionMode.value !== 'non-select') {
+        if (uSelection?.selectionMode.value === null) uSelection?.startSelection(key);
+        else uSelection?.toggleKey(key);
+      }
       return;
     }
 
     if (eType === 'click') {
-      if ((event as MouseEvent).shiftKey && uSelection) {
+      if ((event as MouseEvent).shiftKey && uSelection && uSelection.selectionMode.value !== 'non-select') {
         if (uSelection.selectionMode.value === null) uSelection.startSelection(key);
         else uSelection.toggleKey(key);
         return;
       }
-      if (uSelection && uSelection.selectionMode.value !== null) {
+      if (uSelection && uSelection.selectionMode.value !== null && uSelection.selectionMode.value !== 'non-select') {
         uSelection.toggleKey(key);
         return;
       }

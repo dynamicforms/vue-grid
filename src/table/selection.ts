@@ -2,7 +2,7 @@ import { computed, EmitFn, ref, watch } from 'vue';
 
 import type { GridEmits, GridProps } from './df-grid-types';
 
-export type SelectionMode = null | 'selection' | 'exclusion';
+export type SelectionMode = null | 'selection' | 'exclusion' | 'non-select';
 
 export interface SelectionProps {
   selectionMode?: SelectionMode;

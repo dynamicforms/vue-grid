@@ -77,11 +77,11 @@
 
     <!-- Status bar -->
     <div
-      v-if="showStatusBar || selectionMode"
+      v-if="showStatusBar || isSelectionActive"
       class="df-status-bar"
-      :class="{ 'selection-bar': selectionMode }"
+      :class="{ 'selection-bar': isSelectionActive }"
     >
-      <template v-if="selectionMode">
+      <template v-if="isSelectionActive">
         <div class="selection-bar-left">
           <cached-icon
             name="mdi-close"
@@ -184,6 +184,8 @@ function getFilterableConfig(column: ColumnDefinition<keyof RendererOptionsMap>)
   const config = getFilterConfig((column as any).filterable);
   return (config.fieldType || config.choices) ? config : null;
 }
+
+const isSelectionActive = computed(() => props.selectionMode != null && props.selectionMode !== 'non-select');
 
 const activeFilterCount = computed(() => {
   if (!props.filterState) return 0;
