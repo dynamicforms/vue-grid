@@ -25,6 +25,7 @@
     <div
       v-if="showFilterRow"
       class="df-grid card filter-row"
+      data-section="filter"
       :class="gridClass"
     >
       <div
@@ -79,6 +80,7 @@
     <div
       v-if="showStatusBar || isSelectionActive"
       class="df-status-bar"
+      data-section="status-bar"
       :class="{ 'selection-bar': isSelectionActive }"
     >
       <template v-if="isSelectionActive">
@@ -239,11 +241,6 @@ defineExpose({ headerItem, headerOptions, headerHeight });
   display: flex;
   align-items: center;
   gap: 0.5em;
-}
-
-.df-status-bar.selection-bar {
-  background-color: rgb(var(--v-theme-primary, 25, 118, 210), 0.12);
-  border-top-color: rgb(var(--v-theme-primary, 25, 118, 210), 0.3);
 }
 
 .selection-bar-left {

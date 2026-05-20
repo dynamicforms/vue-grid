@@ -9,12 +9,13 @@
     @dblclick="($event) => processMouse('dblclick', $event)"
     @keydown.enter="void (0)"
   >
-    <div v-if="$slots['toolbar-start'] || $slots['toolbar-end']" class="df-grid-toolbar">
+    <div v-if="$slots['toolbar-start'] || $slots['toolbar-end']" class="df-grid-toolbar" data-section="toolbar">
       <slot name="toolbar-start"/>
       <slot name="toolbar-end"/>
     </div>
     <df-grid-header
       ref="headerRef"
+      data-section="header"
       :columns="uColumns.columns.value"
       :grid-id="gridId"
       :template-columns="templateColumns"
@@ -34,6 +35,7 @@
     </df-grid-header>
     <virtual-scroll
       class="cards-grid flex-1-1 overflow-y-scroll"
+      data-section="body"
       :items="sortedRecords"
       :default-item-size="30"
       :buffer-before="30"
@@ -55,7 +57,7 @@
         </div>
       </template>
     </virtual-scroll>
-    <div v-if="$slots['footer-start'] || $slots['footer-end']" class="df-grid-footer">
+    <div v-if="$slots['footer-start'] || $slots['footer-end']" class="df-grid-footer" data-section="footer">
       <slot name="footer-start"/>
       <slot name="footer-end"/>
     </div>

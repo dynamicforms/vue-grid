@@ -30,6 +30,10 @@ export function useGridMouseEvents(
 ) {
   function processMouse(eType: SortEvents, event: TouchEvent | MouseEvent) {
     const target = event.target as HTMLElement;
+    const section = (target.closest('[data-section]') as HTMLElement | null)?.dataset.section;
+
+    // Passive sections never trigger row interactions
+    if (section === 'toolbar' || section === 'filter' || section === 'status-bar' || section === 'footer') return;
 
     const column = target.closest('.df-grid.cell');
     const row = target?.closest('.df-grid.card');
@@ -51,7 +55,7 @@ export function useGridMouseEvents(
     const columnNames = new Set(uColumns.activeColumnsDefinition.value.columns.map((c) => c.fieldName));
     const columnName = columnClasses.find((c: any) => columnNames.has(c));
 
-    if (!row) return; // click landed outside any row (e.g. status bar buttons)
+    if (!row) return; // click outside any row card within an interactive section
 
     if (key === 'header') {
       const doSort = (eType === 'click' && !longPress.value) || eType === 'longpress';

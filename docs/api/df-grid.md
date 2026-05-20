@@ -76,23 +76,40 @@ See [Filtering → GridFilterEvent](./filtering#gridfilterevent).
 | `footer-start` | — | Rendered at the left side of the footer bar below the scroller. The footer wrapper (`div.df-grid-footer`) is only rendered when at least one footer slot is provided. |
 | `footer-end` | — | Rendered at the right side of the footer. |
 
-### Toolbar and footer layout
+### Grid structure
+
+The grid renders the following layers from top to bottom. Each section carries a `data-section` attribute so you can target it from CSS or event handlers without relying on internal class names.
 
 ```
-┌─────────────────────────────────────┐
-│  toolbar-start    │    toolbar-end  │  ← div.df-grid-toolbar (flex, space-between)
-├─────────────────────────────────────┤
-│           column headers            │
-├─────────────────────────────────────┤
+┌─────────────────────────────────────┐  data-section="toolbar"
+│  toolbar-start    │    toolbar-end  │  div.df-grid-toolbar  (only when a slot has content)
+├─────────────────────────────────────┤  data-section="header"
+│           column headers            │  df-grid-header component root
+├─────────────────────────────────────┤  data-section="filter"   (inside header, when showFilterRow)
 │           filter row                │
-├─────────────────────────────────────┤
-│           data rows                 │
-├─────────────────────────────────────┤
-│  footer-start     │    footer-end   │  ← div.df-grid-footer (flex, space-between)
+├─────────────────────────────────────┤  data-section="status-bar" (inside header, when visible)
+│           status bar                │
+├─────────────────────────────────────┤  data-section="body"
+│           data rows                 │  virtual-scroll container
+├─────────────────────────────────────┤  data-section="footer"
+│  footer-start     │    footer-end   │  div.df-grid-footer   (only when a slot has content)
 └─────────────────────────────────────┘
 ```
 
-Both wrappers use `display: flex; justify-content: space-between` and are only mounted when at least one of their two slots has content.
+`data-section` values:
+
+| Value | Element | Notes |
+|-------|---------|-------|
+| `toolbar` | `div.df-grid-toolbar` | Present only when `toolbar-start` or `toolbar-end` slot has content |
+| `header` | `df-grid-header` root | Always present |
+| `filter` | Filter row `div` inside header | Present only when `showFilterRow` is `true` |
+| `status-bar` | Status bar `div` inside header | Present when `showStatusBar` is `true` or selection mode is active |
+| `body` | Virtual scroll container | Always present |
+| `footer` | `div.df-grid-footer` | Present only when `footer-start` or `footer-end` slot has content |
+
+The grid's own mouse event handler (`processMouse`) reads `data-section` first and immediately ignores clicks that originate in `toolbar`, `filter`, `status-bar`, and `footer` — those sections never trigger row interactions or selection.
+
+Both `div.df-grid-toolbar` and `div.df-grid-footer` use `display: flex; justify-content: space-between` and are only mounted when at least one of their two slots has content.
 
 ## Row CSS classes
 
