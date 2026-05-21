@@ -3,8 +3,9 @@ import { type ResponsiveColumnDefinitions } from './columns';
 import { FilterState, GridFilterEvent } from './columns-filtering';
 import { GridSortEvent, SortState } from './columns-sorting';
 import { GridClickEvent } from './df-grid-mouse-events';
+import { SelectionEmits, SelectionProps } from './selection';
 
-export interface GridProps {
+export interface GridProps extends SelectionProps {
   /**
    * Column layout definitions. Can be a flat `ColumnDefinitionsList` or a `ResponsiveColumnDefinition[]` array for
    * responsive layouts.
@@ -77,7 +78,7 @@ export interface GridProps {
 
 export type RowIndex = number | 'header';
 
-export interface GridEmits {
+export interface GridEmits extends SelectionEmits {
   click: [data: GridClickEvent];
   dblclick: [data: GridClickEvent];
   sort: [data: GridSortEvent];

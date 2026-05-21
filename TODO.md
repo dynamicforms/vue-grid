@@ -22,17 +22,11 @@
 
 ---
 
-## **Status Bar (above body) — existing, needs work**
+## **Status Bar (above body) — existing**
 
-Currently named `showStatusBar` / `statusBar` slot. Sample implementation shows active filter count,
-but the actual intended uses are broader:
-
-- Active filter count (current sample implementation)
-- **Selection mode**: "n items selected" · "Invert selection" · "Cancel selection mode"
-- **Group actions**: list of bulk actions executable on all selected items
-
-- [ ] Fix docs: remove claim that status bar "displays active filter count" — that's only a sample
-- [ ] Design the selection mode API (ties into row selection feature below)
+Named `showStatusBar` / `statusBar` slot. When selection mode is active it switches to the selection
+bar (cancel · count · invert · `#groupActions` slot). Otherwise shows the `statusBar` slot content
+(default: active filter count, which is only a sample).
 
 ---
 
@@ -57,11 +51,6 @@ A refactor to an array seems prudent
 - [ ] Refactor props for showing parts of the grid to one single object prop (Record<'body' | 'headers' | ..., boolean>.
       The prop is named 'visible-sections'. Values will start out as `true` for all except filter, status and summary.
 
-## **Row Operations**
-
-- [ ] Row selection (single / multiple)
-  - Drives selection mode content in the status bar (see above)
-
 ---
 
 ## **Visual Features**
@@ -77,6 +66,31 @@ A refactor to an array seems prudent
       The grid provides the visual implementation with configurable props (e.g. `opacity`) and a slot for full
       replacement. The consumer decides when to trigger it and from which side — the grid has no comparison logic.
       Effect is very noticeable on first trigger but becomes discrete if shown frequently (debounced / throttled).
+
+- [ ] Single-line layout: selection column width does not update when entering/leaving selection mode until a scroll
+      forces a new item into the viewport.
+
+      **What happens:** the `_selection` column is `0px` wide (via `--grid-template-columns`) when selection is
+      inactive, and `~1.5em` wide when active. The shadow grid re-measures correctly on selection change (confirmed:
+      adding `selectionActive` as a key/prop to the shadow grid triggers `idxAndItem()` → `checkShadowGridColumns()`).
+      The CSS variable `--grid-template-columns` on the container **is** updated. But existing visible cards do not
+      visually reflow.
+
+      **Suspected cause:** `@pdanpdan/virtual-scroll` puts each item in a `.virtual-scroll-item` with
+      `will-change: transform`, promoting it to a GPU-composited layer. CSS custom-property changes on an ancestor
+      should cascade even through composited layers (the spec allows it), but in practice Chromium does not
+      re-layout composited items in response to an inherited custom-property change on a distant ancestor — it only
+      picks up the new value when the item is re-rendered/recycled by the scroller.
+
+      **What was tried:** watch on `isSelectionActive` + nextTick + direct `getComputedStyle` read from shadow grid +
+      bypass of throttle; exposing `containerEl` getter from shadow-grid; including `selectionMode` in
+      `columnRendererOptionsInternal` (forces new `columns` prop → Vue re-renders grid-cards). None reliably updated
+      all visible items without a scroll. The last-tried approach (selectionMode in columnRendererOptionsInternal)
+      may be partially working — worth re-testing.
+
+      **Possible future fix:** force a style or class toggle directly on each visible `.virtual-scroll-item` element
+      after `templateColumns` changes (e.g. briefly set a dummy CSS variable on each item via JS to break the
+      compositing cache), or find a way to call the virtual scroller's internal recycle/re-render API.
 
 ---
 

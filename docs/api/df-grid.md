@@ -25,18 +25,22 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `mainShadowCount` | `number` | `500` | Number of rows rendered in the main shadow grid used for column width measurement. Rarely needs changing. |
 | `secondaryShadowCount` | `number` | `30` | Number of rows rendered in secondary shadow grids (one per responsive layout). Rarely needs changing. |
 | `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | zebra striping (`'even'`/`'odd'`) | Returns CSS classes applied to each data row card. Receives the row data object and its 0-based index. Return type matches Vue's `:class` binding — a string, an array, or an object. Overriding this prop replaces the default even/odd zebra striping entirely; include the logic yourself if you still want it. |
+| `selectionMode` | `SelectionMode` | `null` | Active selection mode (`null`, `'selection'`, or `'exclusion'`). Use with `v-model:selectionMode` for controlled selection. See [Selection](./selection). |
+| `selectionKeys` | `Set<any>` | — | Set of selected (or excluded) row keys. Use with `v-model:selectionKeys`. See [Selection](./selection). |
 
 ## Emits
 
 | Event | Payload | Description |
 |-------|---------|-------------|
-| `click` | `GridClickEvent` | Fired on single click anywhere in the grid (header or data row). |
+| `click` | `GridClickEvent` | Fired on single click on a data row **when selection mode is inactive**. Not fired while selection is active (clicks toggle selection instead). Header clicks always fire. |
 | `dblclick` | `GridClickEvent` | Fired on double click. |
 | `sort` | `GridSortEvent` | Fired when the user interacts with a sortable column header. |
 | `filter` | `GridFilterEvent` | Fired when any filter value changes. |
 | `update:activeColumns` | `string` | Fired when the grid's ResizeObserver selects a different responsive layout. |
 | `update:sortState` | `SortState` | Fired together with `sort` when sort state changes internally. |
 | `update:filterState` | `FilterState` | Fired together with `filter` when filter state changes internally. |
+| `update:selectionMode` | `SelectionMode` | Fired when selection mode changes. Use with `v-model:selectionMode`. |
+| `update:selectionKeys` | `Set<any>, SelectionAction, key?` | Fired when the selected key set changes. `action` is `'add'`, `'remove'`, or `'clear'`. |
 
 ### `GridClickEvent`
 
@@ -66,28 +70,46 @@ See [Filtering → GridFilterEvent](./filtering#gridfilterevent).
 | `toolbar-start` | — | Rendered at the left side of the toolbar bar above the header. The toolbar wrapper (`div.df-grid-toolbar`) is only rendered when at least one toolbar slot is provided. |
 | `toolbar-end` | — | Rendered at the right side of the toolbar. |
 | `header` | `{ column, sortState, filterState, ... }` | Overrides the default header cell rendering. Passed through to `<DfGridHeader>`. |
-| `statusBar` | `{ filterState }` | Overrides the default status bar content. Passed through to `<DfGridHeader>`. |
+| `statusBar` | `{ filterState }` | Overrides the default status bar content (filter count). Only visible when `showStatusBar` is `true` and selection mode is inactive. |
+| `groupActions` | — | Rendered on the right side of the selection status bar. Only visible while selection mode is active. Use it for batch actions (delete, export, …). |
 | `item` | `{ item, index, active }` | Overrides the default `<GridCard>` row rendering. Receives the raw row object, its index, and the virtual scroller's `active` flag. |
 | `footer-start` | — | Rendered at the left side of the footer bar below the scroller. The footer wrapper (`div.df-grid-footer`) is only rendered when at least one footer slot is provided. |
 | `footer-end` | — | Rendered at the right side of the footer. |
 
-### Toolbar and footer layout
+### Grid structure
+
+The grid renders the following layers from top to bottom. Each section carries a `data-section` attribute so you can target it from CSS or event handlers without relying on internal class names.
 
 ```
-┌─────────────────────────────────────┐
-│  toolbar-start    │    toolbar-end  │  ← div.df-grid-toolbar (flex, space-between)
-├─────────────────────────────────────┤
-│           column headers            │
-├─────────────────────────────────────┤
+┌─────────────────────────────────────┐  data-section="toolbar"
+│  toolbar-start    │    toolbar-end  │  div.df-grid-toolbar  (only when a slot has content)
+├─────────────────────────────────────┤  data-section="header"
+│           column headers            │  df-grid-header component root
+├─────────────────────────────────────┤  data-section="filter"   (inside header, when showFilterRow)
 │           filter row                │
-├─────────────────────────────────────┤
-│           data rows                 │
-├─────────────────────────────────────┤
-│  footer-start     │    footer-end   │  ← div.df-grid-footer (flex, space-between)
+├─────────────────────────────────────┤  data-section="status-bar" (inside header, when visible)
+│           status bar                │
+├─────────────────────────────────────┤  data-section="body"
+│           data rows                 │  virtual-scroll container
+├─────────────────────────────────────┤  data-section="footer"
+│  footer-start     │    footer-end   │  div.df-grid-footer   (only when a slot has content)
 └─────────────────────────────────────┘
 ```
 
-Both wrappers use `display: flex; justify-content: space-between` and are only mounted when at least one of their two slots has content.
+`data-section` values:
+
+| Value | Element | Notes |
+|-------|---------|-------|
+| `toolbar` | `div.df-grid-toolbar` | Present only when `toolbar-start` or `toolbar-end` slot has content |
+| `header` | `df-grid-header` root | Always present |
+| `filter` | Filter row `div` inside header | Present only when `showFilterRow` is `true` |
+| `status-bar` | Status bar `div` inside header | Present when `showStatusBar` is `true` or selection mode is active |
+| `body` | Virtual scroll container | Always present |
+| `footer` | `div.df-grid-footer` | Present only when `footer-start` or `footer-end` slot has content |
+
+The grid's own mouse event handler (`processMouse`) reads `data-section` first and immediately ignores clicks that originate in `toolbar`, `filter`, `status-bar`, and `footer` — those sections never trigger row interactions or selection.
+
+Both `div.df-grid-toolbar` and `div.df-grid-footer` use `display: flex; justify-content: space-between` and are only mounted when at least one of their two slots has content.
 
 ## Row CSS classes
 

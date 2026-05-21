@@ -52,9 +52,16 @@ const records = [
 </script>
 ```
 
+## Grid structure
+
+The grid is composed of named sections — toolbar, header, filter row, status bar, body, and footer. Each section carries
+a `data-section` HTML attribute, which you can use for CSS targeting or custom event handling. 
+See [Grid structure](/api/df-grid#grid-structure) for the full layout diagram and attribute values.
+
 ## Sorting
 
-Add `sortable: true` (or a `SortConfig` object) to any column. The grid manages sort state internally; use `v-model:sortState` if you want to control it externally or pre-sort the grid:
+Add `sortable: true` (or a `SortConfig` object) to any column. The grid manages sort state internally; use 
+`v-model:sortState` if you want to control it externally or pre-sort the grid:
 
 ```vue
 <df-grid
@@ -119,3 +126,48 @@ const columns: ResponsiveColumnDefinitions = [
 ```
 
 See [Column Definitions](/api/columns) for more details.
+
+## Row selection
+
+The grid has built-in multi-row selection — no extra setup required.
+
+**Activating selection** (user gestures, no props needed):
+- **Long-press** or **Shift+click** a data row → enters selection mode and toggles that row
+- **Click** while selection is active → toggles the clicked row
+- The status bar appears automatically with a cancel button, an item count, and an invert button
+
+**Selection modes** — controlled via `v-model:selectionMode`:
+
+| Mode | Meaning |
+|------|---------|
+| `null` | Inactive — normal click events fire |
+| `'selection'` | Opt-in: only rows in `selectionKeys` are selected |
+| `'exclusion'` | Opt-out: all rows *except* those in `selectionKeys` are selected |
+| `'non-select'` | Gestures disabled — mode can only be changed programmatically |
+
+**CSS classes** — the grid adds these automatically, no JavaScript needed:
+- Container: `selection` (active), `exclusion` (exclusion mode)
+- Each row card: `selected` or `unselected` (only while selection is active)
+
+```css
+.df-grid.container.selection .df-grid.card.selected { outline: 2px solid blue; }
+.df-grid.container.selection .df-grid.card.unselected { opacity: 0.5; }
+```
+
+**Batch actions** — use the `#groupActions` slot to add buttons to the selection status bar:
+
+```vue
+<df-grid
+  v-model:selection-mode="selectionMode"
+  v-model:selection-keys="selectedKeys"
+  :columns="columns"
+  :records="records"
+  key-field="id"
+>
+  <template #groupActions>
+    <button @click="deleteSelected">Delete {{ selectedKeys.size }} items</button>
+  </template>
+</df-grid>
+```
+
+See [Selection](/api/selection) for the full API reference, including uncontrolled vs. controlled mode and reading the key set.

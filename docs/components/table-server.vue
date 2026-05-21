@@ -7,6 +7,7 @@
       class="grid-class"
       key-field="id"
       :show-filter-row="true"
+      selection-mode="non-select"
       @sort="onSort"
       @filter="onFilter"
     >

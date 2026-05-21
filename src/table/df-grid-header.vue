@@ -25,6 +25,7 @@
     <div
       v-if="showFilterRow"
       class="df-grid card filter-row"
+      data-section="filter"
       :class="gridClass"
     >
       <div
@@ -77,14 +78,40 @@
 
     <!-- Status bar -->
     <div
-      v-if="showStatusBar"
+      v-if="showStatusBar || isSelectionActive"
       class="df-status-bar"
+      data-section="status-bar"
+      :class="{ 'selection-bar': isSelectionActive }"
     >
-      <slot name="statusBar" :filter-state="filterState">
-        <div class="status-section">
-          Active filters: {{ activeFilterCount }}
+      <template v-if="isSelectionActive">
+        <div class="selection-bar-left">
+          <cached-icon
+            name="mdi-close"
+            class="selection-icon"
+            title="Cancel selection mode"
+            @click="emit('cancel-selection')"
+          />
+          <span class="selection-count">
+            {{ props.selectionKeys?.size ?? 0 }} items {{ selectionMode === 'selection' ? 'selected' : 'excluded' }}
+          </span>
+          <cached-icon
+            name="mdi-shuffle"
+            class="selection-icon"
+            title="Invert selection"
+            @click="emit('invert-selection')"
+          />
         </div>
-      </slot>
+        <div class="selection-group-actions">
+          <slot name="groupActions"/>
+        </div>
+      </template>
+      <template v-else>
+        <slot name="statusBar" :filter-state="filterState">
+          <div class="status-section">
+            Active filters: {{ activeFilterCount }}
+          </div>
+        </slot>
+      </template>
     </div>
   </div>
 </template>
@@ -93,6 +120,7 @@
 import { DfCheckbox, DfDateTime, DfInput, DfSelect, FieldDensity } from '@dynamicforms/vuetify-inputs';
 import { isBoolean } from 'lodash-es';
 import { computed, onMounted, onUpdated, ref } from 'vue';
+import { CachedIcon } from 'vue-cached-icon';
 
 import { DefaultRenderers, gridColumnCreate, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
@@ -100,13 +128,14 @@ import { ColumnDefinition } from './columns';
 import { FilterState, getFilterConfig } from './columns-filtering';
 import type { ColumnSortState, SortState } from './columns-sorting';
 import { GridCard, useHeaderContent } from './helpers';
+import type { SelectionMode } from './selection';
 
 const filterInputDensity = ref<FieldDensity>('inline');
 
 type CssClassTypes = string | string[] | Record<string, boolean>;
 type CssClasses = CssClassTypes | CssClassTypes[];
 
-interface HeaderProps {
+export interface HeaderProps {
   columns: ColumnDefinition<keyof RendererOptionsMap>[];
   gridId: symbol;
   gridClass: CssClasses;
@@ -114,9 +143,12 @@ interface HeaderProps {
   showFilterRow?: boolean;
   showStatusBar?: boolean;
   filterState?: FilterState;
+  selectionMode?: SelectionMode;
+  selectionKeys?: Set<any>;
 }
 
 const props = defineProps<HeaderProps>();
+const emit = defineEmits<{ 'cancel-selection': []; 'invert-selection': [] }>();
 
 const headerItem = computed(() => (
   Object.fromEntries(props.columns.map((column) => [column.fieldName, column.label]))
@@ -154,6 +186,8 @@ function getFilterableConfig(column: ColumnDefinition<keyof RendererOptionsMap>)
   const config = getFilterConfig((column as any).filterable);
   return (config.fieldType || config.choices) ? config : null;
 }
+
+const isSelectionActive = computed(() => props.selectionMode != null && props.selectionMode !== 'non-select');
 
 const activeFilterCount = computed(() => {
   if (!props.filterState) return 0;
@@ -196,6 +230,7 @@ defineExpose({ headerItem, headerOptions, headerHeight });
 .df-status-bar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 0.5em;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   background-color: rgba(0, 0, 0, 0.02);
@@ -206,6 +241,35 @@ defineExpose({ headerItem, headerOptions, headerHeight });
   display: flex;
   align-items: center;
   gap: 0.5em;
+}
+
+.selection-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.selection-icon {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: background-color 0.15s, opacity 0.15s;
+  margin-top: -.4em;
+}
+
+.selection-icon:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  opacity: 1;
+}
+
+.selection-count {
+  font-weight: 500;
+}
+
+.selection-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  margin-left: auto;
 }
 
 .filter-cell :deep(.v-checkbox-btn) {

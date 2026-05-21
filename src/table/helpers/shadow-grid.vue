@@ -2,7 +2,7 @@
   <div ref="shadowGridRef" class="df-grid shadow-grid card">
     <grid-card
       v-for="item in idxAndItem()"
-      :key="`${item[keyField]}`"
+      :key="`${item[keyField]}${selectionActive}`"
       v-memo="[`${item[keyField]}`]"
       :item="item"
       :columns="columns"
@@ -24,13 +24,14 @@ import GridCard from './grid-card.vue';
 import { useHeaderContent } from './header-content';
 import { ShadowGridMeasurements } from './shadow-grid-types';
 
-interface GridProps {
+export interface GridProps {
   records: RowValue[];
   columns: ColumnDefinition<keyof RendererOptionsMap>[];
   renderers: RenderersMap;
   count: number;
   offset: number;
   keyField: string;
+  selectionActive?: boolean;
 }
 
 const props = defineProps<GridProps>();
@@ -63,7 +64,7 @@ function* idxAndItem() {
 function reMeasure() {
   checkShadowGridColumns();
 }
-defineExpose({ reMeasure });
+defineExpose({ reMeasure, get containerEl() { return shadowGridRef.value; } });
 </script>
 
 <style>

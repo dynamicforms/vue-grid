@@ -7,6 +7,8 @@
     </div>
     <df-grid
       v-model:active-columns="activeColumDef"
+      v-model:selection-mode="selectionMode"
+      v-model:selection-keys="selectionKeys"
       :columns="columnsResponsive"
       :records="records"
       class="grid-class"
@@ -28,6 +30,9 @@
           <span style="font-size: 0.8rem; opacity: 0.8">{{ records.length }} records</span>
         </div>
       </template>
+      <template #groupActions>
+        <cached-icon name="mdi-delete" title="Delete selected" class="shuffle-icon" style="color: red" @click.stop="deleteSelected"/>
+      </template>
       <template #footer-start>
         <span style="padding: 4px 8px; font-size: 0.8rem; opacity: 0.6">@dynamicforms/vue-grid</span>
       </template>
@@ -42,10 +47,55 @@
 import { computed, reactive, ref } from 'vue';
 import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
 
-import { createColumn, DfGrid, filterColumns, ResponsiveColumnDefinitions } from '../../src';
+import { createColumn, DfGrid, filterColumns, ResponsiveColumnDefinitions, SelectionMode } from '../../src';
 import { generateMusicLibrary, languagesMap } from './data-generator';
 
 const records = reactive(generateMusicLibrary(10000));
+
+// --- Selection state ---
+const selectionMode = ref<SelectionMode>(null);
+const selectionKeys = ref<Set<any>>(new Set());
+
+function isSelected(id: any): boolean {
+  if (selectionMode.value === 'selection') return selectionKeys.value.has(id);
+  if (selectionMode.value === 'exclusion') return !selectionKeys.value.has(id);
+  return false;
+}
+
+function toggleSelection(id: any): void {
+  const keys = new Set(selectionKeys.value);
+  if (keys.has(id)) keys.delete(id);
+  else keys.add(id);
+  selectionKeys.value = keys;
+}
+
+function deleteSelected(): void {
+  const arr = records as any[];
+  const toKeep = arr.filter((r) => !isSelected(r.id));
+  arr.splice(0, arr.length, ...toKeep);
+}
+
+// Checkbox column used in single-line and three-row layouts when in selection mode.
+// postRender reads selectionMode/selectionKeys reactively so each card's formattedData
+// computed re-evaluates when selection changes.
+const selectionCol = createColumn('_selection', '', 'plain', {
+  filterable: false,
+  sortable: false,
+  rendererOptions: {
+    transform: () => '',
+    postRender: (value: any, rowValue: any) => new RenderableValue({
+      componentName: 'CachedIcon',
+      componentProps: {
+        name: isSelected(rowValue.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
+        class: 'selection-checkbox',
+        onClick: (e: MouseEvent) => {
+          e.stopPropagation();
+          toggleSelection(rowValue.id);
+        },
+      },
+    } as SimpleComponentDef),
+  },
+});
 
 const columns = [
   createColumn('id', 'Id', 'int', { cssClass: 'text-right' }),
@@ -98,13 +148,57 @@ const columns = [
     },
   }),
 ];
-const columnsResponsive = [
-  { cssClass: 'single-line', columns: filterColumns(columns, [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12]) },
-  { cssClass: 'three-row', columns: filterColumns(columns, [0, 1, 2, 3, 12, 5, 6, 7, 8, 9, 10, 11]) },
-  // { cssClass: 'narrow-1', columns: filterColumns(columns, [0, 1, 2, 5, 6]) },
-  // { cssClass: 'narrow-2', columns: filterColumns(columns, ['id', 'title', 'artist', 'genres', { year: 1 }]) },
-  { cssClass: 'single-column', columns: columns },
-] as ResponsiveColumnDefinitions;
+
+// three-row layout: selection + delete icons share the same cell via preRender/postRender (has-pre-post flex)
+const threeRowActionsCol = createColumn('actions', 'Delete', 'plain', {
+  filterable: false,
+  sortable: false,
+  rendererOptions: {
+    postRender: (_value: any, rowValue: any) => {
+      if (selectionMode.value === null) return null;
+      return new RenderableValue({
+        componentName: 'CachedIcon',
+        componentProps: {
+          name: isSelected(rowValue.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
+          class: 'selection-checkbox',
+          onClick: (e: MouseEvent) => {
+            e.stopPropagation();
+            toggleSelection(rowValue.id);
+          },
+        },
+      } as SimpleComponentDef);
+    },
+    preRender: (_value: any, rowValue: any) => new RenderableValue({
+      componentName: 'CachedIcon',
+      componentProps: {
+        name: 'mdi-delete',
+        class: 'shuffle-icon',
+        style: { color: 'red' },
+        onClick: (e: MouseEvent) => {
+          e.stopPropagation();
+          const index = records.findIndex(r => r.id === rowValue.id);
+          if (index !== -1) records.splice(index, 1);
+        },
+      },
+    } as SimpleComponentDef),
+  },
+});
+
+// single-line: selectionCol always present; hidden via CSS when .selection class is absent
+// three-row:   selection + delete icons combined in one cell via threeRowActionsCol (preRender + postRender)
+// single-column: no structural change – selected state shown via rowClass only
+const columnsResponsive: ResponsiveColumnDefinitions = [
+  {
+    cssClass: 'single-line',
+    columns: [selectionCol, ...filterColumns(columns, [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12])],
+  },
+  {
+    cssClass: 'three-row',
+    columns: [...filterColumns(columns, [0, 1, 2, 3]), threeRowActionsCol, ...filterColumns(columns, [5, 6, 7, 8, 9, 10, 11])],
+  },
+  { cssClass: 'single-column', columns },
+];
+
 const activeColumDef = ref('three-row');
 const fullScreenClass = ref('');
 const fullScreenButtonText = computed(
@@ -149,6 +243,16 @@ function addRows(count: number) {
   color: aqua;
 }
 
+:global(.selection-checkbox) {
+  cursor:  pointer;
+  padding: 0 .1em;
+  color:   #1976d2;
+}
+
+:global(.dark .selection-checkbox) {
+  color: #64b5f6;
+}
+
 .grid-class {
   height: 60em;
 }
@@ -169,10 +273,23 @@ function addRows(count: number) {
   background-color: #60606040;
 }
 
+/* --- Selection highlight --- */
+:deep(.df-grid.card.selected) {
+  outline: 2px solid #1976d280;
+}
+
+:deep(.df-grid.card.single-column.selected) {
+  background-color: #1976d230 !important;
+  outline: none;
+}
+
+/* --- three-row: 7 columns (no selection) --- */
 :deep(.df-grid.card.three-row) {
   grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em) minmax(min-content, max-content);
 }
 
+
+/* --- base card layout --- */
 :deep(.df-grid.card) {
   display:               grid;
   grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em) repeat(7, auto);
@@ -203,15 +320,29 @@ function addRows(count: number) {
   grid-area:   auto !important;
 }
 
+/* --- single-line: 13 columns always; first column collapses to 0 when selection inactive --- */
 :deep(.df-grid.card.single-line) {
-  /* column before last 1fr so that it stretches to remaining available space */
-  grid-template-columns: repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content)  minmax(min-content, max-content);
+  grid-template-columns: 0px repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
+}
+
+:deep(.df-grid.container.selection .df-grid.card.single-line) {
+  grid-template-columns: minmax(min-content, 1.5em) repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
 }
 
 :deep(.df-grid.card.single-line > *) {
   grid-column: auto !important;
   grid-row:    auto !important;
   grid-area:   auto !important;
+}
+
+/* --- selection checkbox cell --- */
+:deep(.df-grid.cell._selection) {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  overflow:        hidden;
+  padding:         0;
+  border:          none;
 }
 
 :deep(.df-grid.cell) {

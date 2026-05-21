@@ -4,6 +4,7 @@
     :records="records"
     key-field="id"
     style="height: 24em"
+    selection-mode="non-select"
   />
 </template>
 

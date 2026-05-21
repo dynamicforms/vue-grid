@@ -4,6 +4,7 @@ import { type RowValue } from './cell-renderers';
 import { type useColumns } from './columns';
 import { PositionEvents, processSortEvent, SortEvents, SortState } from './columns-sorting';
 import type { RowIndex, GridProps, GridEmits } from './df-grid-types';
+import type { useSelection } from './selection';
 
 const longPress = ref(false);
 const longPressClicked = ref(false);
@@ -25,9 +26,14 @@ export function useGridMouseEvents(
   sortState: ComputedRef<SortState>,
   headerRef: Ref,
   uColumns: ReturnType<typeof useColumns>,
+  uSelection?: ReturnType<typeof useSelection>,
 ) {
   function processMouse(eType: SortEvents, event: TouchEvent | MouseEvent) {
     const target = event.target as HTMLElement;
+    const section = (target.closest('[data-section]') as HTMLElement | null)?.dataset.section;
+
+    // Passive sections never trigger row interactions
+    if (section === 'toolbar' || section === 'filter' || section === 'status-bar' || section === 'footer') return;
 
     const column = target.closest('.df-grid.cell');
     const row = target?.closest('.df-grid.card');
@@ -49,6 +55,8 @@ export function useGridMouseEvents(
     const columnNames = new Set(uColumns.activeColumnsDefinition.value.columns.map((c) => c.fieldName));
     const columnName = columnClasses.find((c: any) => columnNames.has(c));
 
+    if (!row) return; // click outside any row card within an interactive section
+
     if (key === 'header') {
       const doSort = (eType === 'click' && !longPress.value) || eType === 'longpress';
       if (doSort) {
@@ -56,9 +64,32 @@ export function useGridMouseEvents(
       }
       longPress.value = eType === 'longpress';
       longPressClicked.value = eType === 'longpress';
+      if (eType === 'click') {
+        const p: GridClickEvent = { rowId, key, rowData, columnClasses, event, columnName };
+        emit(eType as 'click', p); // typecast needed to unconfuse TS about what event we're calling
+      }
+      return;
+    }
+
+    // Data row
+    if (eType === 'longpress') {
+      if (uSelection?.selectionMode.value !== 'non-select') {
+        if (uSelection?.selectionMode.value === null) uSelection?.startSelection(key);
+        else uSelection?.toggleKey(key);
+      }
+      return;
     }
 
     if (eType === 'click') {
+      if ((event as MouseEvent).shiftKey && uSelection && uSelection.selectionMode.value !== 'non-select') {
+        if (uSelection.selectionMode.value === null) uSelection.startSelection(key);
+        else uSelection.toggleKey(key);
+        return;
+      }
+      if (uSelection && uSelection.selectionMode.value !== null && uSelection.selectionMode.value !== 'non-select') {
+        uSelection.toggleKey(key);
+        return;
+      }
       const p: GridClickEvent = { rowId, key, rowData, columnClasses, event, columnName };
       emit(eType as 'click', p); // typecast needed to unconfuse TS about what event we're calling
     }
