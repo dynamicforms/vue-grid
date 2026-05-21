@@ -67,6 +67,31 @@ A refactor to an array seems prudent
       replacement. The consumer decides when to trigger it and from which side — the grid has no comparison logic.
       Effect is very noticeable on first trigger but becomes discrete if shown frequently (debounced / throttled).
 
+- [ ] Single-line layout: selection column width does not update when entering/leaving selection mode until a scroll
+      forces a new item into the viewport.
+
+      **What happens:** the `_selection` column is `0px` wide (via `--grid-template-columns`) when selection is
+      inactive, and `~1.5em` wide when active. The shadow grid re-measures correctly on selection change (confirmed:
+      adding `selectionActive` as a key/prop to the shadow grid triggers `idxAndItem()` → `checkShadowGridColumns()`).
+      The CSS variable `--grid-template-columns` on the container **is** updated. But existing visible cards do not
+      visually reflow.
+
+      **Suspected cause:** `@pdanpdan/virtual-scroll` puts each item in a `.virtual-scroll-item` with
+      `will-change: transform`, promoting it to a GPU-composited layer. CSS custom-property changes on an ancestor
+      should cascade even through composited layers (the spec allows it), but in practice Chromium does not
+      re-layout composited items in response to an inherited custom-property change on a distant ancestor — it only
+      picks up the new value when the item is re-rendered/recycled by the scroller.
+
+      **What was tried:** watch on `isSelectionActive` + nextTick + direct `getComputedStyle` read from shadow grid +
+      bypass of throttle; exposing `containerEl` getter from shadow-grid; including `selectionMode` in
+      `columnRendererOptionsInternal` (forces new `columns` prop → Vue re-renders grid-cards). None reliably updated
+      all visible items without a scroll. The last-tried approach (selectionMode in columnRendererOptionsInternal)
+      may be partially working — worth re-testing.
+
+      **Possible future fix:** force a style or class toggle directly on each visible `.virtual-scroll-item` element
+      after `templateColumns` changes (e.g. briefly set a dummy CSS variable on each item via JS to break the
+      compositing cache), or find a way to call the virtual scroller's internal recycle/re-render API.
+
 ---
 
 # Out of scope

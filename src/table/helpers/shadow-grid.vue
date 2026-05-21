@@ -2,7 +2,7 @@
   <div ref="shadowGridRef" class="df-grid shadow-grid card">
     <grid-card
       v-for="item in idxAndItem()"
-      :key="`${item[keyField]}`"
+      :key="`${item[keyField]}${selectionActive}`"
       v-memo="[`${item[keyField]}`]"
       :item="item"
       :columns="columns"
@@ -31,6 +31,7 @@ export interface GridProps {
   count: number;
   offset: number;
   keyField: string;
+  selectionActive?: boolean;
 }
 
 const props = defineProps<GridProps>();
@@ -63,7 +64,7 @@ function* idxAndItem() {
 function reMeasure() {
   checkShadowGridColumns();
 }
-defineExpose({ reMeasure });
+defineExpose({ reMeasure, get containerEl() { return shadowGridRef.value; } });
 </script>
 
 <style>

@@ -184,26 +184,20 @@ const threeRowActionsCol = createColumn('actions', 'Delete', 'plain', {
   },
 });
 
-// columnsResponsive is a computed so layouts can include/exclude selectionCol based on selection mode.
-// single-line: checkbox column on the far left
+// single-line: selectionCol always present; hidden via CSS when .selection class is absent
 // three-row:   selection + delete icons combined in one cell via threeRowActionsCol (preRender + postRender)
 // single-column: no structural change – selected state shown via rowClass only
-const columnsResponsive = computed<ResponsiveColumnDefinitions>(() => {
-  const inSelection = selectionMode.value !== null;
-  return [
-    {
-      cssClass: 'single-line',
-      columns: inSelection
-        ? [selectionCol, ...filterColumns(columns, [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12])]
-        : filterColumns(columns, [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12]),
-    },
-    {
-      cssClass: 'three-row',
-      columns: [...filterColumns(columns, [0, 1, 2, 3]), threeRowActionsCol, ...filterColumns(columns, [5, 6, 7, 8, 9, 10, 11])],
-    },
-    { cssClass: 'single-column', columns },
-  ];
-});
+const columnsResponsive: ResponsiveColumnDefinitions = [
+  {
+    cssClass: 'single-line',
+    columns: [selectionCol, ...filterColumns(columns, [0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12])],
+  },
+  {
+    cssClass: 'three-row',
+    columns: [...filterColumns(columns, [0, 1, 2, 3]), threeRowActionsCol, ...filterColumns(columns, [5, 6, 7, 8, 9, 10, 11])],
+  },
+  { cssClass: 'single-column', columns },
+];
 
 const activeColumDef = ref('three-row');
 const fullScreenClass = ref('');
@@ -326,13 +320,11 @@ function addRows(count: number) {
   grid-area:   auto !important;
 }
 
-/* --- single-line: 12 columns (no selection) --- */
+/* --- single-line: 13 columns always; first column collapses to 0 when selection inactive --- */
 :deep(.df-grid.card.single-line) {
-  /* column before last 1fr so that it stretches to remaining available space */
-  grid-template-columns: repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content)  minmax(min-content, max-content);
+  grid-template-columns: 0px repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
 }
 
-/* --- single-line: 13 columns (in selection mode — checkbox column prepended) --- */
 :deep(.df-grid.container.selection .df-grid.card.single-line) {
   grid-template-columns: minmax(min-content, 1.5em) repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
 }
@@ -348,6 +340,7 @@ function addRows(count: number) {
   display:         flex;
   align-items:     center;
   justify-content: center;
+  overflow:        hidden;
   padding:         0;
   border:          none;
 }
