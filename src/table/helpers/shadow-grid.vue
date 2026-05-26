@@ -35,7 +35,8 @@ export interface GridProps {
 }
 
 const props = defineProps<GridProps>();
-const { keyField, selectionActive } = toRefs(props); // This is necessary because vue 3.4 SSR renderer messes up the v-memo generation
+// The following dereference is necessary because vue 3.4 SSR renderer messes up the v-memo generation
+const { keyField, selectionActive } = toRefs(props);
 
 interface Emits {
   (e: 'onmeasure', value: ShadowGridMeasurements): any;
