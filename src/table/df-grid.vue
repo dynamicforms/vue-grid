@@ -38,10 +38,12 @@
       class="cards-grid flex-1-1 overflow-y-scroll"
       data-section="body"
       :items="sortedRecords"
+      :loading="loading"
       :default-item-size="30"
       :buffer-before="30"
       :buffer-after="30"
       @visible-range-change="updateRenderedRows"
+      @load="(direction) => emit('load', direction)"
     >
       <template #item="{ item, index }">
         <div class="df-grid dynamic-scroller-item">
@@ -58,6 +60,28 @@
               :data-pk="item[keyField]"
               :data-idx="index"
             />
+          </slot>
+        </div>
+      </template>
+      <template #footer>
+        <div
+          v-if="showSummaryBar || loading || !props.records.length"
+          class="df-summary-bar"
+          data-section="summary-bar"
+        >
+          <slot name="summary-bar">
+            <div v-if="loading" class="df-summary-loading">
+              <slot name="loading">
+                <cached-icon name="mdi-loading" class="df-summary-spin"/>
+                <span>Loading…</span>
+              </slot>
+            </div>
+            <div v-else-if="!props.records.length" class="df-summary-no-data">
+              <slot name="no-data">
+                <cached-icon name="mdi-database-off"/>
+                <span>No data</span>
+              </slot>
+            </div>
           </slot>
         </div>
       </template>
@@ -105,6 +129,7 @@
 import { VirtualScroll } from '@pdanpdan/virtual-scroll';
 import { keys, maxBy, pickBy, throttle } from 'lodash-es';
 import { computed, nextTick, onMounted, onUnmounted, onUpdated, ref, toRef, watch } from 'vue';
+import { CachedIcon } from 'vue-cached-icon';
 import '@pdanpdan/virtual-scroll/style.css';
 
 import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap, RowValue } from './cell-renderers';
@@ -126,6 +151,8 @@ const props = withDefaults(
     columns: () => [],
     showFilterRow: false,
     showStatusBar: false,
+    showSummaryBar: false,
+    loading: false,
     rowClass: (item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
     selectionMode: null,
   },
@@ -240,6 +267,26 @@ onUnmounted(() => gridDestroy(gridId));
 .df-grid-toolbar, .df-grid-footer {
   display: flex;
   justify-content: space-between;
+}
+.df-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 1em;
+}
+.df-summary-loading, .df-summary-no-data {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 2.5em;
+  opacity: 0.7;
+}
+@keyframes df-grid-spin {
+  to { transform: rotate(360deg); }
+}
+.df-summary-spin {
+  animation: df-grid-spin 1s linear infinite;
 }
 .df-grid.container .df-grid.card:not(.shadow-grid) {
   /*noinspection CssUnresolvedCustomProperty*/

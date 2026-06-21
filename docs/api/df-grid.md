@@ -22,6 +22,8 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `filterState` | `FilterState` | — | External filter state. Use with `v-model:filterState` for controlled filtering. When omitted the grid filters internally. |
 | `showFilterRow` | `boolean` | `false` | Show the filter input row below the column headers. |
 | `showStatusBar` | `boolean` | `false` | Show the status bar below the filter row (displays active filter count). |
+| `showSummaryBar` | `boolean` | `false` | Show the summary bar below the data rows. The bar also appears automatically when `loading` is `true` or when `records` is empty. |
+| `loading` | `boolean` | `false` | Indicates that data is being fetched. When `true` the default summary bar shows a loading spinner; the no-data indicator is suppressed even when `records` is empty. |
 | `mainShadowCount` | `number` | `500` | Number of rows rendered in the main shadow grid used for column width measurement. Rarely needs changing. |
 | `secondaryShadowCount` | `number` | `30` | Number of rows rendered in secondary shadow grids (one per responsive layout). Rarely needs changing. |
 | `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | zebra striping (`'even'`/`'odd'`) | Returns CSS classes applied to each data row card. Receives the row data object and its 0-based index. Return type matches Vue's `:class` binding — a string, an array, or an object. Overriding this prop replaces the default even/odd zebra striping entirely; include the logic yourself if you still want it. |
@@ -36,6 +38,7 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `dblclick` | `GridClickEvent` | Fired on double click. |
 | `sort` | `GridSortEvent` | Fired when the user interacts with a sortable column header. |
 | `filter` | `GridFilterEvent` | Fired when any filter value changes. |
+| `load` | `'vertical' \| 'horizontal'` | Fired when the user scrolls within `loadDistance` px of the end of the list and the grid is not in loading state. Use this to fetch and append the next page. Set `:loading="true"` while fetching to suppress duplicate events. Proxied from the underlying virtual-scroll `load` event. |
 | `update:activeColumns` | `string` | Fired when the grid's ResizeObserver selects a different responsive layout. |
 | `update:sortState` | `SortState` | Fired together with `sort` when sort state changes internally. |
 | `update:filterState` | `FilterState` | Fired together with `filter` when filter state changes internally. |
@@ -73,6 +76,9 @@ See [Filtering → GridFilterEvent](./filtering#gridfilterevent).
 | `statusBar` | `{ filterState }` | Overrides the default status bar content (filter count). Only visible when `showStatusBar` is `true` and selection mode is inactive. |
 | `groupActions` | — | Rendered on the right side of the selection status bar. Only visible while selection mode is active. Use it for batch actions (delete, export, …). |
 | `item` | `{ item, index, active }` | Overrides the default `<GridCard>` row rendering. Receives the raw row object, its index, and the virtual scroller's `active` flag. |
+| `summary-bar` | — | Replaces the entire summary bar content. The summary bar is visible when `showSummaryBar` is `true`, `loading` is `true`, or `records` is empty. |
+| `loading` | — | Replaces the default loading indicator (spinning icon + "Loading…" text) inside the summary bar. Only rendered when `loading` is `true`. |
+| `no-data` | — | Replaces the default no-data indicator (database-off icon + "No data" text) inside the summary bar. Only rendered when `loading` is `false` and `records` is empty. |
 | `footer-start` | — | Rendered at the left side of the footer bar below the scroller. The footer wrapper (`div.df-grid-footer`) is only rendered when at least one footer slot is provided. |
 | `footer-end` | — | Rendered at the right side of the footer. |
 
@@ -91,6 +97,8 @@ The grid renders the following layers from top to bottom. Each section carries a
 │           status bar                │
 ├─────────────────────────────────────┤  data-section="body"
 │           data rows                 │  virtual-scroll container
+├─────────────────────────────────────┤  data-section="summary-bar" (when visible)
+│           summary bar               │  div.df-summary-bar
 ├─────────────────────────────────────┤  data-section="footer"
 │  footer-start     │    footer-end   │  div.df-grid-footer   (only when a slot has content)
 └─────────────────────────────────────┘
@@ -105,6 +113,7 @@ The grid renders the following layers from top to bottom. Each section carries a
 | `filter` | Filter row `div` inside header | Present only when `showFilterRow` is `true` |
 | `status-bar` | Status bar `div` inside header | Present when `showStatusBar` is `true` or selection mode is active |
 | `body` | Virtual scroll container | Always present |
+| `summary-bar` | `div.df-summary-bar` | Present when `showSummaryBar` is `true`, `loading` is `true`, or `records` is empty |
 | `footer` | `div.df-grid-footer` | Present only when `footer-start` or `footer-end` slot has content |
 
 The grid's own mouse event handler (`processMouse`) reads `data-section` first and immediately ignores clicks that originate in `toolbar`, `filter`, `status-bar`, and `footer` — those sections never trigger row interactions or selection.

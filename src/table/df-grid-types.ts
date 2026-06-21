@@ -59,6 +59,20 @@ export interface GridProps extends SelectionProps {
   showStatusBar?: boolean;
 
   /**
+   * Show the summary bar below the data rows. The bar also appears automatically when `loading` is
+   * `true` or when `records` is empty.
+   * @default false
+   */
+  showSummaryBar?: boolean;
+
+  /**
+   * Indicates that data is being fetched. When `true` the default summary bar shows a loading
+   * spinner; the no-data indicator is suppressed even when `records` is empty.
+   * @default false
+   */
+  loading?: boolean;
+
+  /**
    * Returns CSS classes applied to each data row card. Receives the row data object and its 0-based index.
    * Return type matches Vue's `:class` binding — a string, an array of strings, or an object `{ className: boolean }`.
    *
@@ -79,13 +93,73 @@ export interface GridProps extends SelectionProps {
 export type RowIndex = number | 'header';
 
 export interface GridEmits extends SelectionEmits {
+  /**
+   * Fired on a single click on a data row **when selection mode is inactive**. Not fired while
+   * selection is active — clicks toggle row selection instead. Header clicks always fire regardless
+   * of selection mode.
+   */
   click: [data: GridClickEvent];
+
+  /**
+   * Fired on a double click anywhere in the grid (header or data rows).
+   */
   dblclick: [data: GridClickEvent];
+
+  /**
+   * Fired when the user interacts with a sortable column header (single or shift-click).
+   * `suggestedSort` is the sort state the grid would apply if sorting locally — use it as-is or
+   * modify it before storing (e.g. to enforce a fixed primary sort key).
+   * On columns marked with `sortExternal`, the grid never reorders `records` itself regardless.
+   */
   sort: [data: GridSortEvent];
+
+  /**
+   * Fired on every change to any filter input (keystroke, clear, selection change).
+   * `filterValues` is a plain `{ fieldName: value }` map ready to forward to a backend query.
+   * On columns marked with `filterExternal`, the grid never applies a local predicate regardless.
+   */
   filter: [data: GridFilterEvent];
+
+  /**
+   * Fired when the user scrolls within `loadDistance` px (default 200) of the end of the list
+   * **and** `loading` is `false`. Use this to fetch and append the next page of records.
+   * Setting `:loading="true"` while fetching suppresses duplicate events until the fetch completes.
+   * Proxied directly from the underlying virtual-scroll `load` event.
+   */
+  load: [direction: 'vertical' | 'horizontal'];
+
+  /**
+   * Fired when the grid's `ResizeObserver` determines that a different responsive column layout
+   * fits the available width. Use with `v-model:activeColumns`.
+   */
   'update:activeColumns': [newValue: string];
+
+  /**
+   * Fired together with `filter` when the internal filter state changes. Use with
+   * `v-model:filterState` for controlled filtering.
+   */
   'update:filterState': [newValue: FilterState];
+
+  /**
+   * Fired together with `sort` when the internal sort state changes. Use with
+   * `v-model:sortState` for controlled sorting.
+   */
   'update:sortState': [newValue: SortState];
+
+  /**
+   * Fired when selection mode changes (e.g. user long-presses a row to start selection, or
+   * cancels via the status bar). Use with `v-model:selectionMode`.
+   * Inherited from `SelectionEmits`.
+   */
+  'update:selectionMode': [mode: import('./selection').SelectionMode];
+
+  /**
+   * Fired when the set of selected (or excluded) row keys changes. `action` describes what
+   * changed: `'add'` — key added, `'remove'` — key removed, `'clear'` — entire set cleared.
+   * Use with `v-model:selectionKeys`.
+   * Inherited from `SelectionEmits`.
+   */
+  'update:selectionKeys': [keys: Set<any>, action: import('./selection').SelectionAction, key?: any];
 }
 
 export type GridEmit = <K extends keyof GridEmits>(

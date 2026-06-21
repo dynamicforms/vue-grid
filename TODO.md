@@ -30,19 +30,6 @@ bar (cancel · count · invert · `#groupActions` slot). Otherwise shows the `st
 
 ---
 
-## **Summary Bar (below body) — TODO**
-
-New bar below the data rows.
-
-Intended uses:
-
-- [ ] Loading indicator (spinner / progress)
-- [ ] "No data" message when records is empty
-- [ ] Implement the bar as a slot (`summary-bar`) + a `showSummaryBar` prop,
-      consistent with how `showStatusBar` works
-
----
-
 ## Refactor showXBar
 
 There are multiple props that determine whether a particular part of the grid should be showing or not.
@@ -55,8 +42,6 @@ A refactor to an array seems prudent
 
 ## **Visual Features**
 
-- [ ] Loading indicator (via summary bar)
-- [ ] "No data" indicator (via summary bar)
 - [ ] Support CSS modes other than grid (e.g. table, flex, Vuetify row/col)
 - [ ] Excessive scrolling indication: when scrolling past the edge of content, show elastic feel (cuts off at ~20–25%
       of visible body height). Implemented as a div with programmatically controlled height — no virtual scroller
