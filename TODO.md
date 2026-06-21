@@ -43,9 +43,6 @@ A refactor to an array seems prudent
 ## **Visual Features**
 
 - [ ] Support CSS modes other than grid (e.g. table, flex, Vuetify row/col)
-- [ ] Excessive scrolling indication: when scrolling past the edge of content, show elastic feel (cuts off at ~20–25%
-      of visible body height). Implemented as a div with programmatically controlled height — no virtual scroller
-      override needed. Snaps back to zero when user stops scrolling (lifts finger, stops wheel, releases arrow key).
 - [ ] Pull to refresh: detect gesture and emit an event — grid detects, consumer handles the logic.
 - [ ] Incoming records indication: an arc flashes at the top or bottom of the body (similar to Android overscroll arc).
       The grid provides the visual implementation with configurable props (e.g. `opacity`) and a slot for full

@@ -20,6 +20,7 @@ A (not so) simple, (but hopefully) fast Vue 3 grid component with virtual scroll
 - Toolbar and footer slots for adding UI above and below the grid
 - Comprehensive events offer all data necessary to correctly identify the exact target of an event. Built-in event 
   handlers as well as support for handling the events separately
+- Overscroll indicator — elastic visual feedback when scrolling past the top or bottom of the content
 
 ### Features TODO
 

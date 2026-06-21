@@ -35,6 +35,7 @@
       <template #groupActions><slot name="groupActions"/></template>
     </df-grid-header>
     <virtual-scroll
+      ref="vsRef"
       class="cards-grid flex-1-1 overflow-y-scroll"
       data-section="body"
       :items="sortedRecords"
@@ -63,6 +64,9 @@
           </slot>
         </div>
       </template>
+      <template #header>
+        <excessive-scroll :height="-excessiveScrollAmount" direction="top"/>
+      </template>
       <template #footer>
         <div
           v-if="showSummaryBar || loading || !props.records.length"
@@ -84,6 +88,7 @@
             </div>
           </slot>
         </div>
+        <excessive-scroll :height="excessiveScrollAmount" direction="bottom"/>
       </template>
     </virtual-scroll>
     <div v-if="$slots['footer-start'] || $slots['footer-end']" class="df-grid-footer" data-section="footer">
@@ -140,8 +145,10 @@ import { useSorting } from './columns-sorting';
 import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
 import type { GridEmits, GridProps } from './df-grid-types';
+import ExcessiveScroll from './excessive-scroll.vue';
 import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from './helpers';
 import { useSelection } from './selection';
+import { useExcessiveScroll } from './use-excessive-scroll';
 
 const props = withDefaults(
   defineProps<GridProps>(),
@@ -203,7 +210,9 @@ watch(isSelectionActive, async () => {
   if (columnWidths && columnWidths !== 'none') templateColumns.value = `grid-template-columns: ${columnWidths}`;
 });
 
-const containerRef = ref();
+const vsRef = ref<any>(null);
+const containerRef = ref<HTMLElement | null>(null);
+const { amount: excessiveScrollAmount } = useExcessiveScroll(containerRef, vsRef, toRef(props, 'loading'));
 let lastResizeWasShrink = true;
 let lastResizeWidth = 0;
 let resizeObserver: ResizeObserver | null = null;
@@ -222,9 +231,11 @@ onMounted(() => {
       }
     });
   });
-  resizeObserver.observe(containerRef.value);
+  resizeObserver.observe(containerRef.value!);
 });
-onUnmounted(() => { resizeObserver?.disconnect(); });
+onUnmounted(() => {
+  resizeObserver?.disconnect();
+});
 onUpdated(() => {
   const targetElement = containerRef.value?.querySelector('.df-grid.dynamic-scroller-item .df-grid.card');
   if (targetElement != null && !lastResizeWasShrink) {
