@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 import { computed, EmitFn, nextTick, reactive } from 'vue';
 
 import type { RowValue } from './cell-renderers';
-import type { ColumnDefinition } from './columns';
+import type { ColumnDefinition, useColumns } from './columns';
 import {
   createFilterState,
   filterExternal,
@@ -390,7 +390,7 @@ describe('columns-filtering.ts', () => {
           const uCols = {
             columns: computed(() => singleDateColumns),
             activeColumnsDefinition: computed(() => ({ columns: singleDateColumns })),
-          };
+          } as ReturnType<typeof useColumns>;
           const inputRecords = computed(() => dateRecords);
           const { filterState, filteredRecords } = useFiltering(
             { records: dateRecords, columns: singleDateColumns, keyField: 'id' },
@@ -409,7 +409,7 @@ describe('columns-filtering.ts', () => {
           const uCols = {
             columns: computed(() => multiDateColumns),
             activeColumnsDefinition: computed(() => ({ columns: multiDateColumns })),
-          };
+          } as ReturnType<typeof useColumns>;
           const inputRecords = computed(() => dateRecords);
           const { filterState, filteredRecords } = useFiltering(
             { records: dateRecords, columns: multiDateColumns, keyField: 'id' },
@@ -552,7 +552,7 @@ describe('columns-filtering.ts', () => {
         const uColumnsInternal = {
           columns: computed(() => mockColumnsInternalOnly),
           activeColumnsDefinition: computed(() => ({ columns: mockColumnsInternalOnly })),
-        };
+        } as ReturnType<typeof useColumns>;
 
         const inputRecords = computed(() => mockRecords);
         const { filteredRecords } = useFiltering(

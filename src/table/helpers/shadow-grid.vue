@@ -46,6 +46,8 @@ const { headerContentVNodes } = useHeaderContent();
 const shadowGridRef = ref();
 
 function checkShadowGridColumns() {
+  // istanbul ignore next — shadowGridRef.value is always set when the component is mounted;
+  // the null branch is a defensive guard that cannot be triggered through normal component usage.
   if (!shadowGridRef.value) return;
 
   const computedStyle = window.getComputedStyle(shadowGridRef.value);

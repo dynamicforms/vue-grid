@@ -7,6 +7,10 @@
 </template>
 
 <script setup lang="ts">
+// No unit tests: this is a pure display component with no JavaScript logic.
+// All conditional rendering (v-if="pre", v-if="post") is template-level and not
+// instrumented by Istanbul's JS coverage. Testing it would only mount a shell
+// and verify that Vue's own v-if directive works.
 import { MessagesWidget, RenderableValue } from '@dynamicforms/vue-forms';
 
 defineOptions({ inheritAttrs: false });

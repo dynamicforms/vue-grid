@@ -13,12 +13,12 @@
  * All registered event listeners are cleaned up in the `unmounted` hook to prevent memory
  * leaks. Non-primary mouse buttons (right-click, middle-click, etc.) are ignored.
  */
-import type { Directive, DirectiveBinding } from 'vue';
+import type { ObjectDirective, DirectiveBinding } from 'vue';
 
 type LongPressElement = HTMLElement & { $longpress$: { start: (e: TouchEvent | MouseEvent) => void; end: () => void } };
 
 // eslint-disable-next-line import/prefer-default-export
-export const longpress: Directive<HTMLElement, (event: TouchEvent | MouseEvent) => void> = {
+export const longpress: ObjectDirective<HTMLElement, (event: TouchEvent | MouseEvent) => void> = {
   mounted(el: HTMLElement, binding: DirectiveBinding<(event: TouchEvent | MouseEvent) => void>) {
     if (typeof binding.value !== 'function') return;
 

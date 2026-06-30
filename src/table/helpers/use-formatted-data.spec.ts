@@ -249,6 +249,21 @@ describe('useFormattedData', () => {
 
       expect(formattedData.value[0].classes[1]).toBe('');
     });
+
+    it('wraps a single string renderer class into an array', () => {
+      const singleClassRenderer = (): RenderableValue => new RenderableValue({}, 'my-single-class');
+
+      const { formattedData } = useFormattedData({
+        item: { value: 'test' },
+        columns: [{ fieldName: 'value', label: 'Value', renderer: 'singleClass' as any, rendererOptions: {} as any }],
+        renderers: { ...renderers, singleClass: singleClassRenderer } as any,
+      });
+
+      const classes = formattedData.value[0].classes as string[];
+      expect(Array.isArray(classes)).toBe(true);
+      expect(classes).toContain('my-single-class');
+      expect(classes).toContain('value');
+    });
   });
 
   // -------------------------------------------------------------------------

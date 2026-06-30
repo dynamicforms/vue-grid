@@ -263,5 +263,20 @@ describe('longpress directive', () => {
 
       expect(cb).toHaveBeenCalledTimes(1);
     });
+
+    it('does not throw when a cancel event fires with no active timer', () => {
+      const cb = vi.fn();
+      const el = mountDirective(cb);
+
+      // Fire cancel events without any prior mousedown — pressTimer is null, end() is a no-op
+      expect(() => {
+        el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+      }).not.toThrow();
+
+      vi.advanceTimersByTime(1000);
+      expect(cb).not.toHaveBeenCalled();
+    });
   });
 });

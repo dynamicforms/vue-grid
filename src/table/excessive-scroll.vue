@@ -1,5 +1,10 @@
 <template>
-  <div v-if="height > 0" class="df-excessive-scroll" :class="`df-excessive-scroll--${direction}`" :style="{ height: `${height}px` }"/>
+  <div
+    v-if="height > 0"
+    class="df-excessive-scroll"
+    :class="`df-excessive-scroll--${direction}`"
+    :style="{ height: `${height}px` }"
+  />
 </template>
 
 <script setup lang="ts">
