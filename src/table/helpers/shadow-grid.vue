@@ -2,7 +2,7 @@
   <div ref="shadowGridRef" class="df-grid shadow-grid card">
     <grid-card
       v-for="item in idxAndItem()"
-      :key="`${item[keyField]}${selectionActive}`"
+      :key="`${item[keyField]}`"
       v-memo="[`${item[keyField]}`]"
       :item="item"
       :columns="columns"
@@ -36,7 +36,7 @@ export interface GridProps {
 
 const props = defineProps<GridProps>();
 // The following dereference is necessary because vue 3.4 SSR renderer messes up the v-memo generation
-const { keyField, selectionActive } = toRefs(props);
+const { keyField } = toRefs(props);
 
 interface Emits {
   (e: 'onmeasure', value: ShadowGridMeasurements): any;

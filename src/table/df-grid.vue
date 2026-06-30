@@ -271,22 +271,15 @@ const doShadowMeasure = throttle(
   100,
 );
 
-const columnRendererOptionsInternal = computed(() => {
-  // Include selectionMode in symbol label so the computed returns a new array when selection
-  // changes, forcing Vue to re-render visible grid cards (needed because virtual-scroller items
-  // run on GPU-composited layers via will-change:transform and don't pick up CSS variable
-  // changes via cascade alone until re-rendered).
-  const selMode = uSelection.selectionMode.value;
-  return uColumns.columns.value.map((column) => {
-    const opt: CellOptionsInternal = (column.rendererOptions ?? { nullHandler: 'null-null' }) as CellOptionsInternal;
-    opt[gridIdOption] = gridId;
-    opt[columnNameOption] = column.fieldName;
-    opt[columnIdOption] = Symbol(`grid-column-${selMode}`);
+const columnRendererOptionsInternal = computed(() => uColumns.columns.value.map((column) => {
+  const opt: CellOptionsInternal = (column.rendererOptions ?? { nullHandler: 'null-null' }) as CellOptionsInternal;
+  opt[gridIdOption] = gridId;
+  opt[columnNameOption] = column.fieldName;
+  opt[columnIdOption] = Symbol('grid-column');
 
-    gridColumnCreate(gridId, column.renderer as keyof RendererOptionsMap, opt);
-    return { ...column, rendererOptions: opt };
-  });
-});
+  gridColumnCreate(gridId, column.renderer as keyof RendererOptionsMap, opt);
+  return { ...column, rendererOptions: opt };
+}));
 
 onUnmounted(() => gridDestroy(gridId));
 </script>
