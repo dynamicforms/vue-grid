@@ -1,3 +1,25 @@
+/**
+ * @file renderers.ts
+ *
+ * Core cell-renderer registry and built-in transformer functions for df-grid.
+ *
+ * A cell renderer is a function `(value, rowValue, options) => RenderableValue`.
+ * `DefaultRenderers` ships built-in implementations for every supported type:
+ *   null-empty, null-null, plain, header, md, color, checkbox, link, email, file,
+ *   ip4, ip6, ip, date, time, datetime, int, float, decimal.
+ *
+ * The `wrapWithPrePost` helper (internal) wraps a main `RenderableValue` with optional
+ * pre/post render values when `preRender`/`postRender` are configured on the options.
+ *
+ * Runtime customisation:
+ *  - `setCellRenderer(type, fn)` — replaces a renderer in `DefaultRenderers`
+ *  - `getCellRenderers()` — returns a shallow copy of the current registry
+ *
+ * Per-column state for numeric renderers:
+ *  - `gridColumnCreate(gridId, dataType, options)` — initialises formatting state for
+ *    `int`, `float`, and `decimal` columns (delegates to `floatGridColumnCreate`)
+ *  - `gridDestroy(gridId)` — tears down all per-column state for a grid instance
+ */
 import { MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
 
 import { header, HeaderOptions } from './header-renderers';

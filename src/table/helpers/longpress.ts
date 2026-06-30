@@ -1,3 +1,18 @@
+/**
+ * @file longpress.ts
+ *
+ * Vue directive `v-longpress` for detecting long-press gestures on HTML elements.
+ *
+ * The directive fires the bound callback after the pointer has been held for 1 000 ms
+ * (or a custom duration via the directive `arg`, e.g. `v-longpress:500` for 500 ms).
+ *
+ * Timer lifecycle:
+ *  - Starts on `mousedown` (primary button only) or `touchstart`
+ *  - Cancelled on `click`, `mouseout`, `touchend`, or `touchcancel`
+ *
+ * All registered event listeners are cleaned up in the `unmounted` hook to prevent memory
+ * leaks. Non-primary mouse buttons (right-click, middle-click, etc.) are ignored.
+ */
 import type { Directive, DirectiveBinding } from 'vue';
 
 type LongPressElement = HTMLElement & { $longpress$: { start: (e: TouchEvent | MouseEvent) => void; end: () => void } };

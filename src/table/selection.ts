@@ -1,3 +1,20 @@
+/**
+ * @file selection.ts
+ *
+ * Manages row selection state for the df-grid component.
+ *
+ * Supports four selection modes:
+ *  - `null`          — selection inactive; regular click behaviour applies
+ *  - `'selection'`   — explicit inclusion: `selectionKeys` holds the selected row keys
+ *  - `'exclusion'`   — implicit inclusion: `selectionKeys` holds the *excluded* row keys,
+ *                      so every row not in the set is considered selected
+ *  - `'non-select'`  — selection mechanism entirely disabled (no rows can be selected)
+ *
+ * The composable supports both controlled (prop-driven) and uncontrolled (internal) modes.
+ * In controlled mode, pass `selectionMode` and `selectionKeys` as reactive props; the
+ * composable mirrors them and re-emits whenever the internal state would change.
+ * In uncontrolled mode, state is managed internally and exposed through the returned refs.
+ */
 import { computed, EmitFn, ref, watch } from 'vue';
 
 import type { GridEmits, GridProps } from './df-grid-types';

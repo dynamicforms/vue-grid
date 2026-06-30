@@ -1,3 +1,20 @@
+/**
+ * @file use-formatted-data.ts
+ *
+ * Vue composable that transforms raw row data into a list of renderable cell values.
+ *
+ * For each column in the provided definition list the composable:
+ *  1. Reads the cell value from the row item using the column's `fieldName`
+ *  2. Selects the renderer: uses `nullHandler` when the value is `null`/`undefined`,
+ *     otherwise uses the column's configured renderer (or `'plain'` as default)
+ *  3. Invokes the renderer to produce a `RenderableValue`
+ *  4. Merges column-level CSS classes (`fieldName` + optional `cssClass`) with any classes
+ *     returned by the renderer itself
+ *
+ * When `addRowResetItem` is `true`, a sentinel `<span class="df-grid-card-break-item">` is
+ * appended to the result list, which the card layout uses to force a grid-row break between
+ * column groups.
+ */
 import { RenderableValue } from '@dynamicforms/vue-forms';
 import { computed } from 'vue';
 

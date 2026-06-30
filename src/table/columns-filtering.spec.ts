@@ -1,12 +1,13 @@
 import { Field, Group } from '@dynamicforms/vue-forms';
 import { vi } from 'vitest';
-import { computed, EmitFn, reactive } from 'vue';
+import { computed, EmitFn, nextTick, reactive } from 'vue';
 
 import type { RowValue } from './cell-renderers';
 import type { ColumnDefinition } from './columns';
 import {
   createFilterState,
   filterExternal,
+  type FilterConfig,
   type FilterState,
   getFilterConfig,
   useFiltering,
@@ -75,6 +76,11 @@ describe('columns-filtering.ts', () => {
       const config = getFilterConfig({ key: filterExternal });
       expect(config.key).toBe(filterExternal);
       expect(config.fieldType).toBe('string'); // default
+    });
+
+    it('should return empty config for FilterConfig with no recognized properties', () => {
+      const config = getFilterConfig({} as FilterConfig);
+      expect(config).toEqual({});
     });
   });
 
@@ -353,6 +359,142 @@ describe('columns-filtering.ts', () => {
         expect(filteredRecords.value.length).toBe(2);
         expect(filteredRecords.value.every((r) => r.artist !== null)).toBe(true);
       });
+
+      describe('date field filtering', () => {
+        const dateRecords: RowValue[] = [
+          { id: 1, releaseDate: '2020-01-01' },
+          { id: 2, releaseDate: '2019-06-15' },
+          { id: 3, releaseDate: '2020-01-01' },
+          { id: 4, releaseDate: '2021-03-20' },
+          { id: 5, releaseDate: null },
+        ];
+
+        const singleDateColumns: ColumnDefinition[] = [
+          { fieldName: 'releaseDate', label: 'Release Date', filterable: { fieldType: 'date' } },
+        ];
+
+        const multiDateChoices = [
+          { id: '2020-01-01', text: '2020' },
+          { id: '2019-06-15', text: 'Jun 2019' },
+        ];
+
+        const multiDateColumns: ColumnDefinition[] = [
+          {
+            fieldName: 'releaseDate',
+            label: 'Release Date',
+            filterable: { choices: multiDateChoices, fieldType: 'date' },
+          },
+        ];
+
+        it('should filter by date exact match (line 154)', () => {
+          const uCols = {
+            columns: computed(() => singleDateColumns),
+            activeColumnsDefinition: computed(() => ({ columns: singleDateColumns })),
+          };
+          const inputRecords = computed(() => dateRecords);
+          const { filterState, filteredRecords } = useFiltering(
+            { records: dateRecords, columns: singleDateColumns, keyField: 'id' },
+            mockEmit,
+            uCols,
+            inputRecords,
+          );
+
+          filterState.value!.fields.releaseDate.value = '2020-01-01';
+
+          expect(filteredRecords.value.length).toBe(2);
+          expect(filteredRecords.value.every((r) => r.releaseDate === '2020-01-01')).toBe(true);
+        });
+
+        it('should filter by multi-select date field (line 153)', () => {
+          const uCols = {
+            columns: computed(() => multiDateColumns),
+            activeColumnsDefinition: computed(() => ({ columns: multiDateColumns })),
+          };
+          const inputRecords = computed(() => dateRecords);
+          const { filterState, filteredRecords } = useFiltering(
+            { records: dateRecords, columns: multiDateColumns, keyField: 'id' },
+            mockEmit,
+            uCols,
+            inputRecords,
+          );
+
+          filterState.value!.fields.releaseDate.value = ['2020-01-01', '2019-06-15'];
+
+          expect(filteredRecords.value.length).toBe(3);
+        });
+      });
+
+      describe('multi-select (choices) string filtering', () => {
+        const genreChoices = [
+          { id: 'rock', text: 'Rock' },
+          { id: 'pop', text: 'Pop' },
+          { id: 'jazz', text: 'Jazz' },
+        ];
+
+        const genreRecords: RowValue[] = [
+          { id: 1, genre: 'rock' },
+          { id: 2, genre: 'pop' },
+          { id: 3, genre: 'jazz' },
+          { id: 4, genre: 'rock' },
+          { id: 5, genre: 'pop' },
+        ];
+
+        const genreColumns: ColumnDefinition[] = [
+          { fieldName: 'genre', label: 'Genre', filterable: { choices: genreChoices } },
+        ];
+
+        let uGenreColumns: any;
+
+        beforeEach(() => {
+          uGenreColumns = {
+            columns: computed(() => genreColumns),
+            activeColumnsDefinition: computed(() => ({ columns: genreColumns })),
+          };
+        });
+
+        it('should return all records when multi-select filter value is empty array (line 136)', () => {
+          const inputRecords = computed(() => genreRecords);
+          const { filterState, filteredRecords } = useFiltering(
+            { records: genreRecords, columns: genreColumns, keyField: 'id' },
+            mockEmit,
+            uGenreColumns,
+            inputRecords,
+          );
+
+          filterState.value!.fields.genre.value = [];
+
+          expect(filteredRecords.value.length).toBe(genreRecords.length);
+        });
+
+        it('should filter records by multi-select string choices (line 161)', () => {
+          const inputRecords = computed(() => genreRecords);
+          const { filterState, filteredRecords } = useFiltering(
+            { records: genreRecords, columns: genreColumns, keyField: 'id' },
+            mockEmit,
+            uGenreColumns,
+            inputRecords,
+          );
+
+          filterState.value!.fields.genre.value = ['rock'];
+
+          expect(filteredRecords.value.length).toBe(2);
+          expect(filteredRecords.value.every((r) => r.genre === 'rock')).toBe(true);
+        });
+
+        it('should match multiple choices in multi-select string filter', () => {
+          const inputRecords = computed(() => genreRecords);
+          const { filterState, filteredRecords } = useFiltering(
+            { records: genreRecords, columns: genreColumns, keyField: 'id' },
+            mockEmit,
+            uGenreColumns,
+            inputRecords,
+          );
+
+          filterState.value!.fields.genre.value = ['rock', 'jazz'];
+
+          expect(filteredRecords.value.length).toBe(3);
+        });
+      });
     });
 
     describe('emitWrapper passthrough', () => {
@@ -395,6 +537,44 @@ describe('columns-filtering.ts', () => {
 
         expect(mockEmit).toHaveBeenCalledWith('dblclick', eventDataDblClick);
         expect(mockEmit).toHaveBeenCalledWith('sort', eventDataSort);
+      });
+    });
+
+    describe('internalFilterState watcher', () => {
+      it('should update internalFilterState when props.filterState changes (line 231)', async () => {
+        const mockPropsReactive = reactive({
+          records: mockRecords,
+          columns: mockColumnsInternalOnly,
+          keyField: 'id',
+          filterState: undefined,
+        });
+
+        const uColumnsInternal = {
+          columns: computed(() => mockColumnsInternalOnly),
+          activeColumnsDefinition: computed(() => ({ columns: mockColumnsInternalOnly })),
+        };
+
+        const inputRecords = computed(() => mockRecords);
+        const { filteredRecords } = useFiltering(
+          mockPropsReactive as unknown as GridProps,
+          mockEmit,
+          uColumnsInternal,
+          inputRecords,
+        );
+
+        // Set external filterState — watch queues to update internalFilterState
+        const newFilterState = createFilterState(mockColumnsInternalOnly, { title: 'Apple' });
+        (mockPropsReactive as any).filterState = newFilterState;
+        await nextTick(); // watch fires (line 231): internalFilterState = newFilterState
+
+        // Remove external filterState — filterState computed falls back to internalFilterState (= newFilterState)
+        (mockPropsReactive as any).filterState = undefined;
+        expect(filteredRecords.value.length).toBe(1);
+
+        await nextTick(); // watch fires again (line 231): internalFilterState = createFilterState(...)
+
+        // internalFilterState recreated with no active filters — all records returned
+        expect(filteredRecords.value.length).toBe(mockRecords.length);
       });
     });
 

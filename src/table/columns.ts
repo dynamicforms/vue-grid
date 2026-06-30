@@ -1,3 +1,19 @@
+/**
+ * @file columns.ts
+ *
+ * Column definitions, utilities, and the `useColumns` Vue composable for df-grid.
+ *
+ * Key exports:
+ *  - `ColumnDefinition<R>` — typed column descriptor that links a data field to a renderer
+ *  - `createColumn()` — convenience factory that builds a ColumnDefinition with safe defaults
+ *  - `filterColumns()` — selects a subset of columns by numeric index, field name string, or
+ *    `{ fieldName: n }` object (nth occurrence of a repeated field)
+ *  - `ResponsiveColumnDefinitions` — union type for flat or responsive (breakpoint-based)
+ *    column arrays
+ *  - `useColumns()` — resolves the currently active column set from a flat or responsive
+ *    column array, attaches internal renderer state via `gridColumnCreate` for each column,
+ *    and exposes computed refs for the active name, CSS class, and column list
+ */
 import { filter, find, isArray, isEmpty, isNumber, isObject, isString } from 'lodash-es';
 import { computed } from 'vue';
 
