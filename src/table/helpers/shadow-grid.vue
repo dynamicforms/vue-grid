@@ -3,7 +3,7 @@
     <grid-card
       v-for="item in idxAndItem()"
       :key="`${item[keyField]}`"
-      v-memo="[`${item[keyField]}`]"
+      v-memo="[`${item[keyField]}`, columnKey]"
       :item="item"
       :columns="columns"
       :renderers="renderers"
@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, toRefs } from 'vue';
+import { computed, nextTick, ref, toRefs } from 'vue';
 
 import { RendererOptionsMap, RenderersMap, RowValue } from '../cell-renderers';
 import { ColumnDefinition } from '../columns';
@@ -37,6 +37,7 @@ export interface GridProps {
 const props = defineProps<GridProps>();
 // The following dereference is necessary because vue 3.4 SSR renderer messes up the v-memo generation
 const { keyField } = toRefs(props);
+const columnKey = computed(() => props.columns.map((c) => c.fieldName).join(','));
 
 interface Emits {
   (e: 'onmeasure', value: ShadowGridMeasurements): any;
