@@ -75,25 +75,27 @@ function deleteSelected(): void {
   arr.splice(0, arr.length, ...toKeep);
 }
 
-// Checkbox column used in single-line and three-row layouts when in selection mode.
-// postRender reads selectionMode/selectionKeys reactively so each card's formattedData
-// computed re-evaluates when selection changes.
+// Checkbox column for single-line layout. Returns null when selection is inactive (matches
+// threeRowActionsCol pattern) so the cell is empty; shows checkbox when selection is active.
 const selectionCol = createColumn('_selection', '', 'plain', {
   filterable: false,
   sortable: false,
   rendererOptions: {
     transform: () => '',
-    postRender: (value: any, rowValue: any) => new RenderableValue({
-      componentName: 'CachedIcon',
-      componentProps: {
-        name: isSelected(rowValue.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
-        class: 'selection-checkbox',
-        onClick: (e: MouseEvent) => {
-          e.stopPropagation();
-          toggleSelection(rowValue.id);
+    postRender: (_value: any, rowValue: any) => {
+      if (selectionMode.value === null) return null;
+      return new RenderableValue({
+        componentName: 'CachedIcon',
+        componentProps: {
+          name: isSelected(rowValue.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
+          class: 'selection-checkbox',
+          onClick: (e: MouseEvent) => {
+            e.stopPropagation();
+            toggleSelection(rowValue.id);
+          },
         },
-      },
-    } as SimpleComponentDef),
+      } as SimpleComponentDef);
+    },
   },
 });
 
@@ -184,7 +186,7 @@ const threeRowActionsCol = createColumn('actions', 'Delete', 'plain', {
   },
 });
 
-// single-line: selectionCol always present; hidden via CSS when .selection class is absent
+// single-line: selectionCol dedicated first column (1.5em always); empty when selection inactive
 // three-row:   selection + delete icons combined in one cell via threeRowActionsCol (preRender + postRender)
 // single-column: no structural change – selected state shown via rowClass only
 const columnsResponsive: ResponsiveColumnDefinitions = [
@@ -274,10 +276,6 @@ function addRows(count: number) {
 }
 
 /* --- Selection highlight --- */
-:deep(.df-grid.card.selected) {
-  outline: 2px solid #1976d280;
-}
-
 :deep(.df-grid.card.single-column.selected) {
   background-color: #1976d230 !important;
   outline: none;
@@ -320,13 +318,9 @@ function addRows(count: number) {
   grid-area:   auto !important;
 }
 
-/* --- single-line: 13 columns always; first column collapses to 0 when selection inactive --- */
+/* --- single-line: 13 columns; first column auto-sizes (0 when cell hidden, ~1.5em when visible) --- */
 :deep(.df-grid.card.single-line) {
-  grid-template-columns: 0px repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
-}
-
-:deep(.df-grid.container.selection .df-grid.card.single-line) {
-  grid-template-columns: minmax(min-content, 1.5em) repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
+  grid-template-columns: max-content repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
 }
 
 :deep(.df-grid.card.single-line > *) {
@@ -335,12 +329,14 @@ function addRows(count: number) {
   grid-area:   auto !important;
 }
 
-/* --- selection checkbox cell --- */
+/* --- selection checkbox cell: hidden by default; shown when selection is active --- */
 :deep(.df-grid.cell._selection) {
+  display: none;
+}
+:deep(.df-grid.container.selection .df-grid.cell._selection) {
   display:         flex;
   align-items:     center;
   justify-content: center;
-  overflow:        hidden;
   padding:         0;
   border:          none;
 }

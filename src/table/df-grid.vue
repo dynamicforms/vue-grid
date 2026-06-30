@@ -201,17 +201,28 @@ const isSelectionActive = computed(() => {
   return mode !== null && mode !== 'non-select';
 });
 
+const vsRef = ref<any>(null);
+const containerRef = ref<HTMLElement | null>(null);
+
 watch(uColumns.active, () => { templateColumns.value = ''; });
 watch(isSelectionActive, async () => {
   await nextTick();
   const el = shadowRef.value?.containerEl as HTMLElement | undefined;
   if (!el) return;
   const columnWidths = window.getComputedStyle(el).getPropertyValue('grid-template-columns');
-  if (columnWidths && columnWidths !== 'none') templateColumns.value = `grid-template-columns: ${columnWidths}`;
+  if (columnWidths && columnWidths !== 'none') {
+    templateColumns.value = `grid-template-columns: ${columnWidths}`;
+    // `.virtual-scroll-item` elements carry `will-change: transform`, promoting them to
+    // GPU-composited layers. Chromium does not re-cascade CSS custom-property changes into
+    // composited subtrees — the row cards would keep the old column widths until the scroller
+    // recycles them on next scroll. Setting --grid-template-columns directly on each visible
+    // item bypasses the cascade boundary: the card finds the variable on its direct parent
+    // (within the same composited layer) and uses the new value immediately.
+    // Items that scroll into view later get the value via normal cascade from the container.
+    const items = containerRef.value?.querySelectorAll<HTMLElement>('.virtual-scroll-item') ?? [];
+    items.forEach((item) => item.style.setProperty('--grid-template-columns', columnWidths));
+  }
 });
-
-const vsRef = ref<any>(null);
-const containerRef = ref<HTMLElement | null>(null);
 const { amount: excessiveScrollAmount } = useExcessiveScroll(
   containerRef,
   vsRef,
