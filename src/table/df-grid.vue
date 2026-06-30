@@ -212,7 +212,13 @@ watch(isSelectionActive, async () => {
 
 const vsRef = ref<any>(null);
 const containerRef = ref<HTMLElement | null>(null);
-const { amount: excessiveScrollAmount } = useExcessiveScroll(containerRef, vsRef, toRef(props, 'loading'));
+const { amount: excessiveScrollAmount } = useExcessiveScroll(
+  containerRef,
+  vsRef,
+  toRef(props, 'loading'),
+  toRef(props, 'excessiveScrollThreshold'),
+  (amt) => emit('excessive-scroll', amt),
+);
 let lastResizeWasShrink = true;
 let lastResizeWidth = 0;
 let resizeObserver: ResizeObserver | null = null;

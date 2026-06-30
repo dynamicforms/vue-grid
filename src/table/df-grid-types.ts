@@ -88,6 +88,23 @@ export interface GridProps extends SelectionProps {
    * :row-class="(item) => item.cssClass"
    */
   rowClass?: (item: RowValue, index: number) => string | string[] | Record<string, boolean>;
+
+  /**
+   * Percentage (0–100) of the maximum overscroll displacement (60 px) at which the
+   * `excessive-scroll` event fires. For example, `80` means the event fires once the user has
+   * scrolled 48 px past the edge of the list.
+   *
+   * When omitted or `undefined`, the event is never emitted and only the visual overscroll
+   * indicator is shown.
+   *
+   * After firing, the event will not fire again until **both** conditions are met:
+   * - at least 1 second has elapsed since the last firing, **and**
+   * - the overscroll displacement has dropped back below the threshold.
+   *
+   * Use together with the `excessive-scroll` event to implement pull-to-refresh or
+   * pull-to-load-more patterns.
+   */
+  excessiveScrollThreshold?: number;
 }
 
 export type RowIndex = number | 'header';
@@ -127,6 +144,21 @@ export interface GridEmits extends SelectionEmits {
    * Proxied directly from the underlying virtual-scroll `load` event.
    */
   load: [direction: 'vertical' | 'horizontal'];
+
+  /**
+   * Fired when the user overscrolls past the `excessiveScrollThreshold` percentage of the maximum
+   * displacement (60 px). The payload is the signed overscroll amount in pixels at the moment of
+   * firing: **positive** values indicate a downward overscroll (past the bottom of the list),
+   * **negative** values indicate an upward overscroll (past the top).
+   *
+   * The event fires at most once per threshold crossing. To fire again, at least 1 second must
+   * have elapsed **and** the overscroll must have fallen back below the threshold first.
+   *
+   * Requires `excessiveScrollThreshold` to be set; when omitted the event is never emitted.
+   *
+   * The visual overscroll indicator is always rendered regardless of this event.
+   */
+  'excessive-scroll': [amount: number];
 
   /**
    * Fired when the grid's `ResizeObserver` determines that a different responsive column layout

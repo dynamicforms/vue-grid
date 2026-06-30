@@ -29,6 +29,7 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | zebra striping (`'even'`/`'odd'`) | Returns CSS classes applied to each data row card. Receives the row data object and its 0-based index. Return type matches Vue's `:class` binding — a string, an array, or an object. Overriding this prop replaces the default even/odd zebra striping entirely; include the logic yourself if you still want it. |
 | `selectionMode` | `SelectionMode` | `null` | Active selection mode (`null`, `'selection'`, or `'exclusion'`). Use with `v-model:selectionMode` for controlled selection. See [Selection](./selection). |
 | `selectionKeys` | `Set<any>` | — | Set of selected (or excluded) row keys. Use with `v-model:selectionKeys`. See [Selection](./selection). |
+| `excessiveScrollThreshold` | `number` | — | Percentage (0–100) of the maximum overscroll displacement (60 px) at which the `excessive-scroll` event fires. When omitted the event is never emitted. See [Pull to refresh](#pull-to-refresh). |
 
 ## Emits
 
@@ -39,6 +40,7 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `sort` | `GridSortEvent` | Fired when the user interacts with a sortable column header. |
 | `filter` | `GridFilterEvent` | Fired when any filter value changes. |
 | `load` | `'vertical' \| 'horizontal'` | Fired when the user scrolls within `loadDistance` px of the end of the list and the grid is not in loading state. Use this to fetch and append the next page. Set `:loading="true"` while fetching to suppress duplicate events. Proxied from the underlying virtual-scroll `load` event. |
+| `excessive-scroll` | `number` | Fired when the user overscrolls past the `excessiveScrollThreshold`. Payload is the signed displacement in pixels: positive = past the bottom, negative = past the top. Re-fires only after 1 second has elapsed **and** the overscroll has fallen back below the threshold. Requires `excessiveScrollThreshold` to be set. |
 | `update:activeColumns` | `string` | Fired when the grid's ResizeObserver selects a different responsive layout. |
 | `update:sortState` | `SortState` | Fired together with `sort` when sort state changes internally. |
 | `update:filterState` | `FilterState` | Fired together with `filter` when filter state changes internally. |
@@ -163,4 +165,64 @@ When `rowClass` is omitted the default is `(item, index) => index % 2 === 0 ? 'e
     <span>Page 1 of 10</span>
   </template>
 </df-grid>
+```
+
+## Pull to refresh
+
+The grid detects overscroll gestures (scrolling past the top or bottom edge) and exposes them
+through the `excessive-scroll` event. The consumer is responsible for acting on the event —
+the grid only detects the gesture and emits the notification.
+
+Set `excessiveScrollThreshold` to the percentage of the maximum overscroll displacement (60 px)
+that should trigger the event. A value of `80` fires when the user has scrolled 48 px past the
+edge. The visual overscroll indicator (a blue gradient) is always rendered regardless of whether
+the event is listened to.
+
+### Firing conditions
+
+The event fires immediately when the threshold is first crossed. After firing it is **silenced**
+until **both** of the following are true:
+
+1. At least **1 second** has elapsed since the last firing.
+2. The overscroll displacement has **fallen back below the threshold** (the user released the
+   gesture or stopped scrolling).
+
+This prevents repeated rapid firings while the user holds the scroll position above the threshold.
+
+### Payload
+
+| Value | Meaning |
+|-------|---------|
+| positive (`amount > 0`) | Overscroll past the **bottom** of the list (pull-to-load-more) |
+| negative (`amount < 0`) | Overscroll past the **top** of the list (pull-to-refresh) |
+
+### Example — pull-to-refresh at the top
+
+```vue
+<template>
+  <df-grid
+    :columns="columns"
+    :records="records"
+    key-field="id"
+    :loading="loading"
+    :excessive-scroll-threshold="80"
+    @excessive-scroll="onExcessiveScroll"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const loading = ref(false);
+const records = ref([]);
+
+async function onExcessiveScroll(amount: number) {
+  if (amount < 0 && !loading.value) {
+    // Negative amount = user pulled past the top → refresh
+    loading.value = true;
+    records.value = await fetchRecords();
+    loading.value = false;
+  }
+}
+</script>
 ```
