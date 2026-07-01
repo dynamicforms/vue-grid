@@ -34,63 +34,87 @@
       <template #statusBar="statusBarProps"><slot name="statusBar" v-bind="statusBarProps"/></template>
       <template #groupActions><slot name="groupActions"/></template>
     </df-grid-header>
-    <virtual-scroll
-      ref="vsRef"
-      class="cards-grid flex-1-1 overflow-y-scroll"
-      data-section="body"
-      :items="sortedRecords"
-      :loading="loading"
-      :default-item-size="30"
-      :buffer-before="30"
-      :buffer-after="30"
-      @visible-range-change="updateRenderedRows"
-      @load="(direction) => emit('load', direction)"
-    >
-      <template #item="{ item, index }">
-        <div class="df-grid dynamic-scroller-item">
-          <slot name="item" :item="item" :index="index" :active="true">
-            <grid-card
-              :item="item"
-              :columns="columnRendererOptionsInternal"
-              :renderers="DefaultRenderers"
-              :class="[
-                uColumns.cssClass.value,
-                props.rowClass?.(item, index),
-                isSelectionActive ? (uSelection.isSelected(item[props.keyField]) ? 'selected' : 'unselected') : null,
-              ]"
-              :data-pk="item[keyField]"
-              :data-idx="index"
-            />
-          </slot>
-        </div>
-      </template>
-      <template #header>
-        <excessive-scroll :height="-excessiveScrollAmount" direction="top"/>
-      </template>
-      <template #footer>
-        <div
-          v-if="showSummaryBar || loading || !props.records.length"
-          class="df-summary-bar"
-          data-section="summary-bar"
+    <div class="df-grid-body">
+      <virtual-scroll
+        ref="vsRef"
+        class="cards-grid"
+        data-section="body"
+        :items="sortedRecords"
+        :loading="loading"
+        :default-item-size="30"
+        :buffer-before="30"
+        :buffer-after="30"
+        @visible-range-change="updateRenderedRows"
+        @load="(direction) => emit('load', direction)"
+      >
+        <template #item="{ item, index }">
+          <div class="df-grid dynamic-scroller-item">
+            <slot name="item" :item="item" :index="index" :active="true">
+              <grid-card
+                :item="item"
+                :columns="columnRendererOptionsInternal"
+                :renderers="DefaultRenderers"
+                :class="[
+                  uColumns.cssClass.value,
+                  props.rowClass?.(item, index),
+                  isSelectionActive ? (uSelection.isSelected(item[props.keyField]) ? 'selected' : 'unselected') : null,
+                  props.recentlyAdded?.isPendingAdd(item[props.keyField]) ? 'state-adding' : null,
+                ]"
+                :data-pk="item[keyField]"
+                :data-idx="index"
+              />
+            </slot>
+          </div>
+        </template>
+        <template #header>
+          <excessive-scroll :height="-excessiveScrollAmount" direction="top"/>
+        </template>
+        <template #footer>
+          <div
+            v-if="showSummaryBar || loading || !props.records.length"
+            class="df-summary-bar"
+            data-section="summary-bar"
+          >
+            <slot name="summary-bar">
+              <div v-if="loading" class="df-summary-loading">
+                <slot name="loading">
+                  <cached-icon name="mdi-loading" class="df-summary-spin"/>
+                  <span>Loading…</span>
+                </slot>
+              </div>
+              <div v-else-if="!props.records.length" class="df-summary-no-data">
+                <slot name="no-data">
+                  <cached-icon name="mdi-database-off"/>
+                  <span>No data</span>
+                </slot>
+              </div>
+            </slot>
+          </div>
+          <excessive-scroll :height="excessiveScrollAmount" direction="bottom"/>
+        </template>
+      </virtual-scroll>
+      <template v-if="props.recentlyAdded">
+        <incoming-arc
+          direction="top"
+          :trigger="props.recentlyAdded.topArcFlashTick.value"
+          :max-opacity="props.incomingArcMaxOpacity ?? 1"
         >
-          <slot name="summary-bar">
-            <div v-if="loading" class="df-summary-loading">
-              <slot name="loading">
-                <cached-icon name="mdi-loading" class="df-summary-spin"/>
-                <span>Loading…</span>
-              </slot>
-            </div>
-            <div v-else-if="!props.records.length" class="df-summary-no-data">
-              <slot name="no-data">
-                <cached-icon name="mdi-database-off"/>
-                <span>No data</span>
-              </slot>
-            </div>
-          </slot>
-        </div>
-        <excessive-scroll :height="excessiveScrollAmount" direction="bottom"/>
+          <!--
+          Pass named slot only when the consumer provided it; a falsy v-if renders a
+          Comment VNode which Vue's ensureValidVNode treats as empty — triggering the
+          incoming-arc fallback wave instead of a blank slot.
+          -->
+          <slot v-if="$slots['incoming-arc-top']" name="incoming-arc-top"/>
+        </incoming-arc>
+        <incoming-arc
+          direction="bottom"
+          :trigger="props.recentlyAdded.bottomArcFlashTick.value"
+          :max-opacity="props.incomingArcMaxOpacity ?? 1"
+        >
+          <slot v-if="$slots['incoming-arc-bottom']" name="incoming-arc-bottom"/>
+        </incoming-arc>
       </template>
-    </virtual-scroll>
+    </div>
     <div v-if="$slots['footer-start'] || $slots['footer-end']" class="df-grid-footer" data-section="footer">
       <slot name="footer-start"/>
       <slot name="footer-end"/>
@@ -147,6 +171,7 @@ import { useGridMouseEvents } from './df-grid-mouse-events';
 import type { GridEmits, GridProps } from './df-grid-types';
 import ExcessiveScroll from './excessive-scroll.vue';
 import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from './helpers';
+import IncomingArc from './incoming-arc.vue';
 import { useSelection } from './selection';
 import { useExcessiveScroll } from './use-excessive-scroll';
 
@@ -160,7 +185,7 @@ const props = withDefaults(
     showStatusBar: false,
     showSummaryBar: false,
     loading: false,
-    rowClass: (item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
+    rowClass: (_item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
     selectionMode: null,
   },
 );
@@ -182,6 +207,8 @@ const { sortState, emitWrapper: sortEmitWrapper, sortedRecords } =
 const headerRef = ref();
 const shadowMeasurements: Record<string, any> = {};
 const shadowRef = ref();
+const vsRef = ref<any>(null);
+const containerRef = ref<HTMLElement | null>(null);
 
 useHeaderContent().provideHeaderContent();
 
@@ -189,6 +216,17 @@ const updateRenderedRows = throttle(
   (range: { start: number; end: number }) => {
     const mid = Math.round((range.start + range.end) / 2);
     mainShadowOffset.value = Math.max(0, mid - Math.round(props.mainShadowCount / 2));
+    if (props.recentlyAdded) {
+      // Use scrollDetails.currentIndex / currentEndIndex for the TRULY visible
+      // range (excluding render buffers). The rendered `range` includes
+      // buffer-before + buffer-after items and is useless for viewport detection.
+      const sd = vsRef.value?.scrollDetails;
+      props.recentlyAdded.setVisibleRange(
+        sd != null ?
+          { start: sd.currentIndex, end: sd.currentEndIndex + 1 } :
+          range,
+      );
+    }
   },
   250,
 );
@@ -200,9 +238,6 @@ const isSelectionActive = computed(() => {
   const mode = uSelection.selectionMode.value;
   return mode !== null && mode !== 'non-select';
 });
-
-const vsRef = ref<any>(null);
-const containerRef = ref<HTMLElement | null>(null);
 
 watch(uColumns.active, () => { templateColumns.value = ''; });
 watch(isSelectionActive, async () => {
@@ -288,6 +323,16 @@ onUnmounted(() => gridDestroy(gridId));
 .df-grid-toolbar, .df-grid-footer {
   display: flex;
   justify-content: space-between;
+}
+.df-grid-body {
+  position: relative;
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow: hidden;
+}
+.df-grid-body .cards-grid {
+  height: 100%;
+  overflow-y: scroll;
 }
 .df-summary-bar {
   display: flex;

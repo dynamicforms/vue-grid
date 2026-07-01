@@ -13,3 +13,7 @@ Using `sortExternal` and `filterExternal` to delegate sorting and filtering to a
 ## [Cell Renderers](./renderers)
 
 `transform`, `preRender`, `postRender`, `nullHandler` — customising cell display without writing a custom renderer.
+
+## [Incoming Records Indicator](./incoming)
+
+`useRecentlyAdded` composable — arc flash overlay and row reveal animation when new records arrive.

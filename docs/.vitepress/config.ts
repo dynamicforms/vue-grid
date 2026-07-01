@@ -45,6 +45,7 @@ export default defineConfig({
             { text: 'Full-featured Demo',              link: '/examples/table' },
             { text: 'Server-side Sorting & Filtering', link: '/examples/server-side' },
             { text: 'Cell Renderers',                  link: '/examples/renderers' },
+            { text: 'Incoming Records Indicator',      link: '/examples/incoming' },
           ]
         }
       ]

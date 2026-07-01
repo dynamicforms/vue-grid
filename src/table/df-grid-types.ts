@@ -4,6 +4,7 @@ import { FilterState, GridFilterEvent } from './columns-filtering';
 import { GridSortEvent, SortState } from './columns-sorting';
 import { GridClickEvent } from './df-grid-mouse-events';
 import { SelectionEmits, SelectionProps } from './selection';
+import { UseRecentlyAdded } from './use-recently-added';
 
 export interface GridProps extends SelectionProps {
   /**
@@ -88,6 +89,23 @@ export interface GridProps extends SelectionProps {
    * :row-class="(item) => item.cssClass"
    */
   rowClass?: (item: RowValue, index: number) => string | string[] | Record<string, boolean>;
+
+  /**
+   * Composable instance returned by `useRecentlyAdded`. When provided, the grid:
+   * - applies a `state-adding` CSS class to rows whose pk is in the recently-added list,
+   * - renders flash arc overlays at the top/bottom edge of the body when newly added records
+   *   are outside the visible viewport.
+   *
+   * The grid calls `recentlyAdded.setVisibleRange()` automatically as the viewport scrolls.
+   */
+  recentlyAdded?: UseRecentlyAdded;
+
+  /**
+   * Peak opacity for the incoming-records arc overlay (0–1). Applies to the first flash;
+   * subsequent rapid flashes automatically decay toward 0.15 (discrete behaviour).
+   * @default 1
+   */
+  incomingArcMaxOpacity?: number;
 
   /**
    * Percentage (0–100) of the maximum overscroll displacement (60 px) at which the
