@@ -23,6 +23,8 @@ export interface UseRecentlyAdded {
   topArcFlashTick: Ref<number>;
   /** Increments each time a flash should trigger on the bottom arc (newly added pks below viewport). */
   bottomArcFlashTick: Ref<number>;
+  /** The currently visible row index range as reported by the grid. Read-only for consumers. */
+  visibleRange: Ref<{ start: number; end: number }>;
 }
 
 /**
@@ -90,7 +92,6 @@ export function useRecentlyAdded(
       const indexMap = pkToIndex.value;
       let hasTop = false;
       let hasBottom = false;
-      console.log([start, end]);
       pks.forEach((pk) => {
         if (!entries.has(pk)) return; // already expired
         const idx = indexMap.get(pk);
@@ -114,7 +115,6 @@ export function useRecentlyAdded(
   }
 
   function setVisibleRange(range: { start: number; end: number }) {
-    console.log('visible range', range);
     visibleRange.value = range;
   }
 
@@ -130,5 +130,6 @@ export function useRecentlyAdded(
     triggerBottomArc,
     topArcFlashTick,
     bottomArcFlashTick,
+    visibleRange,
   };
 }

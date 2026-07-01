@@ -4,6 +4,7 @@
       <v-btn color="primary"   @click="addRecords('end')">Add at bottom</v-btn>
       <v-btn color="secondary" @click="addRecords('start')">Add at top</v-btn>
       <v-btn color="success"   @click="addRecords('random')">Add random</v-btn>
+      <v-btn color="error"     @click="addRecords('visible')">Add in visible range</v-btn>
       <v-btn :color="autoActive ? 'warning' : 'info'" @click="toggleAuto">
         {{ autoActive ? 'Pause auto-add' : 'Start auto-add' }}
       </v-btn>
@@ -38,8 +39,8 @@ function rowClass(item: any, index: number): string {
   return recentlyAdded.isPendingAdd(item.id) ? `${stripe} state-adding` : stripe;
 }
 
-function addRecords(position: 'start' | 'end' | 'random') {
-  const count = Math.floor(Math.random() * 2) + 1;
+function addRecords(position: 'start' | 'end' | 'random' | 'visible') {
+  const count = 1; //Math.floor(Math.random() * 2) + 1;
   const newOnes = generateMusicLibrary(count).map((r) => ({ ...r, id: nextId++ }));
   const pks = newOnes.map((r) => r.id);
 
@@ -49,10 +50,16 @@ function addRecords(position: 'start' | 'end' | 'random') {
   } else if (position === 'end') {
     records.push(...newOnes);
     recentlyAdded.addRecentlyAdded(pks, 600);
+  } else if (position === 'visible') {
+    const { start, end } = recentlyAdded.visibleRange.value;
+    const rangeSize = Math.max(0, end - start);
+    if (rangeSize === 0) return;
+    const pos = start + Math.floor(Math.random() * rangeSize);
+    records.splice(pos, 0, ...newOnes);
+    recentlyAdded.addRecentlyAdded(pks, 600);
   } else {
     const pos = Math.floor(Math.random() * (records.length + 1));
     records.splice(pos, 0, ...newOnes);
-    // Let the composable determine top/bottom based on viewport position.
     recentlyAdded.addRecentlyAdded(pks, 600);
   }
 }
@@ -98,17 +105,23 @@ const columns = [
 </script>
 
 <style>
-/*
- * Row reveal animation: clip-path wipe from top gives the visual impression of
- * height 0 → 100 % without changing layout height (virtual scroll pre-measures sizes).
- */
-@keyframes df-incoming-row-reveal {
-  from { clip-path: inset(0 0 100% 0); opacity: 0.3; }
-  to   { clip-path: inset(0 0 0%   0); opacity: 1;   }
+/* scaleY reveal + brightness wink.
+   background-color cannot animate on GPU-composited layers (broken by will-change:transform
+   on the virtual-scroll parent). filter:brightness() IS GPU-compositable and always works. */
+@keyframes df-row-scale-in {
+  from { transform: scaleY(0); opacity: 0.3; }
+  to   { transform: scaleY(1); opacity: 1;   }
 }
-.df-grid.card.state-adding {
-  animation: df-incoming-row-reveal 0.5s ease-out;
-  background-color: rgba(64, 100, 220, 0.15) !important;
+@keyframes df-row-wink {
+  0%, 100% { filter: brightness(1);   }
+  50%      { filter: brightness(2.2); }
+}
+
+.incoming-demo-grid .df-grid.card.state-adding {
+  transform-origin: center center;
+  animation:
+    df-row-scale-in 0.25s ease-out,
+    df-row-wink     0.4s  0.25s ease-in-out both;
 }
 
 /* ---------- 2-row card layout -------------------------------------------- */
