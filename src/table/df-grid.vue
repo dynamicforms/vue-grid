@@ -5,7 +5,7 @@
     class="df-grid container d-flex flex-column"
     :class="{ selection: isSelectionActive, exclusion: uSelection.selectionMode.value === 'exclusion' }"
     :style="`--${templateColumns}`"
-    @mousedown="($event) => { if ($event.shiftKey) $event.preventDefault(); }"
+    @mousedown="($event) => { if ($event.shiftKey && !props.recentlyAdded?.isAdding.value) $event.preventDefault(); }"
     @click="($event) => processMouse('click', $event)"
     @dblclick="($event) => processMouse('dblclick', $event)"
     @keydown.enter="void (0)"

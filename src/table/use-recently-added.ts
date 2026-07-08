@@ -25,6 +25,12 @@ export interface UseRecentlyAdded {
   bottomArcFlashTick: Ref<number>;
   /** The currently visible row index range as reported by the grid. Read-only for consumers. */
   visibleRange: Ref<{ start: number; end: number }>;
+  /**
+   * True for 300 ms after any addRecentlyAdded call. The grid uses this to suppress
+   * click/tap events during the content-shift window (prevents the "inbox shift" mis-click).
+   * Scroll, wheel, swipe and pinch events are NOT affected.
+   */
+  isAdding: Ref<boolean>;
 }
 
 /**
@@ -40,6 +46,8 @@ export function useRecentlyAdded(
   // pk → addedAt timestamp. Vue 3 reactive() wraps Maps with full reactivity.
   const entries = reactive(new Map<any, number>());
   const visibleRange = ref<{ start: number; end: number }>({ start: 0, end: 0 });
+  const isAdding = ref(false);
+  let isAddingTimer: ReturnType<typeof setTimeout> | null = null;
 
   // rAF ticker: drives timeSinceAdded() reactivity while entries are pending.
   const ticker = ref(0);
@@ -70,10 +78,16 @@ export function useRecentlyAdded(
 
   onUnmounted(() => {
     if (rafId !== null) cancelAnimationFrame(rafId);
+    if (isAddingTimer !== null) clearTimeout(isAddingTimer);
   });
 
   function addRecentlyAdded(pks: any[], timeout = 250) {
     const now = Date.now();
+    // Suppress click/tap for 300 ms to prevent mis-clicks during content shift.
+    isAdding.value = true;
+    if (isAddingTimer !== null) clearTimeout(isAddingTimer);
+    isAddingTimer = setTimeout(() => { isAdding.value = false; }, 300);
+
     // Capture the visible range NOW (before the virtual scroll has a chance to
     // update it in response to the records mutation). Virtual-scroll fires
     // visible-range-change asynchronously (next Vue render cycle), so at this
@@ -131,5 +145,6 @@ export function useRecentlyAdded(
     topArcFlashTick,
     bottomArcFlashTick,
     visibleRange,
+    isAdding,
   };
 }

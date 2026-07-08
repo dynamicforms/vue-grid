@@ -43,10 +43,8 @@ A refactor to an array seems prudent
 ## **Visual Features**
 
 - [ ] Support CSS modes other than grid (e.g. table, flex, Vuetify row/col)
-- [ ] Incoming records indication: an arc flashes at the top or bottom of the body (similar to Android overscroll arc).
-      The grid provides the visual implementation with configurable props (e.g. `opacity`) and a slot for full
-      replacement. The consumer decides when to trigger it and from which side — the grid has no comparison logic.
-      Effect is very noticeable on first trigger but becomes discrete if shown frequently (debounced / throttled).
+- [ ] Incoming records indicator currently shifts rows down when a new row is added at top. This is of course wrong and
+      should be fixed.
 
 ---
 

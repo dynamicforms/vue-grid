@@ -29,6 +29,9 @@ export function useGridMouseEvents(
   uSelection?: ReturnType<typeof useSelection>,
 ) {
   function processMouse(eType: SortEvents, event: TouchEvent | MouseEvent) {
+    // Suppress row interactions during the content-shift window after a recently-added row.
+    if (props.recentlyAdded?.isAdding.value) return;
+
     const target = event.target as HTMLElement;
     const section = (target.closest('[data-section]') as HTMLElement | null)?.dataset.section;
 
