@@ -1,7 +1,7 @@
 {
   "name": "@dynamicforms/vue-grid",
   "private": false,
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "module",
   "description": "High-performance virtual-scroll data grid for Vue 3 with sorting, filtering, and row selection.",
   "author": "Jure Erznožnik",
@@ -15,7 +15,7 @@
       "require": "./dist/dynamicforms-vue-grid.umd.cjs",
       "import": "./dist/dynamicforms-vue-grid.js"
     },
-    "./styles.css": "./dist/style.css"
+    "./styles.css": "./dist/dynamicforms-vue-grid.css"
   },
   "workspaces": [
     "docs"
