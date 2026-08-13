@@ -87,6 +87,16 @@
     "extends": [
       "velis"
     ],
+    "overrides": [
+      {
+        "files": [
+          "**/*.spec.ts"
+        ],
+        "rules": {
+          "vue/one-component-per-file": "off"
+        }
+      }
+    ],
     "ignorePatterns": [
       "dist/*",
       "coverage/*",

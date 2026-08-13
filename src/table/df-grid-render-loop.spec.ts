@@ -106,7 +106,15 @@ vi.mock('./helpers', () => ({
   //    (mirroring the real shadow-grid's `nextTick(checkShadowGridColumns)` in idxAndItem)
   ShadowGrid: defineComponent({
     name: 'ShadowGrid',
-    props: ['records', 'columns', 'renderers', 'count', 'offset', 'keyField', 'selectionActive'],
+    props: {
+      records: { type: Array, default: () => [] },
+      columns: { type: Array, default: () => [] },
+      renderers: { type: Object, default: () => ({}) },
+      count: { type: Number, default: 0 },
+      offset: { type: Number, default: 0 },
+      keyField: { type: String, default: '' },
+      selectionActive: { type: Boolean, default: false },
+    },
     emits: ['onmeasure'],
     setup(_, { expose, emit }) {
       expose({ containerEl: shadowContainerEl, reMeasure: vi.fn() });

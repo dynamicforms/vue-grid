@@ -89,9 +89,13 @@ vi.mock('./helpers', () => ({
   // whether `columnRendererOptionsInternal` returned a new (re-computed) array.
   GridCard: defineComponent({
     name: 'GridCard',
-    // `class` is deliberately not declared — it is a fallthrough attr, and declaring it as a
-    // prop is both reserved and pointless here: only `columns` is ever read.
-    props: ['item', 'columns', 'renderers', 'data-pk', 'data-idx'],
+    // `class`, `data-pk` and `data-idx` are deliberately not declared: they are fallthrough
+    // attrs on the real component too, and only `columns` is ever read here.
+    props: {
+      item: { type: Object, default: () => ({}) },
+      columns: { type: Array, default: () => [] },
+      renderers: { type: Object, default: () => ({}) },
+    },
     setup(props) {
       return () => {
         lastSeenColumns.value = props.columns as unknown[];
@@ -102,7 +106,15 @@ vi.mock('./helpers', () => ({
 
   ShadowGrid: defineComponent({
     name: 'ShadowGrid',
-    props: ['records', 'columns', 'renderers', 'count', 'offset', 'keyField', 'selectionActive'],
+    props: {
+      records: { type: Array, default: () => [] },
+      columns: { type: Array, default: () => [] },
+      renderers: { type: Object, default: () => ({}) },
+      count: { type: Number, default: 0 },
+      offset: { type: Number, default: 0 },
+      keyField: { type: String, default: '' },
+      selectionActive: { type: Boolean, default: false },
+    },
     setup(_, { expose }) {
       expose({ containerEl: shadowContainerEl, reMeasure: vi.fn() });
       return () => h('div', { class: 'shadow-grid' });

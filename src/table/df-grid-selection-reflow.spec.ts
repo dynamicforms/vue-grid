@@ -87,7 +87,15 @@ vi.mock('./helpers', () => ({
   // getComputedStyle() on it to read the new column widths.
   ShadowGrid: defineComponent({
     name: 'ShadowGrid',
-    props: ['records', 'columns', 'renderers', 'count', 'offset', 'keyField', 'selectionActive'],
+    props: {
+      records: { type: Array, default: () => [] },
+      columns: { type: Array, default: () => [] },
+      renderers: { type: Object, default: () => ({}) },
+      count: { type: Number, default: 0 },
+      offset: { type: Number, default: 0 },
+      keyField: { type: String, default: '' },
+      selectionActive: { type: Boolean, default: false },
+    },
     setup(_, { expose }) {
       expose({ containerEl: shadowContainerEl, reMeasure: vi.fn() });
       return () => h('div', { class: 'shadow-grid' });
