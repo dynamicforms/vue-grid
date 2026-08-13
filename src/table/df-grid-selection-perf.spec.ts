@@ -43,6 +43,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineComponent, h, ref } from 'vue';
 
 import DfGrid from './df-grid.vue';
+import type { SelectionMode } from './selection';
 
 // ===========================================================================
 // vi.hoisted — must exist before vi.mock() factories run
@@ -65,11 +66,11 @@ vi.mock('@pdanpdan/virtual-scroll', () => ({
     setup(props, { slots }) {
       return () => h('div', { class: 'virtual-scroll', 'data-section': 'body' }, [
         slots.header?.(),
-        ...(props.items as unknown[]).map((item, i) =>
-          h('div', { class: 'virtual-scroll-item', key: i },
-            slots.item?.({ item, index: i, active: true }),
-          ),
-        ),
+        ...(props.items as unknown[]).map((item, i) => h(
+          'div',
+          { class: 'virtual-scroll-item', key: i },
+          slots.item?.({ item, index: i, active: true }),
+        )),
         slots.footer?.(),
       ]);
     },
@@ -88,7 +89,9 @@ vi.mock('./helpers', () => ({
   // whether `columnRendererOptionsInternal` returned a new (re-computed) array.
   GridCard: defineComponent({
     name: 'GridCard',
-    props: ['item', 'columns', 'renderers', 'class', 'data-pk', 'data-idx'],
+    // `class` is deliberately not declared — it is a fallthrough attr, and declaring it as a
+    // prop is both reserved and pointless here: only `columns` is ever read.
+    props: ['item', 'columns', 'renderers', 'data-pk', 'data-idx'],
     setup(props) {
       return () => {
         lastSeenColumns.value = props.columns as unknown[];
@@ -138,7 +141,7 @@ const columns = [{ fieldName: 'name', label: 'Name' }, { fieldName: 'id', label:
 // Helpers
 // ===========================================================================
 
-function mountGrid(selectionMode: string | null = null) {
+function mountGrid(selectionMode: SelectionMode = null) {
   return mount(DfGrid, {
     props: { columns, records, keyField: 'id', selectionMode },
     global: { directives: { longpress: { mounted: () => {}, unmounted: () => {} } } },

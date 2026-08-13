@@ -226,7 +226,8 @@ describe('useFormattedData', () => {
       });
 
       formattedData.value.forEach((rv, i) => {
-        expect(rv.classes[0]).toBe(mockColumns[i].fieldName);
+        // useFormattedData always rewrites `classes` into an array (fieldName, cssClass, ...extra).
+        expect((rv.classes as string[])[0]).toBe(mockColumns[i].fieldName);
       });
     });
 
@@ -237,7 +238,7 @@ describe('useFormattedData', () => {
         renderers,
       });
 
-      expect(formattedData.value[0].classes[1]).toBe('text-right');
+      expect((formattedData.value[0].classes as string[])[1]).toBe('text-right');
     });
 
     it('uses an empty string as cssClass when column.cssClass is absent', () => {
@@ -247,11 +248,11 @@ describe('useFormattedData', () => {
         renderers,
       });
 
-      expect(formattedData.value[0].classes[1]).toBe('');
+      expect((formattedData.value[0].classes as string[])[1]).toBe('');
     });
 
     it('wraps a single string renderer class into an array', () => {
-      const singleClassRenderer = (): RenderableValue => new RenderableValue({}, 'my-single-class');
+      const singleClassRenderer = (): RenderableValue => new RenderableValue({} as any, 'my-single-class');
 
       const { formattedData } = useFormattedData({
         item: { value: 'test' },

@@ -123,6 +123,7 @@ export function useRecentlyAdded(
   }
 
   function timeSinceAdded(pk: any): number | null {
+    // eslint-disable-next-line no-void -- `void` is the point: read the ref purely to establish the dependency
     void ticker.value; // establish reactive dependency on the rAF tick
     const addedAt = entries.get(pk);
     return addedAt != null ? Date.now() - addedAt : null;

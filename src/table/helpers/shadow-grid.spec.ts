@@ -18,6 +18,7 @@
  */
 import { mount } from '@vue/test-utils';
 import { vi } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { defineComponent, nextTick } from 'vue';
 
 import type { RendererOptionsMap, RenderersMap, RowValue } from '../cell-renderers';
@@ -72,7 +73,7 @@ function mountShadowGrid(overrides: ShadowGridOverrides = {}) {
 // ---------------------------------------------------------------------------
 
 describe('ShadowGrid', () => {
-  let computedStyleSpy: ReturnType<typeof vi.spyOn>;
+  let computedStyleSpy: MockInstance<typeof window.getComputedStyle>;
 
   beforeEach(() => {
     const mockStyle = { getPropertyValue: (prop: string) => (prop === 'width' ? '600px' : '200px 200px 200px') };

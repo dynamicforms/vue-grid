@@ -35,9 +35,11 @@
  */
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { defineComponent, h, ref } from 'vue';
 
 import DfGrid from './df-grid.vue';
+import type { SelectionMode } from './selection';
 
 // ===========================================================================
 // vi.hoisted — values that must exist inside vi.mock() factories
@@ -130,7 +132,7 @@ const columns = [{ fieldName: 'name', label: 'Name' }];
 // Helpers
 // ===========================================================================
 
-function mountGrid(selectionMode: string | null = null) {
+function mountGrid(selectionMode: SelectionMode = null) {
   return mount(DfGrid, {
     props: { columns, records, keyField: 'id', selectionMode },
     global: {
@@ -145,7 +147,7 @@ function mountGrid(selectionMode: string | null = null) {
 // ===========================================================================
 
 describe('DfGrid — selection-column reflow', () => {
-  let computedStyleSpy: ReturnType<typeof vi.spyOn>;
+  let computedStyleSpy: MockInstance<typeof window.getComputedStyle>;
 
   beforeEach(() => {
     // df-grid.vue's watch(isSelectionActive) calls window.getComputedStyle on the

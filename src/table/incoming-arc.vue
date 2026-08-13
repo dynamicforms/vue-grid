@@ -63,9 +63,9 @@ watch(
     lastTriggerAt = now;
 
     // Each rapid consecutive trigger reduces initial opacity toward 0.15 (discrete / subtle).
-    const initialOpacity = isFrequent
-      ? props.maxOpacity * Math.max(0.15, 1 - 0.15 * (triggerCount - 1))
-      : props.maxOpacity;
+    const initialOpacity = isFrequent ?
+      props.maxOpacity * Math.max(0.15, 1 - 0.15 * (triggerCount - 1)) :
+      props.maxOpacity;
 
     arcOpacity.value = initialOpacity;
     startDecay(initialOpacity);

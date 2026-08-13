@@ -11,6 +11,8 @@ import { mount } from '@vue/test-utils';
 import { vi } from 'vitest';
 import { defineComponent } from 'vue';
 
+import { DefaultRenderers } from '../cell-renderers';
+
 import GridCard from './grid-card.vue';
 
 // ---------------------------------------------------------------------------
@@ -37,7 +39,7 @@ vi.mock('@dynamicforms/vue-forms', async (importOriginal) => {
 const baseProps = {
   item: { name: 'Alice' },
   columns: [],
-  renderers: {},
+  renderers: DefaultRenderers,
 };
 
 // ---------------------------------------------------------------------------
