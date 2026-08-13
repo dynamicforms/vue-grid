@@ -9,9 +9,11 @@
     "dist/*"
   ],
   "main": "dist/dynamicforms-vue-grid.umd.cjs",
+  "module": "dist/dynamicforms-vue-grid.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "require": "./dist/dynamicforms-vue-grid.umd.cjs",
       "import": "./dist/dynamicforms-vue-grid.js"
     },
