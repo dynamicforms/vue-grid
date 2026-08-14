@@ -55,8 +55,7 @@ function startDecay(fromOpacity: number) {
 
 watch(
   () => props.trigger,
-  (newVal, oldVal) => {
-    if (newVal === oldVal) return;
+  () => {
     const now = Date.now();
     const isFrequent = now - lastTriggerAt < 1500 && triggerCount > 0;
     triggerCount = isFrequent ? triggerCount + 1 : 1;
