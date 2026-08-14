@@ -5,7 +5,6 @@
     :style="{
       'overflow-x': 'hidden',
       'overflow-y': 'hidden',
-      'scrollbar-gutter': 'stable',
       minHeight: `${headerHeight}px`,
     }"
   >
@@ -218,6 +217,14 @@ defineExpose({ headerItem, headerOptions, headerHeight });
 .df-grid.header-container {
   display: flex;
   flex-direction: column;
+  /*
+   * The width the body scroller reserves for its vertical scrollbar, measured by df-grid and
+   * published as a custom property. The header scrolls with nothing of its own, so it has to
+   * step aside by exactly that much to stay aligned with the body columns. `scrollbar-gutter:
+   * stable` cannot do this: with overlay scrollbars Chromium still reserves the classic width
+   * while the body reserves none.
+   */
+  padding-right: var(--df-grid-scrollbar-width, 0px);
 }
 :deep(.df-grid.card.header .df-grid.cell) {
   user-select: none;

@@ -4,7 +4,7 @@
     v-longpress="($event) => processMouse('longpress', $event)"
     class="df-grid container d-flex flex-column"
     :class="{ selection: isSelectionActive, exclusion: uSelection.selectionMode.value === 'exclusion' }"
-    :style="`--${templateColumns}`"
+    :style="[`--${templateColumns}`, { '--df-grid-scrollbar-width': `${scrollbarWidth}px` }]"
     @mousedown="($event) => { if ($event.shiftKey && !props.recentlyAdded?.isAdding.value) $event.preventDefault(); }"
     @click="($event) => processMouse('click', $event)"
     @dblclick="($event) => processMouse('dblclick', $event)"
@@ -265,15 +265,28 @@ const { amount: excessiveScrollAmount } = useExcessiveScroll(
   toRef(props, 'excessiveScrollThreshold'),
   (amt) => emit('excessive-scroll', amt),
 );
+const scrollbarWidth = ref(0);
+function measureScrollbarWidth() {
+  // The header is a sibling of the body scroller, so it has to reserve the same width for the
+  // vertical scrollbar that the scroller reserves - otherwise its columns are wider than the
+  // body columns they label. How much that is cannot be declared: classic scrollbars take
+  // ~15px, overlay ones take none, and `scrollbar-gutter: stable` is honoured differently
+  // between engines on the same platform. So we ask the scroller what it actually reserved.
+  const el = vsRef.value?.$el as HTMLElement | undefined;
+  if (el) scrollbarWidth.value = el.offsetWidth - el.clientWidth;
+}
+
 let lastResizeWasShrink = true;
 let lastResizeWidth = 0;
 let resizeObserver: ResizeObserver | null = null;
 onMounted(() => {
+  measureScrollbarWidth();
   resizeObserver = new ResizeObserver((etries) => {
     etries.forEach((entry) => {
       const { width } = entry.contentRect;
       lastResizeWasShrink = width < lastResizeWidth;
       lastResizeWidth = width;
+      measureScrollbarWidth();
       const filtered = pickBy(shadowMeasurements, (config) => config <= width);
       const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
       shadowRef.value?.reMeasure();
@@ -289,6 +302,9 @@ onUnmounted(() => {
   resizeObserver?.disconnect();
 });
 onUpdated(() => {
+  // Rows arriving or leaving can make the body scrollbar appear or disappear without the
+  // container ever resizing.
+  measureScrollbarWidth();
   const targetElement = containerRef.value?.querySelector('.df-grid.dynamic-scroller-item .df-grid.card');
   if (targetElement != null && !lastResizeWasShrink) {
     const computedStyle = window.getComputedStyle(targetElement);
@@ -320,6 +336,16 @@ onUnmounted(() => gridDestroy(gridId));
 </script>
 
 <style>
+.df-grid.container {
+  /*
+   * The containing block for the shadow grid, which is `position: absolute; left: 0; right: 0` and
+   * a direct child of this element. Without this the shadow stretches to whatever ancestor happens
+   * to be positioned - in a Vuetify app that is `.v-application__wrap`, the full page width - and
+   * the column widths it measures are then copied onto the real rows, which are only as wide as
+   * this container. The grid overflows by exactly the difference.
+   */
+  position: relative;
+}
 .df-grid-toolbar, .df-grid-footer {
   display: flex;
   justify-content: space-between;
