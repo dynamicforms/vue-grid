@@ -107,6 +107,7 @@ describe('df-grid-mouse-events.ts', () => {
   describe('useGridMouseEvents', () => {
     let mockEmit: ReturnType<typeof vi.fn>;
     let mockProps: GridProps;
+    let mockDisplayedRecords: ComputedRef<RowValue[]>;
     let mockSortState: ComputedRef<SortState>;
     let mockHeaderRef: ReturnType<typeof ref>;
     let mockUColumns: any;
@@ -118,6 +119,7 @@ describe('df-grid-mouse-events.ts', () => {
         columns: mockColumns,
         keyField: 'id',
       };
+      mockDisplayedRecords = computed(() => mockRecords);
       mockSortState = computed(() => []);
       mockHeaderRef = ref({ headerItem: { title: 'Title', artist: 'Artist', id: 'ID' } });
       mockUColumns = {
@@ -131,6 +133,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -167,6 +170,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -202,6 +206,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -236,6 +241,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -265,6 +271,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -292,6 +299,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -352,6 +360,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -373,6 +382,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -395,6 +405,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -417,6 +428,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -438,6 +450,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -459,6 +472,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -487,6 +501,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -517,6 +532,7 @@ describe('df-grid-mouse-events.ts', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,
           mockProps,
+          mockDisplayedRecords,
           mockSortState,
           mockHeaderRef,
           mockUColumns,
@@ -543,6 +559,110 @@ describe('df-grid-mouse-events.ts', () => {
         expect(emittedEvent.columnClasses).not.toContain('df-header-cell');
 
         document.body.removeChild(card);
+      });
+    });
+
+    // -----------------------------------------------------------------------
+    // Rows are addressed by their position in the displayed list (`data-idx`), which is the list
+    // after filtering and sorting. Resolving that position against the `records` prop instead
+    // hands out a different record - and the same wrong key then drives selection.
+    // -----------------------------------------------------------------------
+    describe('row identity in display order', () => {
+      function clickRow(processMouse: (t: any, e: any) => void, dataIdx: string, type: any = 'click') {
+        const cell = document.createElement('div');
+        cell.className = 'df-grid cell title';
+        const card = document.createElement('div');
+        card.className = 'df-grid card';
+        card.setAttribute('data-idx', dataIdx);
+        card.appendChild(cell);
+        document.body.appendChild(card);
+
+        const mouseEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+        Object.defineProperty(mouseEvent, 'target', { value: cell, writable: false });
+        processMouse(type, mouseEvent);
+
+        document.body.removeChild(card);
+      }
+
+      it('reports the record shown at that position, not the one at that index in `records`', () => {
+        // Sorted by title: Apple (id 2), Mango (id 3), Zebra (id 1).
+        mockDisplayedRecords = computed(() => [mockRecords[1], mockRecords[2], mockRecords[0]]);
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockDisplayedRecords,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+        );
+
+        clickRow(processMouse, '0');
+
+        const emitted = mockEmit.mock.calls.find((call) => call[0] === 'click')?.[1] as GridClickEvent;
+        expect(emitted.key).toBe(2);
+        expect(emitted.rowData).toEqual(mockRecords[1]);
+      });
+
+      it('resolves a position that only exists in the filtered list', () => {
+        // Filtered down to the two Alpha records: Zebra (id 1), Mango (id 3).
+        mockDisplayedRecords = computed(() => [mockRecords[0], mockRecords[2]]);
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockDisplayedRecords,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+        );
+
+        clickRow(processMouse, '1');
+
+        const emitted = mockEmit.mock.calls.find((call) => call[0] === 'click')?.[1] as GridClickEvent;
+        expect(emitted.key).toBe(3);
+      });
+
+      it('starts selection on the row the user actually pressed', () => {
+        mockDisplayedRecords = computed(() => [mockRecords[2], mockRecords[1], mockRecords[0]]);
+        const mockUSelection: any = {
+          selectionMode: { value: null },
+          startSelection: vi.fn(),
+          toggleKey: vi.fn(),
+        };
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockDisplayedRecords,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+          mockUSelection,
+        );
+
+        clickRow(processMouse, '0', 'longpress');
+
+        expect(mockUSelection.startSelection).toHaveBeenCalledWith(3);
+      });
+
+      it('toggles the row the user actually clicked while selection is active', () => {
+        mockDisplayedRecords = computed(() => [mockRecords[2], mockRecords[1], mockRecords[0]]);
+        const mockUSelection: any = {
+          selectionMode: { value: 'selection' },
+          startSelection: vi.fn(),
+          toggleKey: vi.fn(),
+        };
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockDisplayedRecords,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+          mockUSelection,
+        );
+
+        clickRow(processMouse, '2');
+
+        expect(mockUSelection.toggleKey).toHaveBeenCalledWith(1);
       });
     });
   });

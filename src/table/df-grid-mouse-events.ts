@@ -23,6 +23,13 @@ export interface GridClickEvent {
 export function useGridMouseEvents(
   emit: EmitFn<GridEmits>,
   props: GridProps,
+  /**
+   * The records in display order, i.e. after filtering and sorting. Rows carry their position in
+   * this list as `data-idx`, so this is the list a clicked row must be looked up in — reading
+   * `props.records` at that index identifies a different record as soon as anything is sorted out
+   * of its original order.
+   */
+  displayedRecords: ComputedRef<RowValue[]>,
   sortState: ComputedRef<SortState>,
   headerRef: Ref,
   uColumns: ReturnType<typeof useColumns>,
@@ -52,7 +59,7 @@ export function useGridMouseEvents(
       key = 'header';
     } else {
       rowId = Number.parseInt(dataIdx, 10);
-      rowData = rowId === -1 ? undefined : props.records[rowId];
+      rowData = rowId === -1 ? undefined : displayedRecords.value[rowId];
       key = rowData?.[props.keyField];
     }
     const columnNames = new Set(uColumns.activeColumnsDefinition.value.columns.map((c) => c.fieldName));

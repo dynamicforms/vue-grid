@@ -232,7 +232,8 @@ const updateRenderedRows = throttle(
 );
 
 const uSelection = useSelection(props, emit);
-const { processMouse } = useGridMouseEvents(sortEmitWrapper, props, sortState, headerRef, uColumns, uSelection);
+const { processMouse } =
+  useGridMouseEvents(sortEmitWrapper, props, sortedRecords, sortState, headerRef, uColumns, uSelection);
 
 const isSelectionActive = computed(() => {
   const mode = uSelection.selectionMode.value;
