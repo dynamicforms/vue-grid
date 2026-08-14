@@ -9,13 +9,13 @@ function createColumn<R extends keyof RendererOptionsMap>(
   fieldName: string,
   label: string,
   renderer?: R,
-  otherOptions?: Omit<ColumnDefinition, 'fieldName' | 'label' | 'renderer'>,
+  otherOptions?: Omit<ColumnDefinition<R>, 'fieldName' | 'label' | 'renderer'>,
 ): ColumnDefinition<R>
 ```
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `fieldName` | `string` | Property name on the row data object. Also used as a CSS class on cells. |
+| `fieldName` | `string` | Property name on the row data object, read as a direct property access — dotted paths are not resolved. Also used as a CSS class on cells. |
 | `label` | `string` | Column header label. |
 | `renderer` | `keyof RendererOptionsMap` | Cell renderer to use. Defaults to `'plain'`. See [Cell Renderers](./renderers). |
 | `otherOptions` | `object` | Additional column options (see `ColumnDefinition` below). |
@@ -34,6 +34,8 @@ interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> {
 }
 ```
 
+`createColumn()` sets `sortable: true` on the column it builds; a `sortable` key in `otherOptions` overrides it. A `ColumnDefinition` written as a plain object literal has no such default, and a column without `sortable` cannot be sorted.
+
 ### Example
 
 ```typescript
@@ -45,7 +47,7 @@ const columns = [
   createColumn('rating', 'Rating', 'float', {
     sortable: { direction: 'desc', nulls: 'last' },
     filterable: { fieldType: 'number' },
-    rendererOptions: { decimalPlaces: 1 },
+    rendererOptions: { locale: { locale: 'en-US', localeOptions: { minimumFractionDigits: 1, maximumFractionDigits: 1 } } },
   }),
 ];
 ```
@@ -64,13 +66,27 @@ interface ResponsiveColumnDefinition {
 type ResponsiveColumnDefinitions = ColumnDefinitionsList | ResponsiveColumnDefinition[];
 ```
 
-The grid's `ResizeObserver` measures shadow grids for each layout and emits `update:activeColumns` with the `cssClass` of the best-fitting layout whenever the container is resized.
+The grid decides whether the array is responsive by looking at its first element: an element carrying `name` or `cssClass` together with `columns` marks the whole array as a list of layouts. Every entry must end up with a non-empty name — `name`, or `cssClass` when `name` is omitted — otherwise the grid throws `column definition <idx> must have a name or cssClasses assigned and non-empty`.
+
+The grid renders a hidden shadow grid for each layout and records the width that layout needs. When the container is resized, it emits `update:activeColumns` with the *name* of the widest layout whose recorded width still fits the container. If no layout fits, the active layout stays as it is.
+
+The value of `activeColumns` is matched against the layout name — `name` when given, otherwise `cssClass`. When `activeColumns` is unset, or names no existing layout, the first layout in the array is used. A flat column list is treated as a single layout named `default` with an empty `cssClass`.
 
 ```typescript
+import { createColumn, filterColumns } from '@dynamicforms/vue-grid';
+import type { ResponsiveColumnDefinitions } from '@dynamicforms/vue-grid';
+
+const allColumns = [
+  createColumn('id',      'ID',      'int'),
+  createColumn('name',    'Name',    'plain'),
+  createColumn('country', 'Country', 'plain'),
+  createColumn('email',   'Email',   'email'),
+];
+
 const columnsResponsive: ResponsiveColumnDefinitions = [
-  { cssClass: 'wide',   columns: filterColumns(allColumns, [0, 1, 2, 3, 4, 5]) },
-  { cssClass: 'medium', columns: filterColumns(allColumns, [0, 1, 2, 3]) },
-  { cssClass: 'narrow', columns: allColumns },
+  { cssClass: 'wide',   columns: allColumns },
+  { cssClass: 'medium', columns: filterColumns(allColumns, [0, 1, 3]) },
+  { cssClass: 'narrow', columns: filterColumns(allColumns, [1]) },
 ];
 ```
 
@@ -97,4 +113,23 @@ function filterColumns(
 Selectors can be:
 - `number` — picks column at that index
 - `string` — picks the first column with that `fieldName`
-- `{ fieldName: occurrence }` — picks the *n-th* column with that `fieldName` (useful when the same `fieldName` appears more than once)
+- `{ fieldName: occurrence }` — picks the column with that `fieldName` at index `occurrence` (0-based) among all columns sharing the name; only the first entry of the object is read
+
+The returned list follows the order of the selectors, not the order of the columns. A column selected twice appears twice, and a selector that matches nothing is dropped.
+
+## `useColumns()`
+
+```typescript
+function useColumns(props: GridProps, gridId: symbol)
+```
+
+The composable `<DfGrid>` uses to resolve the `columns` prop down to a single active layout. `gridId` is a symbol identifying the grid instance; it is what the numeric renderers register their per-column formatting state under, and what releases it when the grid unmounts. The returned members are all computed refs:
+
+| Member | Description |
+|--------|-------------|
+| `active` | Name of the active layout: the `activeColumns` prop, or the first layout's name when the prop is unset. |
+| `builtColumns` | All layouts, each carrying `name`, `cssClass` and `columns`. |
+| `activeColumnsDefinition` | The entry of `builtColumns` that is currently active. |
+| `name` | `name` of the active layout. |
+| `cssClass` | `cssClass` of the active layout; `''` for a flat column list. |
+| `columns` | The active layout's column list. |

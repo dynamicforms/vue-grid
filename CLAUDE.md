@@ -39,14 +39,14 @@ and with classic ones (`auto-sizing-classic.spec.ts` — Chromium only, launched
 `--hide-scrollbars`). Headless Firefox cannot be made to show classic scrollbars, so it only runs
 the overlay half.
 
-## The Playwright tests are outside the safety net
+## The Playwright tests run, but not for coverage
 
-`npm test` is vitest only — `e2e/**` is excluded from the run, and the coverage report is built
-from the istanbul instrumentation inside that process. The Playwright tests drive the VitePress
-dev server, whose code is not instrumented, so they contribute nothing to `coverage-final.json`.
-CI does not run them at all: it lints, runs `npm test`, builds, and checks incremental coverage.
+CI runs them in their own job (`.github/workflows/ci.yml`, the `e2e` job): Playwright installs
+chromium and firefox, `npm run test:e2e` starts the VitePress dev server through
+`playwright.config.ts`, and traces are uploaded when a test fails.
 
-Two things follow. Coverage numbers understate what is actually exercised — `df-grid.vue`,
-`use-excessive-scroll.ts` and `use-recently-added.ts` are all driven by the e2e suite. And any
-regression only the browser can see (all of the auto-sizing geometry above) is caught only when
-someone runs `npm run test:e2e` by hand.
+They contribute nothing to the coverage report, though. `npm test` is vitest only — `e2e/**` is
+excluded from the run, and `coverage-final.json` is built from the istanbul instrumentation inside
+that process, while the Playwright tests drive a dev server whose code is not instrumented. So the
+coverage numbers understate what is actually exercised: `df-grid.vue`, `use-excessive-scroll.ts`
+and `use-recently-added.ts` are all driven by the e2e suite as well.

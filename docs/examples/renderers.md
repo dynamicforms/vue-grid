@@ -1,6 +1,6 @@
 # Cell Renderers
 
-Every column has a `renderer` (defaults to `'plain'`). Three `rendererOptions` — `transform`, `preRender`, and `postRender` — let you customise any renderer without writing a custom one.
+Every column has a `renderer` (defaults to `'plain'`). Four `rendererOptions` — `transform`, `nullHandler`, `preRender`, and `postRender` — let you customise any renderer without writing a custom one.
 
 ## `transform`
 
@@ -17,7 +17,7 @@ createColumn('salary', 'Salary', 'plain', {
 
 ## `nullHandler`
 
-When the (possibly transformed) value is `null` or `undefined`, the cell falls back to this renderer instead. Useful to keep a column's type-specific formatting while gracefully handling missing data.
+When the value read from the record is `null` or `undefined`, the cell is rendered by this renderer instead. The check runs on the raw value, before `transform`. Useful to keep a column's type-specific formatting while gracefully handling missing data.
 
 ```typescript
 createColumn('salary', 'Salary', 'plain', {
@@ -25,9 +25,11 @@ createColumn('salary', 'Salary', 'plain', {
 })
 ```
 
+A column that declares no `rendererOptions` at all is given `nullHandler: 'null-null'`, so empty cells show the text `null` in a bordered chip (`div.df-cell-null`). Supplying a `rendererOptions` object without a `nullHandler` key removes that default and lets the column's own renderer receive the `null` value; set `'null-empty'` for a blank cell instead.
+
 ## `preRender` / `postRender`
 
-Inject additional content to the left or right of the main cell value. When either is set the cell switches to a flex layout with three zones: `pre · content · post`. Return a plain HTML string or a `RenderableValue` for Vue components.
+Inject additional content to the left or right of the main cell value. When either is set the cell switches to a flex layout with three zones: `pre · content · post`, and the cell gains the class `has-pre-post`. Both hooks receive the raw record value and the row object — `transform` applies only to the content zone. Return a plain HTML string, a `RenderableValue` for Vue components, or `null` to leave that zone out.
 
 ```typescript
 createColumn('name', 'Name', 'plain', {
@@ -49,6 +51,8 @@ createColumn('score', 'Score', 'plain', {
 ```
 
 ## Live demo
+
+The grid below combines all four options: a coloured status dot injected with `preRender`, a currency `transform` falling back to `null-empty` for the missing salaries, a percentage `transform` with a bar appended by `postRender`, the `date` renderer with a custom `format` string (`MMM d, yyyy`), and the `checkbox` renderer.
 
 <table-renderers/>
 

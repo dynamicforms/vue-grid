@@ -1,12 +1,18 @@
 # API Reference
 
-This section documents the complete public API of `@dynamicforms/vue-grid`.
+This section documents the parts of `@dynamicforms/vue-grid` you use to build a grid: the components, the column,
+sorting, filtering and selection APIs, and the built-in cell renderers. The package exports more symbols than are
+covered here — the bundled type declarations are the authoritative list.
 
 ## Components
 
 | Component | Description |
 |-----------|-------------|
 | [`<DfGrid>`](./df-grid) | Main grid component |
+| `<DfGridHeader>` | Header row, filter row and status bar. Rendered by `<DfGrid>`. |
+| `<GridCard>` | Renders one row card from a record and a column list. Used by `<DfGrid>` for each row. |
+| `<SortingIndicator>` | The ascending / descending / sort-index glyph drawn in header cells. |
+| `<IncomingArc>` | The flash overlay rendered at the top and bottom edge of the body when `recentlyAdded` is supplied. |
 
 ## Concepts
 
@@ -17,3 +23,4 @@ This section documents the complete public API of `@dynamicforms/vue-grid`.
 | [Filtering](./filtering) | Filter configuration, state, and events |
 | [Selection](./selection) | Row selection, selection modes, and batch actions |
 | [Cell Renderers](./renderers) | Built-in renderers and their options |
+| [Incoming Records](/examples/incoming) | The `useRecentlyAdded` composable, the `recentlyAdded` prop, and the arc overlays |

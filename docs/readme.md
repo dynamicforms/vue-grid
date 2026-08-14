@@ -1,6 +1,6 @@
-# DynamicForms Vue Forms Documentation
+# DynamicForms Vue Grid Documentation
 
-This directory contains the VitePress documentation for `@dynamicforms/dynamicforms-vue-grid`.
+This directory contains the VitePress documentation for `@dynamicforms/vue-grid`.
 
 ## Development
 
@@ -39,6 +39,6 @@ The built site will be in the `docs/.vitepress/dist` directory.
 
 ## Adding New Examples
 
-1. Create a new Vue component in `.vitepress/components/`
+1. Create a new Vue component in `components/`
 2. Create a new markdown page in `examples/`
 3. Import and use the component in your markdown page

@@ -25,6 +25,9 @@ If you prefer to register `<DfGrid>` locally in individual components:
 import { DfGrid } from '@dynamicforms/vue-grid';
 ```
 
+Local registration covers the component only — the `v-longpress` directive comes from the plugin, so install the
+plugin as well if you want long-press selection.
+
 ## Basic Usage
 
 ```vue
@@ -52,9 +55,32 @@ const records = [
 </script>
 ```
 
+## Card layout CSS
+
+The grid measures column widths for you and publishes them on the container as the `--grid-template-columns` custom
+property, which every rendered row applies with `grid-template-columns: var(--grid-template-columns) !important`. The
+card's grid itself comes from your stylesheet — make `.df-grid.card` a grid and give it a base track list, one track
+per column:
+
+```css
+.df-grid.card {
+  display:               grid;
+  grid-template-columns: minmax(2em, 4em) 1fr 1fr;
+  gap:                   0.25em;
+  padding:               0.35em 0.5em;
+}
+```
+
+Each cell carries its column's `fieldName` as a CSS class, plus the column's `cssClass` when one is set, so individual
+columns can be placed and styled by name:
+
+```css
+.df-grid.cell.id { text-align: right; }
+```
+
 ## Grid structure
 
-The grid is composed of named sections — toolbar, header, filter row, status bar, body, and footer. Each section carries
+The grid is composed of named sections — toolbar, header, filter row, status bar, body, summary bar, and footer. Each section carries
 a `data-section` HTML attribute, which you can use for CSS targeting or custom event handling. 
 See [Grid structure](/api/df-grid#grid-structure) for the full layout diagram and attribute values.
 
@@ -129,10 +155,14 @@ See [Column Definitions](/api/columns) for more details.
 
 ## Row selection
 
-The grid has built-in multi-row selection — no extra setup required.
+The grid has built-in multi-row selection. Shift+click works however the component is registered; long-press
+additionally needs the `v-longpress` directive, which the plugin registers globally when installed as
+`app.use(DynamicFormsVueGrid, { registerComponents: true })`.
 
 **Activating selection** (user gestures, no props needed):
-- **Long-press** or **Shift+click** a data row → enters selection mode and toggles that row
+- **Shift+click** a data row → enters selection mode and toggles that row
+- **Long-press** a data row → enters selection mode. The long-press fires while the button is still held, and the
+  click produced on release toggles the row a second time, so the row ends up in the state it started in
 - **Click** while selection is active → toggles the clicked row
 - The status bar appears automatically with a cancel button, an item count, and an invert button
 

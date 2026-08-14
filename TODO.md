@@ -59,3 +59,37 @@ A refactor to an array seems prudent
 
 ## **Sorting & Filtering**
 - Dynamic filter parameters
+
+---
+
+# Road to 1.0
+
+1.0 is a promise that the public API will not break, not a promise that everything is finished.
+These are the things standing between the current state and that promise.
+
+### Blockers
+
+- **Pre-1.0 peer dependencies leak into the public API.** `@dynamicforms/vue-forms ^0.5.0` and
+  `@dynamicforms/vuetify-inputs ^0.7.4` are themselves below 1.0, and their types (`RenderableValue`,
+  `MessagesWidget`, the filter row inputs) are part of what consumers touch. This package cannot be
+  more stable than what it re-exports: either those reach 1.0 first, or their types get wrapped so
+  they stop being part of this API.
+
+- **Secondary shadow grids are measured once.** See the comment in `df-grid.vue` next to the
+  per-layout shadow grids: the initial render may be too narrow, and the measurement taken there is
+  the one every later layout decision is made from. Responsive layout switching is a headline
+  feature, so this is a behavioural gap rather than a cosmetic one. Either re-measure when the
+  layout changes, or raise `secondaryShadowCount` enough to make the first measurement trustworthy.
+
+- **The public surface has not been deliberately drawn.** `src/table/index.ts` also exports
+  `DfGridHeader`, `GridCard`, `SortingIndicator` and `IncomingArc`. 1.0 freezes whatever is exported,
+  so decide which of these are API and which are internals that happen to be reachable.
+
+- **Documentation accuracy is unverified.** A 1.0 tells readers to trust the documentation; the
+  audit against the source has to be finished and its findings applied first.
+
+### Soak, don't rush
+
+The two auto-sizing fixes (the shadow grid's containing block, and reserving the measured scrollbar
+width in the header instead of a declared gutter) mean the layout foundation was wrong in real
+conditions until now. Give them time in real use before freezing the API around them.

@@ -6,10 +6,10 @@ Every column has a `renderer` that determines how its value is displayed. Render
 
 | Renderer | Input type | Description |
 |----------|------------|-------------|
-| `plain` | any | Renders the value as a plain string via `.toString()`. |
+| `plain` | any | Renders the value inside a `div` as HTML, so markup in the value is interpreted. |
 | `int` | number | Integer. Supports locale-aware formatting. |
-| `float` | number | Floating-point number. Configurable decimal places. |
-| `decimal` | number | Like `float` but aligned for tabular display. |
+| `float` | number | Floating-point number, formatted with `Intl.NumberFormat`. Fraction digits are controlled through `locale.localeOptions`. |
+| `decimal` | number | Identical to `float`: same formatting, same options. |
 | `date` | string \| Date | Formats a date value. |
 | `time` | string \| Date | Formats a time value. |
 | `datetime` | string \| Date | Formats a date+time value. |
@@ -22,13 +22,13 @@ Every column has a `renderer` that determines how its value is displayed. Render
 | `ip4` | string | IPv4 address. |
 | `ip6` | string | IPv6 address. |
 | `ip` | string | Auto-detects IPv4 or IPv6. |
-| `null-empty` | any | Renders `null`/`undefined` as an empty string. |
-| `null-null` | any | Renders `null`/`undefined` as the string `"null"`. |
+| `null-empty` | any | Renders an empty cell. It does not look at the value; it exists to be named as a `nullHandler`. |
+| `null-null` | any | Renders the text `null` inside a `div` with the CSS class `df-cell-null`. It does not look at the value; it exists to be named as a `nullHandler`. |
 | `header` | — | Internal renderer for header cells. Not for data columns. |
 
 ## Common options (`CellOptions`)
 
-All renderers accept these base options via `rendererOptions`:
+Renderers accept these base options via `rendererOptions`. `null-empty`, `null-null` and `header` ignore `transform`; every other renderer applies it.
 
 ```typescript
 interface CellOptions {
@@ -41,7 +41,9 @@ interface CellOptions {
 
 The `transform` function receives the raw cell value and the full row object, and returns the value that will actually be rendered.
 
-`preRender` and `postRender` allow injecting additional content to the left or right of the main cell value. When either is set, the cell switches to a flex layout with three zones: `pre`, `content`, and `post`.
+A column that specifies no `rendererOptions` at all is given `{ nullHandler: 'null-null' }`, so its `null` and `undefined` cells are rendered by `null-null`. As soon as you supply a `rendererOptions` object, that default is gone: without a `nullHandler` key the column's own renderer receives the `null`. The choice is made on the raw record value, before `transform` runs.
+
+`preRender` and `postRender` allow injecting additional content to the left or right of the main cell value. When either is set, the cell switches to a flex layout with three zones: `pre`, `content`, and `post`. Such cells carry the extra CSS class `has-pre-post`, which is what the flex layout is attached to.
 
 ## Numeric options (`int`, `float`, `decimal`)
 
@@ -53,42 +55,78 @@ interface LocaleWithOptions {
 
 interface IntOptions extends CellOptions {
   locale?: string | LocaleWithOptions;  // formatting locale; defaults to browser locale
-  padToLength?: number | 'auto';        // pad integer part to N digits; 'auto' tracks
-                                        // the widest value in the column and pads all to match
+  padToLength?: number | 'auto';        // pad the integer part to N digits, or 'auto'
 }
 ```
 
-`padToLength: 'auto'` is useful for keeping numbers visually aligned when the column width varies by content — the grid measures the longest integer encountered and pads shorter values with dim leading zeros.
+A numeric `padToLength` keeps values vertically aligned: the integer part is padded to that many digits, and the padding zeros are rendered at half opacity, as are the trailing zeros of the fraction.
+
+`padToLength: 'auto'` picks the width instead of taking it from you. The column keeps track of the longest integer part and the longest fraction it has formatted so far; whenever a value exceeds either, the column's formatter is rebuilt with the new minimum digit counts and the column is redrawn, so all its cells pad to the same width. The padding is rendered at half opacity exactly as with a numeric value. Because the measurement only ever grows, the width tracks the widest value the column has actually rendered.
+
+`localeOptions` defaults to `{ useGrouping: false }`, so grouping separators are off unless you ask for them, and `maximumFractionDigits` is set to 20 whenever you do not supply it, so fractions are not rounded by default.
+
+The object form of `locale` is recognised only when the object contains a `locale` key; an object carrying only `localeOptions` is ignored and the defaults apply.
+
+`int` formats the value like `float` and then cuts the fractional part off, so it truncates rather than rounds.
 
 ## Date/time options (`date`, `time`, `datetime`)
 
 ```typescript
 interface DateTimeOptions extends CellOptions {
-  format?: string;          // date-fns format string; defaults to locale-aware
-                            // 'P' (date), 'p' (time), or 'P p' (datetime)
+  format?: string;          // date-fns format string; defaults to 'P' (date), 'p' (time),
+                            // or 'P p' (datetime), resolved against date-fns' default
+                            // locale (change it globally with date-fns' setDefaultOptions)
   parseISOPrefix?: string;  // string prepended to the raw value before ISO parsing
-                            // (e.g. to attach a fixed timezone offset like '+02:00')
+                            // (e.g. '2000-01-01T' to make a time-only value parseable)
 }
 ```
 
+A `Date` instance is formatted as-is and `parseISOPrefix` is not applied to it. Any other value is parsed with date-fns' `parseISO` first, after `parseISOPrefix` has been prepended; a value `parseISO` cannot read makes formatting throw a `RangeError`.
+
 ## Custom renderers
 
-Register a custom renderer globally with `setCellRenderer()`:
+`setCellRenderer()` replaces one of the built-in renderers:
 
 ```typescript
-import { setCellRenderer } from '@dynamicforms/vue-grid';
-
-setCellRenderer('plain', (value, rowValue, options) => {
-  return value ?? '—';
-});
+function setCellRenderer(
+  dataType: keyof RendererOptionsMap,
+  transform: CellRendererTransformer,
+): void
 ```
 
-Or replace any built-in renderer. The transformer receives:
+`dataType` must be one of the renderer names listed above; new names cannot be added. The replacement is global — every grid in the application renders with it from that point on. Capture the current implementation with `getCellRenderers()` first if you need to keep it.
+
+```typescript
+import { RenderableValue } from '@dynamicforms/vue-forms';
+import { setCellRenderer } from '@dynamicforms/vue-grid';
+
+setCellRenderer('plain', (value, rowValue, options) => new RenderableValue({
+  componentName: 'div',
+  componentVHtml: value ?? '—',
+}));
+```
+
+The transformer receives:
 - `value` — the (possibly transformed) cell value
 - `rowValue` — the full row object
-- `options` — the merged `CellOptionsInternal` for this column
+- `options` — the column's `rendererOptions` object, with internal per-grid/per-column state stamped onto it under symbol keys
 
-The return value must be a string, number, boolean, or a VNode.
+The return value must be a `RenderableValue` (from `@dynamicforms/vue-forms`). Its `classes` are combined with the column's `fieldName` and `cssClass` when the cell is built.
+
+## `getCellRenderers()`
+
+```typescript
+function getCellRenderers(): RenderersMap
+```
+
+`getCellRenderers()` returns a copy of the registry as it stands at the moment of the call. Use it to wrap an existing renderer:
+
+```typescript
+import { getCellRenderers, setCellRenderer } from '@dynamicforms/vue-grid';
+
+const original = getCellRenderers().int;
+setCellRenderer('int', (value, rowValue, options) => original(value, rowValue, options));
+```
 
 ## `RowValue`
 

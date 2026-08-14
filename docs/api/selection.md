@@ -25,9 +25,13 @@ Users activate selection mode without any prop wiring:
 
 | Gesture | Effect |
 |---------|--------|
-| **Long-press** on a data row | Enters `'selection'` mode and toggles the pressed row |
-| **Shift+click** on a data row | Same as long-press — enters `'selection'` mode and toggles the row |
+| **Shift+click** on a data row | Enters `'selection'` mode and toggles the pressed row; while a mode is already active it toggles the row without changing the mode |
+| **Long-press** on a data row | Enters `'selection'` mode. The long-press fires while the button is still held, and the `click` produced when it is released toggles the row a second time, so the row ends up in the state it was in before the gesture |
 | **Click** while selection is active | Toggles the clicked row without changing mode |
+
+In `'non-select'` mode neither gesture changes the selection.
+
+Long-press relies on the `v-longpress` directive, which the grid does not register itself — it comes with the plugin: `app.use(DynamicFormsVueGrid, { registerComponents: true })`. When `<DfGrid>` is imported and registered locally instead, the directive is missing and long-press does nothing; shift+click remains the way to enter selection mode.
 
 Once active, a status bar appears at the bottom of the header area with:
 
@@ -48,11 +52,7 @@ Once active, a status bar appears at the bottom of the header area with:
 | Event | Payload | Description |
 |-------|---------|-------------|
 | `update:selectionMode` | `SelectionMode` | Fired when selection mode changes. Use with `v-model:selectionMode`. |
-| `update:selectionKeys` | `Set<any>, SelectionAction, key?` | Fired when the key set changes. `action` is `'add'`, `'remove'`, or `'clear'`; `key` is the affected key (absent for `'clear'`). |
-
-```typescript
-type SelectionAction = 'add' | 'remove' | 'clear';
-```
+| `update:selectionKeys` | `Set<any>, 'add' \| 'remove' \| 'clear', key?` | Fired when the key set changes. `action` is `'add'`, `'remove'`, or `'clear'`; `key` is the affected key (absent for `'clear'`). |
 
 ## Slots
 
@@ -100,6 +100,8 @@ Bind both props with `v-model` to fully control selection from outside:
 const selectionMode = ref<SelectionMode>(null);
 const selectedKeys = ref<Set<any>>(new Set());
 ```
+
+Both props shadow the grid's internal state: `selectionKeys` is a `Set`, so once it is bound the grid always shows the bound set and gestures change nothing on screen until the parent assigns the set carried by `update:selectionKeys`; `selectionMode` shadows the internal mode as soon as it is anything other than `null`. Use `v-model` on both, or handle the events and assign the values yourself — a one-way `:selection-keys` binding freezes the selection.
 
 ::: tip
 You can bind only `selectionMode` and leave `selectionKeys` unbound — the grid will still manage the key set internally while you observe or control the mode externally.
@@ -175,8 +177,8 @@ The default `rowClass` prop already adds `even` and `odd` alternating row classe
 
 ## Click events and selection
 
-When selection mode is active, clicking a row **toggles** the row instead of emitting the normal `click` event. The `click` event is only emitted for data rows when `selectionMode` is `null`.
+When selection mode is active, clicking a data row **toggles** the row instead of emitting the normal `click` event. `click` is emitted for data rows in two cases: when `selectionMode` is `null` and the shift key is not held, and when `selectionMode` is `'non-select'` (with or without shift).
 
-Shift+click activates selection mode if it is not yet active; if it is already active it simply toggles the row — identical to a regular click.
+Shift+click activates selection mode when it is not yet active and emits no `click`; while a mode is already active it toggles the row, exactly like a regular click. In `'non-select'` mode shift+click changes nothing and emits `click` like any other click.
 
 Header row clicks always emit `click` regardless of selection mode.

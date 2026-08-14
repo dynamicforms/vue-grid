@@ -14,8 +14,8 @@ export interface GridProps extends SelectionProps {
   columns: ResponsiveColumnDefinitions;
 
   /**
-   * Name of the currently active responsive layout (matches `cssClass` of a `ResponsiveColumnDefinition`). Use with
-   * `v-model:activeColumns`.
+   * Name of the currently active responsive layout: the `name` of a `ResponsiveColumnDefinition`, or its `cssClass`
+   * when that definition has no `name`. Defaults to the first layout. Use with `v-model:activeColumns`.
    */
   activeColumns?: string;
 
