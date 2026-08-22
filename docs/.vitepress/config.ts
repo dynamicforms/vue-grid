@@ -1,8 +1,6 @@
 import vuetify from 'vite-plugin-vuetify';
 import { defineConfig } from 'vitepress';
 
-import ssrCkeditorStub from './ssr-ckeditor-stub';
-
 export default defineConfig({
   title: 'DynamicForms Vue Grid',
   description: 'A (not so) simple, (but hopefully) fast vue grid component.',
@@ -65,7 +63,7 @@ export default defineConfig({
     }
   },
   vite: {
-    plugins: [vuetify(), ssrCkeditorStub],
+    plugins: [vuetify()],
     optimizeDeps: {
       include: ['vuetify'],
     },
