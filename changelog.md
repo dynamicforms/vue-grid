@@ -5,6 +5,14 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-08-22
+
+### Changed
+- The peer range on `@dynamicforms/vuetify-inputs` moves to `^0.10.0`. That release rebuilds
+  `<df-rtf-editor>` on TipTap instead of CKEditor 5, so the VitePress SSR plugin that stubbed out
+  CKEditor's browser-only modules during pre-rendering (`docs/.vitepress/ssr-ckeditor-stub.ts`) has
+  nothing left to stub and is removed along with its wiring in `docs/.vitepress/config.ts`.
+
 ## [0.3.0] - 2026-08-22
 
 ### Changed
