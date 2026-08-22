@@ -90,7 +90,7 @@ interface GridFilterEvent {
 }
 ```
 
-Use `filterValues` for server-side filtering — it maps each filterable column's `fieldName` to the current input value. `FilterConfig.key` does not appear here; it only selects the record property used by local filtering.
+Use `filterValues` for server-side filtering — it maps each filterable column's `fieldName` to the current input value. Every filterable column is present; one whose filter is empty carries `null`. `FilterConfig.key` does not appear here; it only selects the record property used by local filtering.
 
 ### Example: server-side filtering
 

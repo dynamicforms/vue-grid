@@ -48,7 +48,7 @@ jobs:
         run: npm run docs:build
 
       - name: Incremental coverage check
-        uses: velis74/incremental-coverage-check@v2
+        uses: velis74/incremental-coverage-check@v3
         with:
           coverage-files: coverage/coverage-final.json
           log-level: INFO

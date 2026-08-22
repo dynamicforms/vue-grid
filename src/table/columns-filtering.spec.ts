@@ -101,7 +101,7 @@ describe('columns-filtering.ts', () => {
 
       expect(filterState.fields.title.value).toBe('Apple');
       expect(filterState.fields.year.value).toBe(2020);
-      expect(filterState.fields.artist.value).toBeUndefined();
+      expect(filterState.fields.artist.value).toBeNull();
     });
 
     it('should create Group instance', () => {
@@ -583,8 +583,8 @@ describe('columns-filtering.ts', () => {
         const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
         });
         const filterStateWithInvalid = new Group({
-          id: Field.create({ value: 123 }), // id is not filterable
-          title: Field.create({ value: 'test' }),
+          id: new Field({ value: 123 }), // id is not filterable
+          title: new Field({ value: 'test' }),
         }) as FilterState;
         mockProps.filterState = filterStateWithInvalid;
         const inputRecords = computed(() => mockRecords);
