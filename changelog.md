@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   classic scrollbars.
 
 ### Fixed
+- The grid no longer overflows its container in a Vuetify app. Column widths are measured on a hidden shadow
+  grid, absolutely positioned against `.df-grid.container`; without `position: relative` on that container the
+  shadow stretched to whatever ancestor happened to be positioned instead - `.v-application__wrap`, the full page
+  width - and the widths measured there were copied onto rows that were only as wide as the actual container.
 - Header column widths account for the scrollbar gutter correctly on both overlay and classic scrollbars. The
   scroller declared `scrollbar-gutter: stable`, but the reservation it gets does not match what the surrounding
   layout reserves: Chromium with overlay scrollbars still reserves roughly 15px for the gutter while the
@@ -80,9 +84,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A summary bar below the data rows, shown automatically when `loading` is `true` or `records` is empty, and
   configurable to show at other times. While `loading` is `true` the bar shows a spinner and the no-data state
   is suppressed even when `records` is empty.
-- A `load-more` event, fired when the user scrolls near the end of the list and `loading` is `false`, for
-  fetching and appending the next page of records; setting `loading` to `true` while a fetch is in flight
-  suppresses duplicate events.
+- A `load` event (`direction: 'vertical' | 'horizontal'`), proxied from the underlying virtual-scroll `load`
+  event and fired when the user scrolls within `loadDistance` px (default 200) of the end of the list while
+  `loading` is `false`. Use it to fetch and append the next page of records; setting `loading` to `true` while a
+  fetch is in flight suppresses duplicate events until it completes.
 - An overscroll indicator and `excessive-scroll` event: scrolling past either end of the list accumulates a
   visible overscroll displacement (up to 60px), and when `excessiveScrollThreshold` is set, crossing that
   percentage of the maximum fires an `excessive-scroll` event with the signed displacement - positive past the
