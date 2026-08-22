@@ -69,8 +69,8 @@ These are the things standing between the current state and that promise.
 
 ### Blockers
 
-- **Pre-1.0 peer dependencies leak into the public API.** `@dynamicforms/vue-forms ^0.5.0` and
-  `@dynamicforms/vuetify-inputs ^0.7.4` are themselves below 1.0, and their types (`RenderableValue`,
+- **Pre-1.0 peer dependencies leak into the public API.** `@dynamicforms/vue-forms ^0.17.1` and
+  `@dynamicforms/vuetify-inputs ^0.9.2` are themselves below 1.0, and their types (`RenderableValue`,
   `MessagesWidget`, the filter row inputs) are part of what consumers touch. This package cannot be
   more stable than what it re-exports: either those reach 1.0 first, or their types get wrapped so
   they stop being part of this API.

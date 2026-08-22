@@ -180,7 +180,7 @@ export function createFilterState(
     // Only create field if column is filterable
     if (filterConfig.fieldType != null || filterConfig.choices != null) {
       const initialValue = initialValues?.[column.fieldName] ?? null;
-      fields[column.fieldName] = Field.create({ value: initialValue });
+      fields[column.fieldName] = new Field({ value: initialValue });
     }
   });
 
