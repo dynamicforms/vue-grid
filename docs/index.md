@@ -11,6 +11,9 @@ hero:
     - theme: alt
       text: View on GitHub
       link: https://github.com/dynamicforms/vue-grid
+    - theme: alt
+      text: Changelog
+      link: /guide/changelog
 features:
   - title: Virtual Scrolling
     details: Handles large datasets efficiently using @pdanpdan/virtual-scroll — only visible rows are rendered

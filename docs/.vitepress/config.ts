@@ -22,6 +22,12 @@ export default defineConfig({
             { text: 'Installation', link: '/guide/getting-started#installation' },
             { text: 'Basic Usage', link: '/guide/getting-started#basic-usage' },
           ]
+        },
+        {
+          text: 'Changelog',
+          items: [
+            { text: 'Changelog', link: '/guide/changelog' },
+          ]
         }
       ],
       '/api/': [
