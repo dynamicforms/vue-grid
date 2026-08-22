@@ -22,11 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - 2026-08-14
 
 ### Added
-- `types` and `module` export conditions on the package manifest. Without `types`, TypeScript could not resolve
-  `dist/index.d.ts` through the `.` export, so consumers got implicit `any` for the whole grid; `module` points
-  bundlers that still read it at the ESM build instead of the UMD one.
-- A GitHub Actions CI workflow: lint, test, build and docs build on two Node versions, incremental coverage
-  reporting on pull requests, and a second job running the Playwright e2e suite against the docs dev server.
 - Statement coverage raised from 74.94% to 95% with new specs for `use-excessive-scroll.ts`, `use-recently-added.ts`,
   `incoming-arc.vue`, `header-renderers.ts` and grid lifecycle behaviour (visible-range reporting, overflow
   learning, teardown), plus a dedicated auto-sizing spec and Playwright regression tests covering overlay and
@@ -55,9 +50,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.8] - 2026-08-13
 
-### Fixed
-- The published CSS path in the package manifest now points at `dist/dynamicforms-vue-grid.css`, matching the
-  file the build actually emits, instead of the stale `dist/style.css`.
+### Added
+- `types` and `module` export conditions on the package manifest. Without `types`, TypeScript could not resolve
+  `dist/index.d.ts` through the `.` export, so consumers got implicit `any` for the whole grid; `module` points
+  bundlers that still read it at the ESM build instead of the UMD one.
+- A GitHub Actions CI workflow: lint, test, build and docs build on two Node versions, incremental coverage
+  reporting on pull requests, and a second job running the Playwright e2e suite against the docs dev server.
 
 ## [0.1.7] - 2026-08-01
 
@@ -109,6 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   owning grid's id and column identity internally.
 
 ### Fixed
+- The published CSS path in the package manifest now points at `dist/dynamicforms-vue-grid.css`, matching the
+  file the build actually emits, instead of the stale `dist/style.css`.
 - Row selection survives a reflow of the underlying data (sort, filter, or the record list changing shape)
   without losing or misattributing which rows are selected.
 - Column width measurement stays correct when selection mode is switched on or off, rather than leaving the
