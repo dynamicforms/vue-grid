@@ -169,7 +169,9 @@ describe('DfGrid — column auto-sizing', () => {
     );
     vi.spyOn(window, 'getComputedStyle').mockReturnValue({ getPropertyValue } as CSSStyleDeclaration);
 
-    global.ResizeObserver = vi.fn().mockImplementation((cb: ResizeObserverCallback) => {
+    // vitest 4 requires a real function here since the mock is invoked with `new`
+    // eslint-disable-next-line prefer-arrow-callback, func-names
+    globalThis.ResizeObserver = vi.fn().mockImplementation(function (cb: ResizeObserverCallback) {
       resizeCallback.fn = cb;
       return { observe: vi.fn(), disconnect: vi.fn() };
     });

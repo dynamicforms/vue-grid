@@ -1,11 +1,11 @@
 import { vi } from 'vitest';
-import { computed, ComputedRef, ref } from 'vue';
+import { computed, ComputedRef, EmitFn, ref } from 'vue';
 
 import type { RowValue } from './cell-renderers';
 import type { ColumnDefinition } from './columns';
 import { SortState } from './columns-sorting';
 import { GridClickEvent, useGridMouseEvents, useGridMouseEventsPosition } from './df-grid-mouse-events';
-import type { GridProps } from './df-grid-types';
+import type { GridEmits, GridProps } from './df-grid-types';
 
 // Mock data for testing
 const mockRecords: RowValue[] = [
@@ -105,7 +105,7 @@ describe('df-grid-mouse-events.ts', () => {
   });
 
   describe('useGridMouseEvents', () => {
-    let mockEmit: ReturnType<typeof vi.fn>;
+    let mockEmit: ReturnType<typeof vi.fn> & EmitFn<GridEmits>;
     let mockProps: GridProps;
     let mockDisplayedRecords: ComputedRef<RowValue[]>;
     let mockSortState: ComputedRef<SortState>;
@@ -113,7 +113,7 @@ describe('df-grid-mouse-events.ts', () => {
     let mockUColumns: any;
 
     beforeEach(() => {
-      mockEmit = vi.fn();
+      mockEmit = vi.fn() as unknown as ReturnType<typeof vi.fn> & EmitFn<GridEmits>;
       mockProps = {
         records: mockRecords,
         columns: mockColumns,

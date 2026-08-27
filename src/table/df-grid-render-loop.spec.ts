@@ -196,12 +196,13 @@ describe('DfGrid — reactive render-loop detection', () => {
       },
     } as CSSStyleDeclaration);
 
-    global.ResizeObserver = vi.fn().mockImplementation(() => ({
-      observe: vi.fn(),
-      disconnect: vi.fn(),
-    }));
+    // vitest 4 requires a real function here since the mock is invoked with `new`
+    // eslint-disable-next-line prefer-arrow-callback, func-names
+    globalThis.ResizeObserver = vi.fn().mockImplementation(function () {
+      return { observe: vi.fn(), disconnect: vi.fn() };
+    });
 
-    global.requestAnimationFrame = vi.fn();
+    globalThis.requestAnimationFrame = vi.fn();
   });
 
   afterEach(() => vi.restoreAllMocks());

@@ -36,9 +36,9 @@
  *    provided as reactive props, the composable mirrors their values and reacts to changes.
  */
 import { vi } from 'vitest';
-import { nextTick, reactive } from 'vue';
+import { EmitFn, nextTick, reactive } from 'vue';
 
-import type { GridProps } from './df-grid-types';
+import type { GridEmits, GridProps } from './df-grid-types';
 import { type SelectionMode, useSelection } from './selection';
 
 // ---------------------------------------------------------------------------
@@ -60,10 +60,10 @@ function makeProps(overrides: Partial<GridProps> = {}): GridProps {
 // ---------------------------------------------------------------------------
 
 describe('useSelection', () => {
-  let mockEmit: ReturnType<typeof vi.fn>;
+  let mockEmit: ReturnType<typeof vi.fn> & EmitFn<GridEmits>;
 
   beforeEach(() => {
-    mockEmit = vi.fn();
+    mockEmit = vi.fn() as unknown as ReturnType<typeof vi.fn> & EmitFn<GridEmits>;
   });
 
   // -------------------------------------------------------------------------
