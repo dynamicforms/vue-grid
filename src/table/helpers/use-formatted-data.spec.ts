@@ -39,12 +39,7 @@
 import { RenderableValue } from '@dynamicforms/vue-forms';
 import { reactive } from 'vue';
 
-import {
-  DefaultRenderers,
-  type RendererOptionsMap,
-  type RenderersMap,
-  type RowValue,
-} from '../cell-renderers';
+import { DefaultRenderers, type RendererOptionsMap, type RenderersMap, type RowValue } from '../cell-renderers';
 import type { ColumnDefinition } from '../columns';
 
 import { useFormattedData } from './use-formatted-data';
@@ -171,11 +166,13 @@ describe('useFormattedData', () => {
 
       const { formattedData } = useFormattedData({
         item: { score: null },
-        columns: [{
-          fieldName: 'score',
-          label: 'Score',
-          rendererOptions: { nullHandler: 'null-null' } as any,
-        }],
+        columns: [
+          {
+            fieldName: 'score',
+            label: 'Score',
+            rendererOptions: { nullHandler: 'null-null' } as any,
+          },
+        ],
         renderers: spyRenderers,
       });
       expect(formattedData.value).toHaveLength(1);
@@ -189,11 +186,13 @@ describe('useFormattedData', () => {
 
       const { formattedData } = useFormattedData({
         item: { score: 42 },
-        columns: [{
-          fieldName: 'score',
-          label: 'Score',
-          rendererOptions: { nullHandler: 'null-null' } as any,
-        }],
+        columns: [
+          {
+            fieldName: 'score',
+            label: 'Score',
+            rendererOptions: { nullHandler: 'null-null' } as any,
+          },
+        ],
         renderers: { ...renderers, plain: plainSpy, 'null-null': nullNullSpy },
       });
       expect(formattedData.value).toHaveLength(1);

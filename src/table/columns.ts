@@ -34,7 +34,7 @@ export interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> 
 }
 
 export type AnyColumnDefinition = {
-  [K in keyof RendererOptionsMap]: ColumnDefinition<K>
+  [K in keyof RendererOptionsMap]: ColumnDefinition<K>;
 }[keyof RendererOptionsMap];
 
 export function createColumn<R extends keyof RendererOptionsMap>(
@@ -47,7 +47,7 @@ export function createColumn<R extends keyof RendererOptionsMap>(
 
   // If renderer is 'header' and rendererOptions doesn't have sortState, add default
   if (renderer === 'header') {
-    if (result.rendererOptions == null) result.rendererOptions = { } as RendererOptionsMap[R];
+    if (result.rendererOptions == null) result.rendererOptions = {} as RendererOptionsMap[R];
     const opts = result.rendererOptions as any;
     if (opts.sortState === undefined) opts.sortState = { direction: undefined, index: undefined, sortable: true };
   }
@@ -67,37 +67,36 @@ export interface ResponsiveColumnDefinition {
 export type ResponsiveColumnDefinitions = ColumnDefinitionsList | ResponsiveColumnDefinition[];
 
 export function filterColumns(columns: ColumnDefinitionsList, selectors: ColumnFilterSelectors): ColumnDefinitionsList {
-  return selectors.map((selector) => {
-    if (isNumber(selector)) return columns[selector];
-    if (isString(selector)) return find(columns, { fieldName: selector });
-    if (isObject(selector)) {
-      const [fieldName, occurrence] = Object.entries(selector)[0];
-      return filter(columns, { fieldName })[occurrence];
-    }
-    return null;
-  }).filter(Boolean) as ColumnDefinitionsList;
+  return selectors
+    .map((selector) => {
+      if (isNumber(selector)) return columns[selector];
+      if (isString(selector)) return find(columns, { fieldName: selector });
+      if (isObject(selector)) {
+        const [fieldName, occurrence] = Object.entries(selector)[0];
+        return filter(columns, { fieldName })[occurrence];
+      }
+      return null;
+    })
+    .filter(Boolean) as ColumnDefinitionsList;
 }
 
 function isResponsiveDefinition(columns: ResponsiveColumnDefinitions): columns is ResponsiveColumnDefinition[] {
   if (!isArray(columns)) throw new Error('columns prop must be an array');
 
   const firstDefinition = columns[0];
-  return (('name' in firstDefinition || 'cssClass' in firstDefinition) && 'columns' in firstDefinition);
+  return ('name' in firstDefinition || 'cssClass' in firstDefinition) && 'columns' in firstDefinition;
 }
 
-const makeColumnRenderOptsInternal = (
-  columns: ColumnDefinitionsList,
-  gridId: symbol,
-) => columns.map((column) => {
-  const opt: CellOptionsInternal =
-    (column.rendererOptions ?? { nullHandler: 'null-null' }) as CellOptionsInternal;
-  opt[gridIdOption] = gridId;
-  opt[columnNameOption] = column.fieldName;
-  opt[columnIdOption] = Symbol('grid-column');
+const makeColumnRenderOptsInternal = (columns: ColumnDefinitionsList, gridId: symbol) =>
+  columns.map((column) => {
+    const opt: CellOptionsInternal = (column.rendererOptions ?? { nullHandler: 'null-null' }) as CellOptionsInternal;
+    opt[gridIdOption] = gridId;
+    opt[columnNameOption] = column.fieldName;
+    opt[columnIdOption] = Symbol('grid-column');
 
-  gridColumnCreate(gridId, column.renderer as keyof RendererOptionsMap, opt);
-  return { ...column, rendererOptions: opt };
-});
+    gridColumnCreate(gridId, column.renderer as keyof RendererOptionsMap, opt);
+    return { ...column, rendererOptions: opt };
+  });
 
 export function useColumns(props: GridProps, gridId: symbol) {
   const builtColumns = computed(() => {
@@ -115,19 +114,21 @@ export function useColumns(props: GridProps, gridId: symbol) {
         return ret;
       });
     }
-    return [{
-      name: 'default',
-      cssClass: '',
-      columns: props.columns,
-      columnRenderOptsInternal: computed(
-        () => makeColumnRenderOptsInternal(props.columns as ColumnDefinitionsList, gridId),
-      ),
-    }];
+    return [
+      {
+        name: 'default',
+        cssClass: '',
+        columns: props.columns,
+        columnRenderOptsInternal: computed(() =>
+          makeColumnRenderOptsInternal(props.columns as ColumnDefinitionsList, gridId),
+        ),
+      },
+    ];
   });
   const actualActiveColumns = computed(() => props.activeColumns ?? builtColumns.value[0].name);
-  const columns = computed(() => (
-    builtColumns.value.find((c) => c.name === actualActiveColumns.value) ?? builtColumns.value[0]
-  ));
+  const columns = computed(
+    () => builtColumns.value.find((c) => c.name === actualActiveColumns.value) ?? builtColumns.value[0],
+  );
 
   return {
     active: actualActiveColumns,

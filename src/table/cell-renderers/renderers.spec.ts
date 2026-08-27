@@ -50,10 +50,7 @@ import {
 // ---------------------------------------------------------------------------
 
 /** Creates a minimal `CellOptionsInternal` suitable for all non-numeric renderers. */
-function makeMockOptions(
-  gridId: symbol = Symbol('grid'),
-  columnId: symbol = Symbol('col'),
-): CellOptionsInternal {
+function makeMockOptions(gridId: symbol = Symbol('grid'), columnId: symbol = Symbol('col')): CellOptionsInternal {
   return {
     [gridIdOption]: gridId,
     [columnIdOption]: columnId,
@@ -78,11 +75,25 @@ function makeNumericOptions(gridId: symbol, columnId: symbol): CellOptionsIntern
 
 describe('DefaultRenderers', () => {
   const expectedTypes: (keyof RendererOptionsMap)[] = [
-    'null-empty', 'null-null', 'plain', 'header', 'md',
-    'color', 'checkbox', 'link', 'email', 'file',
-    'ip4', 'ip6', 'ip',
-    'date', 'time', 'datetime',
-    'int', 'float', 'decimal',
+    'null-empty',
+    'null-null',
+    'plain',
+    'header',
+    'md',
+    'color',
+    'checkbox',
+    'link',
+    'email',
+    'file',
+    'ip4',
+    'ip6',
+    'ip',
+    'date',
+    'time',
+    'datetime',
+    'int',
+    'float',
+    'decimal',
   ];
 
   it('contains an entry for every renderer type in RendererOptionsMap', () => {

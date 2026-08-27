@@ -137,24 +137,19 @@ describe('useSelection', () => {
 
       toggleKey('key1');
 
-      expect(mockEmit).toHaveBeenCalledWith(
-        'update:selectionKeys',
-        expect.any(Set),
-        'remove',
-        'key1',
-      );
+      expect(mockEmit).toHaveBeenCalledWith('update:selectionKeys', expect.any(Set), 'remove', 'key1');
     });
 
     it('the emitted Set contains the key after add and lacks it after remove', () => {
       const { toggleKey } = useSelection(makeProps(), mockEmit);
 
       toggleKey(99);
-      const afterAdd = (mockEmit.mock.calls[0][1] as Set<any>);
+      const afterAdd = mockEmit.mock.calls[0][1] as Set<any>;
       expect(afterAdd.has(99)).toBe(true);
 
       mockEmit.mockClear();
       toggleKey(99);
-      const afterRemove = (mockEmit.mock.calls[0][1] as Set<any>);
+      const afterRemove = mockEmit.mock.calls[0][1] as Set<any>;
       expect(afterRemove.has(99)).toBe(false);
     });
   });
@@ -268,10 +263,7 @@ describe('useSelection', () => {
     });
 
     it('preserves the selectionKeys set while inverting', () => {
-      const { startSelection, toggleKey, invertMode, selectionKeys } = useSelection(
-        makeProps(),
-        mockEmit,
-      );
+      const { startSelection, toggleKey, invertMode, selectionKeys } = useSelection(makeProps(), mockEmit);
       startSelection('key1');
       toggleKey('key2');
 

@@ -2,7 +2,7 @@
 import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
-import eslint from 'vite-plugin-eslint';
+import eslint from 'vite-plugin-eslint2';
 import dts from 'vite-plugin-dts';
 import { visualizer } from 'rollup-plugin-visualizer';
 
@@ -12,8 +12,7 @@ export default defineConfig({
     vue(),
     {
       ...eslint({
-        failOnWarning: false,
-        failOnError: false,
+        emitErrorAsWarning: true,
       }),
       apply: 'serve',
       enforce: 'post',

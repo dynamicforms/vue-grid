@@ -108,9 +108,7 @@ describe('columns-sorting.ts', () => {
           'title',
         );
 
-        expect(mockEmit).toHaveBeenCalledWith('update:sortState', [
-          { columnName: 'title', direction: 'asc' },
-        ]);
+        expect(mockEmit).toHaveBeenCalledWith('update:sortState', [{ columnName: 'title', direction: 'asc' }]);
       });
 
       it('should cycle asc to desc on second click', () => {
@@ -127,9 +125,7 @@ describe('columns-sorting.ts', () => {
           'title',
         );
 
-        expect(mockEmit).toHaveBeenCalledWith('update:sortState', [
-          { columnName: 'title', direction: 'desc' },
-        ]);
+        expect(mockEmit).toHaveBeenCalledWith('update:sortState', [{ columnName: 'title', direction: 'desc' }]);
       });
 
       it('should remove sort on third click', () => {
@@ -166,9 +162,7 @@ describe('columns-sorting.ts', () => {
           'year',
         );
 
-        expect(mockEmit).toHaveBeenCalledWith('update:sortState', [
-          { columnName: 'year', direction: 'asc' },
-        ]);
+        expect(mockEmit).toHaveBeenCalledWith('update:sortState', [{ columnName: 'year', direction: 'asc' }]);
       });
     });
 
@@ -247,9 +241,7 @@ describe('columns-sorting.ts', () => {
           'artist',
         );
 
-        expect(mockEmit).toHaveBeenCalledWith('update:sortState', [
-          { columnName: 'title', direction: 'asc' },
-        ]);
+        expect(mockEmit).toHaveBeenCalledWith('update:sortState', [{ columnName: 'title', direction: 'asc' }]);
       });
 
       it('should not clear other columns when adding new one', () => {
@@ -430,21 +422,9 @@ describe('columns-sorting.ts', () => {
     describe('direction constraints', () => {
       it('should respect asc-only columns', () => {
         const sortState: SortState = [];
-        processSortEvent(
-          mockEmit,
-          sortState,
-          mockHeaderRef,
-          mockUColumns,
-          undefined,
-          ['id'],
-          'click',
-          mockEvent,
-          'id',
-        );
+        processSortEvent(mockEmit, sortState, mockHeaderRef, mockUColumns, undefined, ['id'], 'click', mockEvent, 'id');
 
-        expect(mockEmit).toHaveBeenCalledWith('update:sortState', [
-          { columnName: 'id', direction: 'asc' },
-        ]);
+        expect(mockEmit).toHaveBeenCalledWith('update:sortState', [{ columnName: 'id', direction: 'asc' }]);
 
         // Second click should remove it (no desc allowed)
         const sortState2: SortState = [{ columnName: 'id', direction: 'asc' }];
@@ -540,12 +520,7 @@ describe('columns-sorting.ts', () => {
 
       it('should update internal state on emit', () => {
         const inputRecords = computed(() => mockRecords);
-        const { sortState, emitWrapper, sortedRecords } = useSorting(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { sortState, emitWrapper, sortedRecords } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
         const newState: SortState = [{ columnName: 'title', direction: 'asc' }];
         emitWrapper('update:sortState', newState);
@@ -592,9 +567,7 @@ describe('columns-sorting.ts', () => {
         // Access sortedRecords to trigger computed validation
         const result = sortedRecords.value;
 
-        expect(consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining('unsortable column'),
-        );
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('unsortable column'));
         expect(result).toEqual(mockRecords); // should remain unsorted
 
         consoleSpy.mockRestore();

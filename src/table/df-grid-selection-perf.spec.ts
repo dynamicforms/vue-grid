@@ -64,15 +64,14 @@ vi.mock('@pdanpdan/virtual-scroll', () => ({
     name: 'MockVirtualScroll',
     props: { items: { type: Array, default: () => [] }, loading: Boolean },
     setup(props, { slots }) {
-      return () => h('div', { class: 'virtual-scroll', 'data-section': 'body' }, [
-        slots.header?.(),
-        ...(props.items as unknown[]).map((item, i) => h(
-          'div',
-          { class: 'virtual-scroll-item', key: i },
-          slots.item?.({ item, index: i, active: true }),
-        )),
-        slots.footer?.(),
-      ]);
+      return () =>
+        h('div', { class: 'virtual-scroll', 'data-section': 'body' }, [
+          slots.header?.(),
+          ...(props.items as unknown[]).map((item, i) =>
+            h('div', { class: 'virtual-scroll-item', key: i }, slots.item?.({ item, index: i, active: true })),
+          ),
+          slots.footer?.(),
+        ]);
     },
   }),
 }));
@@ -147,7 +146,10 @@ vi.mock('./use-excessive-scroll', () => ({ useExcessiveScroll: () => ({ amount: 
 
 const ROW_COUNT = 20;
 const records = Array.from({ length: ROW_COUNT }, (_, i) => ({ id: i, name: `Row ${i}` }));
-const columns = [{ fieldName: 'name', label: 'Name' }, { fieldName: 'id', label: 'ID' }];
+const columns = [
+  { fieldName: 'name', label: 'Name' },
+  { fieldName: 'id', label: 'ID' },
+];
 
 // ===========================================================================
 // Helpers

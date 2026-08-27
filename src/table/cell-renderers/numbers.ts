@@ -13,7 +13,7 @@ type RLocaleWithOptions = Required<LocaleWithOptions>;
 const defaultLocaleOptions: Intl.NumberFormatOptions = { useGrouping: false };
 
 function isLocaleWithOptions(obj: any): obj is LocaleWithOptions {
-  return isPlainObject(obj) && ('locale' in obj);
+  return isPlainObject(obj) && 'locale' in obj;
 }
 
 class Measurement {
@@ -102,9 +102,9 @@ export const int = (value: number | string, options: CellOptionsInternal<IntOpti
 
 export function floatGridColumnCreate(gridId: symbol, options: CellOptionsInternal<IntOptions>) {
   const locale: RLocaleWithOptions = (
-    isLocaleWithOptions(options.locale) ?
-      { locale: options.locale.locale, localeOptions: options.locale.localeOptions ?? { ...defaultLocaleOptions } } :
-      { locale: options.locale, localeOptions: { ...defaultLocaleOptions } }
+    isLocaleWithOptions(options.locale)
+      ? { locale: options.locale.locale, localeOptions: options.locale.localeOptions ?? { ...defaultLocaleOptions } }
+      : { locale: options.locale, localeOptions: { ...defaultLocaleOptions } }
   ) as RLocaleWithOptions;
   if (isNumber(options.padToLength)) locale.localeOptions.minimumIntegerDigits = options.padToLength;
   locale.localeOptions.maximumFractionDigits = locale.localeOptions.maximumFractionDigits ?? 20;

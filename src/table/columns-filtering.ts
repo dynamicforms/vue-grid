@@ -119,50 +119,52 @@ function applyFiltering(
   if (hasExternalFilter) return recordsArray;
 
   // Apply local filtering
-  return recordsArray.filter((record) => Object.entries(filterValues).every(([fieldName, filterValue]) => {
-    // Record must match all active filters
+  return recordsArray.filter((record) =>
+    Object.entries(filterValues).every(([fieldName, filterValue]) => {
+      // Record must match all active filters
 
-    // Skip empty/null filter values
-    if (filterValue == null || filterValue === '' || filterValue === undefined) {
-      return true;
-    }
-
-    const colDef = columns.value.find((c) => c.fieldName === fieldName);
-    if (!colDef) return true;
-
-    const filterConfig = getFilterConfig((colDef as any).filterable);
-    const isMultiSelect = filterConfig.choices != null;
-    if (isMultiSelect && filterValue.length === 0) {
-      return true;
-    }
-    const recordValue = record[filterConfig.key as string ?? fieldName];
-
-    // Handle different field types
-    switch (filterConfig.fieldType) {
-    case 'boolean':
-      // For boolean: only filter if explicitly set to true or false
-      return recordValue === filterValue;
-
-    case 'number':
-      // For number: exact match (could be extended to ranges later)
-      if (isMultiSelect) return filterValue.some((v: any) => recordValue === Number(v));
-      return recordValue === Number(filterValue);
-
-    case 'date':
-      // For date: simple equality (could be extended to ranges later)
-      if (isMultiSelect) return filterValue.some((v: any) => recordValue === v);
-      return recordValue === filterValue;
-
-    case 'string':
-    default:
-      // For string: case-insensitive substring match
-      if (recordValue == null) return false;
-      if (isMultiSelect) {
-        return filterValue.some((v: any) => String(recordValue).toLowerCase() === String(v).toLowerCase());
+      // Skip empty/null filter values
+      if (filterValue == null || filterValue === '' || filterValue === undefined) {
+        return true;
       }
-      return String(recordValue).toLowerCase().includes(String(filterValue).toLowerCase());
-    }
-  }));
+
+      const colDef = columns.value.find((c) => c.fieldName === fieldName);
+      if (!colDef) return true;
+
+      const filterConfig = getFilterConfig((colDef as any).filterable);
+      const isMultiSelect = filterConfig.choices != null;
+      if (isMultiSelect && filterValue.length === 0) {
+        return true;
+      }
+      const recordValue = record[(filterConfig.key as string) ?? fieldName];
+
+      // Handle different field types
+      switch (filterConfig.fieldType) {
+        case 'boolean':
+          // For boolean: only filter if explicitly set to true or false
+          return recordValue === filterValue;
+
+        case 'number':
+          // For number: exact match (could be extended to ranges later)
+          if (isMultiSelect) return filterValue.some((v: any) => recordValue === Number(v));
+          return recordValue === Number(filterValue);
+
+        case 'date':
+          // For date: simple equality (could be extended to ranges later)
+          if (isMultiSelect) return filterValue.some((v: any) => recordValue === v);
+          return recordValue === filterValue;
+
+        case 'string':
+        default:
+          // For string: case-insensitive substring match
+          if (recordValue == null) return false;
+          if (isMultiSelect) {
+            return filterValue.some((v: any) => String(recordValue).toLowerCase() === String(v).toLowerCase());
+          }
+          return String(recordValue).toLowerCase().includes(String(filterValue).toLowerCase());
+      }
+    }),
+  );
 }
 
 /**
@@ -192,8 +194,9 @@ export interface ColumnFilterState {
   filterable: boolean;
 }
 
-export type ColumnDefinitionWithFilterState<T extends keyof RendererOptionsMap = 'plain'> =
-  ColumnDefinition<T> & { filterState: ColumnFilterState };
+export type ColumnDefinitionWithFilterState<T extends keyof RendererOptionsMap = 'plain'> = ColumnDefinition<T> & {
+  filterState: ColumnFilterState;
+};
 
 export function useFiltering(
   props: GridProps,
@@ -202,20 +205,19 @@ export function useFiltering(
   inputRecords: MaybeRef<RowValue[]>,
 ) {
   // Create internal filter state from columns
-  const internalFilterState = ref<FilterState>(
-    props.filterState ?? createFilterState(uColumns.columns.value),
-  );
+  const internalFilterState = ref<FilterState>(props.filterState ?? createFilterState(uColumns.columns.value));
 
-  const filterState = computed<FilterState>(
-    () => (props.filterState ?? internalFilterState.value) as FilterState,
-  );
+  const filterState = computed<FilterState>(() => (props.filterState ?? internalFilterState.value) as FilterState);
 
   // Validate filter state
   watch(
     [() => filterState.value, () => uColumns.columns.value],
     ([newFilterState, newColumns]) => {
       if (newFilterState) {
-        validateFilterState(newFilterState, computed(() => newColumns));
+        validateFilterState(
+          newFilterState,
+          computed(() => newColumns),
+        );
       }
     },
     { immediate: true },
@@ -245,14 +247,14 @@ export function useFiltering(
   );
 
   // Wrap emit to intercept update:filterState
-  const emitWrapper: GridEmit = ((event: any, ...args: any[]) => {
+  const emitWrapper: GridEmit = (event: any, ...args: any[]) => {
     if (event === 'update:filterState') {
       // Update internal state
       internalFilterState.value = args[0];
     }
     // @ts-expect-error - emit wrapper extends the emit signature
     return emit(event, ...args);
-  });
+  };
 
   return { filterState, emitWrapper, filteredRecords };
 }

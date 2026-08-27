@@ -42,10 +42,7 @@ import { longpress } from './longpress';
  * Mounts the directive on a freshly created <div> with the given binding value and
  * optional arg (custom duration in ms as a string, matching Vue's directive arg type).
  */
-function mountDirective(
-  callback: (e: MouseEvent | TouchEvent) => void,
-  arg?: string,
-): HTMLElement {
+function mountDirective(callback: (e: MouseEvent | TouchEvent) => void, arg?: string): HTMLElement {
   const el = document.createElement('div');
   document.body.appendChild(el);
   longpress.mounted!(el, { value: callback, arg } as any, null as any, null as any);

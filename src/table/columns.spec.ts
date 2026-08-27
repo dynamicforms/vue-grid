@@ -245,37 +245,26 @@ describe('useColumns', () => {
     });
 
     it('selects the correct group when activeColumns matches a group name', () => {
-      const { name, columns } = useColumns(
-        makeGridProps(responsiveColumns, 'desktop'),
-        GRID_ID,
-      );
+      const { name, columns } = useColumns(makeGridProps(responsiveColumns, 'desktop'), GRID_ID);
 
       expect(name.value).toBe('desktop');
       expect(columns.value).toHaveLength(2);
     });
 
     it('falls back to the first group when activeColumns does not match any group', () => {
-      const { name } = useColumns(
-        makeGridProps(responsiveColumns, 'tablet'),
-        GRID_ID,
-      );
+      const { name } = useColumns(makeGridProps(responsiveColumns, 'tablet'), GRID_ID);
 
       expect(name.value).toBe('mobile');
     });
 
     it('reflects cssClass of the active group', () => {
-      const { cssClass } = useColumns(
-        makeGridProps(responsiveColumns, 'desktop'),
-        GRID_ID,
-      );
+      const { cssClass } = useColumns(makeGridProps(responsiveColumns, 'desktop'), GRID_ID);
 
       expect(cssClass.value).toBe('desktop');
     });
 
     it('falls back to cssClass as group name when no explicit name is given', () => {
-      const noNameColumns = [
-        { cssClass: 'compact', columns: [{ fieldName: 'title', label: 'Title' }] },
-      ] as any;
+      const noNameColumns = [{ cssClass: 'compact', columns: [{ fieldName: 'title', label: 'Title' }] }] as any;
 
       const { name } = useColumns(makeGridProps(noNameColumns), GRID_ID);
 
@@ -284,9 +273,7 @@ describe('useColumns', () => {
 
     it('throws when a group has empty cssClass and no name', () => {
       // cssClass present (triggers responsive path) but empty string → no valid name
-      const badColumns = [
-        { cssClass: '', columns: [{ fieldName: 'title', label: 'Title' }] },
-      ] as any;
+      const badColumns = [{ cssClass: '', columns: [{ fieldName: 'title', label: 'Title' }] }] as any;
 
       expect(() => {
         const { builtColumns } = useColumns(makeGridProps(badColumns), GRID_ID);
@@ -302,7 +289,10 @@ describe('useColumns', () => {
         {
           name: 'large',
           cssClass: 'large',
-          columns: [{ fieldName: 'title', label: 'T' }, { fieldName: 'year', label: 'Y' }],
+          columns: [
+            { fieldName: 'title', label: 'T' },
+            { fieldName: 'year', label: 'Y' },
+          ],
         },
       ] as any;
 

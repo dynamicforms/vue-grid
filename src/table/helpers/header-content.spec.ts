@@ -1,4 +1,3 @@
-/* eslint-disable vue/one-component-per-file */
 /**
  * @file header-content.spec.ts
  *
@@ -20,12 +19,14 @@ import { useHeaderContent } from './header-content';
 // ---------------------------------------------------------------------------
 function withSetup<T>(composable: () => T): T {
   let result!: T;
-  mount(defineComponent({
-    setup() {
-      result = composable();
-      return () => h('div');
-    },
-  }));
+  mount(
+    defineComponent({
+      setup() {
+        result = composable();
+        return () => h('div');
+      },
+    }),
+  );
   return result;
 }
 
@@ -78,10 +79,7 @@ describe('useHeaderContent', () => {
     it('maps multiple nodes in order', () => {
       const { setHeaderContent, headerContent } = withSetup(useHeaderContent);
 
-      const nodes = [
-        makeNode('<h1>Title</h1>'),
-        makeNode('<p id="intro">Body</p>'),
-      ];
+      const nodes = [makeNode('<h1>Title</h1>'), makeNode('<p id="intro">Body</p>')];
       setHeaderContent(nodes);
 
       expect(headerContent.value).toHaveLength(2);
@@ -150,17 +148,19 @@ describe('useHeaderContent', () => {
         },
       });
 
-      mount(defineComponent({
-        components: { Child },
-        setup() {
-          const { provideHeaderContent } = useHeaderContent();
-          // provideHeaderContent() creates a new ref and calls provide(); write to it directly
-          // (setHeaderContent writes to the *injected* default ref, not the provided one)
-          parentRef = provideHeaderContent();
-          parentRef.value = [{ tag: 'b', attrs: {}, content: 'injected' }];
-          return () => h(Child);
-        },
-      }));
+      mount(
+        defineComponent({
+          components: { Child },
+          setup() {
+            const { provideHeaderContent } = useHeaderContent();
+            // provideHeaderContent() creates a new ref and calls provide(); write to it directly
+            // (setHeaderContent writes to the *injected* default ref, not the provided one)
+            parentRef = provideHeaderContent();
+            parentRef.value = [{ tag: 'b', attrs: {}, content: 'injected' }];
+            return () => h(Child);
+          },
+        }),
+      );
 
       // The child's headerContent ref should be the same object as what the parent provided
       expect(childHeaderContent).toBe(parentRef);

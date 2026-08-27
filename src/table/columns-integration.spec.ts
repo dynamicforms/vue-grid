@@ -50,31 +50,17 @@ describe('Filtering + Sorting Integration', () => {
       const inputRecords = computed(() => mockRecords);
 
       // Setup filtering
-      const { filterState, filteredRecords } = useFiltering(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        inputRecords,
-      );
+      const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
       // Setup sorting on filtered records
-      const { sortedRecords, emitWrapper: sortEmit } = useSorting(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        filteredRecords,
-      );
+      const { sortedRecords, emitWrapper: sortEmit } = useSorting(mockProps, mockEmit, mockUColumns, filteredRecords);
 
       // Apply filter: artist = 'Alpha'
       filterState.value!.fields.artist.value = 'Alpha';
 
       // Filtered records should have 3 items (Zebra, Mango, Zebra Crossing)
       expect(filteredRecords.value.length).toBe(3);
-      expect(filteredRecords.value.map((r) => r.title)).toEqual([
-        'Zebra',
-        'Mango',
-        'Zebra Crossing',
-      ]);
+      expect(filteredRecords.value.map((r) => r.title)).toEqual(['Zebra', 'Mango', 'Zebra Crossing']);
 
       // Apply sort: title ascending
       sortEmit('update:sortState', [{ columnName: 'title', direction: 'asc' }]);
@@ -87,19 +73,9 @@ describe('Filtering + Sorting Integration', () => {
     it('should update sorted results when filter changes', () => {
       const inputRecords = computed(() => mockRecords);
 
-      const { filterState, filteredRecords } = useFiltering(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        inputRecords,
-      );
+      const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
-      const { sortedRecords, emitWrapper: sortEmit } = useSorting(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        filteredRecords,
-      );
+      const { sortedRecords, emitWrapper: sortEmit } = useSorting(mockProps, mockEmit, mockUColumns, filteredRecords);
 
       // Apply sort first: title ascending
       sortEmit('update:sortState', [{ columnName: 'title', direction: 'asc' }]);
@@ -119,19 +95,9 @@ describe('Filtering + Sorting Integration', () => {
     it('should handle multi-column sort with filters', () => {
       const inputRecords = computed(() => mockRecords);
 
-      const { filterState, filteredRecords } = useFiltering(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        inputRecords,
-      );
+      const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
-      const { sortedRecords, emitWrapper: sortEmit } = useSorting(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        filteredRecords,
-      );
+      const { sortedRecords, emitWrapper: sortEmit } = useSorting(mockProps, mockEmit, mockUColumns, filteredRecords);
 
       // Filter: active = true
       filterState.value!.fields.active.value = true;
@@ -161,19 +127,9 @@ describe('Filtering + Sorting Integration', () => {
     it('should apply sorting first, then filtering (filter takes precedence)', () => {
       const inputRecords = computed(() => mockRecords);
 
-      const { sortedRecords, emitWrapper: sortEmit } = useSorting(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        inputRecords,
-      );
+      const { sortedRecords, emitWrapper: sortEmit } = useSorting(mockProps, mockEmit, mockUColumns, inputRecords);
 
-      const { filterState, filteredRecords } = useFiltering(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        sortedRecords,
-      );
+      const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, sortedRecords);
 
       // Sort first: title ascending
       sortEmit('update:sortState', [{ columnName: 'title', direction: 'asc' }]);
@@ -195,19 +151,9 @@ describe('Filtering + Sorting Integration', () => {
     it('should handle multiple filters with multiple sorts', () => {
       const inputRecords = computed(() => mockRecords);
 
-      const { filterState, filteredRecords } = useFiltering(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        inputRecords,
-      );
+      const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
-      const { sortedRecords, emitWrapper: sortEmit } = useSorting(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        filteredRecords,
-      );
+      const { sortedRecords, emitWrapper: sortEmit } = useSorting(mockProps, mockEmit, mockUColumns, filteredRecords);
 
       // Apply multiple filters
       filterState.value!.fields.active.value = true;
@@ -228,19 +174,9 @@ describe('Filtering + Sorting Integration', () => {
     it('should clear filters and maintain sort', () => {
       const inputRecords = computed(() => mockRecords);
 
-      const { filterState, filteredRecords } = useFiltering(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        inputRecords,
-      );
+      const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
-      const { sortedRecords, emitWrapper: sortEmit } = useSorting(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        filteredRecords,
-      );
+      const { sortedRecords, emitWrapper: sortEmit } = useSorting(mockProps, mockEmit, mockUColumns, filteredRecords);
 
       // Filter and sort
       filterState.value!.fields.artist.value = 'Beta';
@@ -260,19 +196,9 @@ describe('Filtering + Sorting Integration', () => {
     it('should clear sort and maintain filter', () => {
       const inputRecords = computed(() => mockRecords);
 
-      const { filterState, filteredRecords } = useFiltering(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        inputRecords,
-      );
+      const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
-      const { sortedRecords, emitWrapper: sortEmit } = useSorting(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        filteredRecords,
-      );
+      const { sortedRecords, emitWrapper: sortEmit } = useSorting(mockProps, mockEmit, mockUColumns, filteredRecords);
 
       // Filter and sort
       filterState.value!.fields.artist.value = 'Alpha';
@@ -286,11 +212,7 @@ describe('Filtering + Sorting Integration', () => {
 
       // Should still be filtered, but not sorted (original order)
       expect(sortedRecords.value.length).toBe(3);
-      expect(sortedRecords.value.map((r) => r.title)).toEqual([
-        'Zebra',
-        'Mango',
-        'Zebra Crossing',
-      ]);
+      expect(sortedRecords.value.map((r) => r.title)).toEqual(['Zebra', 'Mango', 'Zebra Crossing']);
     });
   });
 
@@ -362,19 +284,9 @@ describe('Filtering + Sorting Integration', () => {
     it('should handle empty records array', () => {
       const emptyRecords = computed(() => [] as RowValue[]);
 
-      const { filterState, filteredRecords } = useFiltering(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        emptyRecords,
-      );
+      const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, emptyRecords);
 
-      const { sortedRecords, emitWrapper } = useSorting(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        filteredRecords,
-      );
+      const { sortedRecords, emitWrapper } = useSorting(mockProps, mockEmit, mockUColumns, filteredRecords);
 
       filterState.value!.fields.artist.value = 'Alpha';
       emitWrapper('update:sortState', [{ columnName: 'title', direction: 'asc' }]);
@@ -386,19 +298,9 @@ describe('Filtering + Sorting Integration', () => {
     it('should handle filters that result in empty array', () => {
       const inputRecords = computed(() => mockRecords);
 
-      const { filterState, filteredRecords } = useFiltering(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        inputRecords,
-      );
+      const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
-      const { sortedRecords, emitWrapper } = useSorting(
-        mockProps,
-        mockEmit,
-        mockUColumns,
-        filteredRecords,
-      );
+      const { sortedRecords, emitWrapper } = useSorting(mockProps, mockEmit, mockUColumns, filteredRecords);
 
       // Apply filter that matches nothing
       filterState.value!.fields.artist.value = 'NonExistent';
@@ -454,7 +356,7 @@ describe('Filtering + Sorting Integration', () => {
 
   describe('performance considerations', () => {
     it('should re-sort when filter changes (expected behavior)', () => {
-      const sortSpy = vi.fn((a, b) => (a.localeCompare(b)));
+      const sortSpy = vi.fn((a, b) => a.localeCompare(b));
 
       const columnsWithCustomSort = [
         {

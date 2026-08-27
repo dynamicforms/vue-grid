@@ -21,12 +21,7 @@
     </slot>
 
     <!-- Filter row -->
-    <div
-      v-if="showFilterRow"
-      class="df-grid card filter-row"
-      data-section="filter"
-      :class="gridClass"
-    >
+    <div v-if="showFilterRow" class="df-grid card filter-row" data-section="filter" :class="gridClass">
       <div
         v-for="column in columns"
         :key="column.fieldName"
@@ -101,14 +96,12 @@
           />
         </div>
         <div class="selection-group-actions">
-          <slot name="groupActions"/>
+          <slot name="groupActions" />
         </div>
       </template>
       <template v-else>
         <slot name="statusBar" :filter-state="filterState">
-          <div class="status-section">
-            Active filters: {{ activeFilterCount }}
-          </div>
+          <div class="status-section">Active filters: {{ activeFilterCount }}</div>
         </slot>
       </template>
     </div>
@@ -149,32 +142,32 @@ export interface HeaderProps {
 const props = defineProps<HeaderProps>();
 const emit = defineEmits<{ 'cancel-selection': []; 'invert-selection': [] }>();
 
-const headerItem = computed(() => (
-  Object.fromEntries(props.columns.map((column) => [column.fieldName, column.label]))
-));
+const headerItem = computed(() => Object.fromEntries(props.columns.map((column) => [column.fieldName, column.label])));
 
-const headerOptions = computed(() => props.columns.map((column) => {
-  const srtIdx = props.sortState.findIndex((ssi) => ssi.columnName === column.fieldName);
-  const srt = srtIdx === -1 ? null : props.sortState[srtIdx];
-  const singleSegment = props.sortState.length === 1;
-  const sortState: ColumnSortState = {
-    index: srtIdx === -1 ? undefined : srtIdx + (singleSegment ? 0 : 1),
-    sortable: isBoolean(column.sortable) ? column.sortable : column.sortable?.direction !== undefined,
-    direction: srt?.direction,
-  };
+const headerOptions = computed(() =>
+  props.columns.map((column) => {
+    const srtIdx = props.sortState.findIndex((ssi) => ssi.columnName === column.fieldName);
+    const srt = srtIdx === -1 ? null : props.sortState[srtIdx];
+    const singleSegment = props.sortState.length === 1;
+    const sortState: ColumnSortState = {
+      index: srtIdx === -1 ? undefined : srtIdx + (singleSegment ? 0 : 1),
+      sortable: isBoolean(column.sortable) ? column.sortable : column.sortable?.direction !== undefined,
+      direction: srt?.direction,
+    };
 
-  const opt: CellOptionsInternal = {
-    nullHandler: 'null-null',
-    redrawColumn: () => null,
-    sortState,
-    [gridIdOption]: props.gridId,
-    [columnNameOption]: column.fieldName,
-    [columnIdOption]: Symbol('grid-column-header'),
-  } as CellOptionsInternal;
+    const opt: CellOptionsInternal = {
+      nullHandler: 'null-null',
+      redrawColumn: () => null,
+      sortState,
+      [gridIdOption]: props.gridId,
+      [columnNameOption]: column.fieldName,
+      [columnIdOption]: Symbol('grid-column-header'),
+    } as CellOptionsInternal;
 
-  gridColumnCreate(props.gridId, 'header' as keyof RendererOptionsMap, opt);
-  return { ...column, renderer: 'header' as keyof RendererOptionsMap, rendererOptions: opt, sortState };
-}));
+    gridColumnCreate(props.gridId, 'header' as keyof RendererOptionsMap, opt);
+    return { ...column, renderer: 'header' as keyof RendererOptionsMap, rendererOptions: opt, sortState };
+  }),
+);
 
 const headerRef = ref();
 const headerHeight = ref(0);
@@ -183,7 +176,7 @@ const { setHeaderContent } = useHeaderContent();
 
 function getFilterableConfig(column: ColumnDefinition<keyof RendererOptionsMap>) {
   const config = getFilterConfig((column as any).filterable);
-  return (config.fieldType || config.choices) ? config : null;
+  return config.fieldType || config.choices ? config : null;
 }
 
 const isSelectionActive = computed(() => props.selectionMode != null && props.selectionMode !== 'non-select');
@@ -268,8 +261,10 @@ defineExpose({ headerItem, headerOptions, headerHeight });
 .selection-icon {
   cursor: pointer;
   opacity: 0.7;
-  transition: background-color 0.15s, opacity 0.15s;
-  margin-top: -.4em;
+  transition:
+    background-color 0.15s,
+    opacity 0.15s;
+  margin-top: -0.4em;
 }
 
 .selection-icon:hover {

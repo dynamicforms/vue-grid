@@ -1,11 +1,7 @@
 <template>
-  <div
-    class="df-incoming-arc"
-    :class="`df-incoming-arc--${direction}`"
-    aria-hidden="true"
-  >
+  <div class="df-incoming-arc" :class="`df-incoming-arc--${direction}`" aria-hidden="true">
     <slot>
-      <div class="df-incoming-arc__wave" :style="{ opacity: arcOpacity }"/>
+      <div class="df-incoming-arc__wave" :style="{ opacity: arcOpacity }" />
     </slot>
   </div>
 </template>
@@ -62,9 +58,9 @@ watch(
     lastTriggerAt = now;
 
     // Each rapid consecutive trigger reduces initial opacity toward 0.15 (discrete / subtle).
-    const initialOpacity = isFrequent ?
-      props.maxOpacity * Math.max(0.15, 1 - 0.15 * (triggerCount - 1)) :
-      props.maxOpacity;
+    const initialOpacity = isFrequent
+      ? props.maxOpacity * Math.max(0.15, 1 - 0.15 * (triggerCount - 1))
+      : props.maxOpacity;
 
     arcOpacity.value = initialOpacity;
     startDecay(initialOpacity);
@@ -84,8 +80,12 @@ onUnmounted(cancelDecay);
   z-index: 2;
   overflow: hidden;
 }
-.df-incoming-arc--top { top: 0; }
-.df-incoming-arc--bottom { bottom: 0; }
+.df-incoming-arc--top {
+  top: 0;
+}
+.df-incoming-arc--bottom {
+  bottom: 0;
+}
 
 .df-incoming-arc__wave {
   position: absolute;

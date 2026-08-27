@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { onMounted, onUnmounted, ref } from 'vue';
 import type { Ref } from 'vue';
 
@@ -45,9 +44,7 @@ export function useExcessiveScroll(
 
     if (absAmount >= thresholdPx) {
       const now = Date.now();
-      const canFire =
-        belowThresholdSinceTrigger &&
-        (triggerLastAt === null || now - triggerLastAt >= 1000);
+      const canFire = belowThresholdSinceTrigger && (triggerLastAt === null || now - triggerLastAt >= 1000);
       if (canFire) {
         triggerLastAt = now;
         belowThresholdSinceTrigger = false;
@@ -59,7 +56,10 @@ export function useExcessiveScroll(
   }
 
   function cancelDecay() {
-    if (decayFrame !== null) { cancelAnimationFrame(decayFrame); decayFrame = null; }
+    if (decayFrame !== null) {
+      cancelAnimationFrame(decayFrame);
+      decayFrame = null;
+    }
   }
 
   function stepDecay(now: number) {
@@ -84,7 +84,10 @@ export function useExcessiveScroll(
 
   function resetTimer() {
     if (timer) clearTimeout(timer);
-    timer = setTimeout(() => { timer = null; startDecay(); }, 200);
+    timer = setTimeout(() => {
+      timer = null;
+      startDecay();
+    }, 200);
   }
 
   function onWheel(event: WheelEvent) {

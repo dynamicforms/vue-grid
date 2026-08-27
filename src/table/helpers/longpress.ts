@@ -17,7 +17,6 @@ import type { ObjectDirective, DirectiveBinding } from 'vue';
 
 type LongPressElement = HTMLElement & { $longpress$: { start: (e: TouchEvent | MouseEvent) => void; end: () => void } };
 
-// eslint-disable-next-line import/prefer-default-export
 export const longpress: ObjectDirective<HTMLElement, (event: TouchEvent | MouseEvent) => void> = {
   mounted(el: HTMLElement, binding: DirectiveBinding<(event: TouchEvent | MouseEvent) => void>) {
     if (typeof binding.value !== 'function') return;
@@ -47,11 +46,11 @@ export const longpress: ObjectDirective<HTMLElement, (event: TouchEvent | MouseE
     el.addEventListener('touchend', end);
     el.addEventListener('touchcancel', end);
 
-    (<LongPressElement> el).$longpress$ = { start, end };
+    (<LongPressElement>el).$longpress$ = { start, end };
   },
 
   unmounted(el: HTMLElement) {
-    const lp = (<LongPressElement> el).$longpress$;
+    const lp = (<LongPressElement>el).$longpress$;
     el.removeEventListener('mousedown', lp.start);
     el.removeEventListener('touchstart', lp.start);
     el.removeEventListener('click', lp.end);
@@ -63,6 +62,6 @@ export const longpress: ObjectDirective<HTMLElement, (event: TouchEvent | MouseE
 
 declare module 'vue' {
   interface ComponentCustomProperties {
-    vLongpress: typeof longpress
+    vLongpress: typeof longpress;
   }
 }

@@ -15,10 +15,14 @@ const cbOptions = {
 
 export const checkbox = (value: any): string => {
   switch (value) {
-  case null: return cbOptions.null;
-  case true: return cbOptions.true;
-  case false: return cbOptions.false;
-  default: return cbOptions.xx;
+    case null:
+      return cbOptions.null;
+    case true:
+      return cbOptions.true;
+    case false:
+      return cbOptions.false;
+    default:
+      return cbOptions.xx;
   }
 };
 
@@ -35,13 +39,14 @@ export const email = (value: any): string => {
 export const ip4 = (value: any): string => {
   const segments = String(value).split('.');
 
-  const formatted = segments.length === 4 ?
-    segments
-      .map((t: string) => t.padStart(3, '0'))
-      .map((t: string) => t.replace(/^0+/, (match: any) => `<span style="opacity: .5">${match}</span>`))
-      .map((t: string) => `<span>${t}</span>`)
-      .join('.') :
-    value;
+  const formatted =
+    segments.length === 4
+      ? segments
+          .map((t: string) => t.padStart(3, '0'))
+          .map((t: string) => t.replace(/^0+/, (match: any) => `<span style="opacity: .5">${match}</span>`))
+          .map((t: string) => `<span>${t}</span>`)
+          .join('.')
+      : value;
 
   return `<code>${formatted}</code>`;
 };
@@ -54,11 +59,9 @@ export const ip6 = (value: string): string => {
       if (t === '') return t;
       return t.padStart(4, '0');
     })
-    .map((t: string) => (
-      t.includes('<span') ?
-        t :
-        t.replace(/^0+/, (match: any) => `<span style="opacity: .5">${match}</span>`)
-    ))
+    .map((t: string) =>
+      t.includes('<span') ? t : t.replace(/^0+/, (match: any) => `<span style="opacity: .5">${match}</span>`),
+    )
     .map((t: string) => (t.includes('.') || t === '' ? t : `<span>${t}</span>`))
     .join(':');
 

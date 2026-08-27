@@ -44,12 +44,7 @@ import DfGrid from './df-grid.vue';
 // vi.hoisted — shared mutable counters visible inside vi.mock() factories
 // ===========================================================================
 
-const {
-  shadowRenderCount,
-  onmeasureCount,
-  emitVisibleRangeChange,
-  shadowContainerEl,
-} = vi.hoisted(() => {
+const { shadowRenderCount, onmeasureCount, emitVisibleRangeChange, shadowContainerEl } = vi.hoisted(() => {
   const containerEl = document.createElement('div');
 
   // These counters are reset in beforeEach.
@@ -80,15 +75,14 @@ vi.mock('@pdanpdan/virtual-scroll', () => ({
     setup(props, { slots, emit }) {
       // Expose the emit so tests can fire visible-range-change.
       emitVisibleRangeChange.fn = (range) => emit('visible-range-change', range);
-      return () => h('div', { class: 'virtual-scroll', 'data-section': 'body' }, [
-        slots.header?.(),
-        ...(props.items as unknown[]).map((item, i) => h(
-          'div',
-          { class: 'virtual-scroll-item', key: i },
-          slots.item?.({ item, index: i, active: true }),
-        )),
-        slots.footer?.(),
-      ]);
+      return () =>
+        h('div', { class: 'virtual-scroll', 'data-section': 'body' }, [
+          slots.header?.(),
+          ...(props.items as unknown[]).map((item, i) =>
+            h('div', { class: 'virtual-scroll-item', key: i }, slots.item?.({ item, index: i, active: true })),
+          ),
+          slots.footer?.(),
+        ]);
     },
   }),
 }));
@@ -170,12 +164,10 @@ function mountGrid() {
 
 /** Run N extra nextTick / promise flushes to let async measurement settle. */
 async function settle(rounds = 5) {
-  /* eslint-disable no-await-in-loop -- rounds must drain sequentially; that is what "settle" means */
   for (let i = 0; i < rounds; i++) {
     await nextTick();
     await flushPromises();
   }
-  /* eslint-enable no-await-in-loop */
 }
 
 // ===========================================================================
@@ -275,7 +267,7 @@ describe('DfGrid — reactive render-loop detection', () => {
     // Fire alternating ranges — simulates browser oscillation between two stable
     // item-height values that flip the visible range back and forth.
     const N = 6;
-    /* eslint-disable no-await-in-loop -- each range change must be fully processed before the next one fires */
+
     for (let i = 0; i < N; i++) {
       // Alternate between two ranges that produce *different* mainShadowOffsets.
       const start = i % 2 === 0 ? 260 : 360;
@@ -283,7 +275,6 @@ describe('DfGrid — reactive render-loop detection', () => {
       await nextTick();
       await flushPromises();
     }
-    /* eslint-enable no-await-in-loop */
 
     // Each distinct visible-range-change should cause at most 1 shadow-grid render
     // plus 1 onmeasure call. Linear growth (≤ N renders) is acceptable.
