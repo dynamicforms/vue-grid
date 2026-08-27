@@ -46,7 +46,7 @@ chromium and firefox, `npm run test:e2e` starts the VitePress dev server through
 `playwright.config.ts`, and traces are uploaded when a test fails.
 
 They contribute nothing to the coverage report, though. `npm test` is vitest only — `e2e/**` is
-excluded from the run, and `coverage-final.json` is built from the istanbul instrumentation inside
+excluded from the run, and `coverage-final.json` is built from the v8 instrumentation inside
 that process, while the Playwright tests drive a dev server whose code is not instrumented. So the
 coverage numbers understate what is actually exercised: `df-grid.vue`, `use-excessive-scroll.ts`
 and `use-recently-added.ts` are all driven by the e2e suite as well.

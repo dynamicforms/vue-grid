@@ -67,7 +67,7 @@ export default defineConfig({
   test: {
     exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
     coverage: {
-      provider: 'istanbul',  // for some reason v8 was giving Serialized Error: { code: 'ERR_INSPECTOR_NOT_CONNECTED' }
+      provider: 'v8',
       include: [
         'src/**/*'
       ],
