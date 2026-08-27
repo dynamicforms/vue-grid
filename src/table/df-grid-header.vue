@@ -229,6 +229,15 @@ defineExpose({ headerItem, headerOptions, headerHeight });
 :deep(.df-grid.card.header .df-grid.cell) {
   user-select: none;
 }
+/*
+ * Elsewhere `.content` grows to fill the cell (renderers.ts), pinning a post element to the far
+ * right edge. In the header that stretch put the sort indicator so far from its column's label
+ * that neighbouring columns read as one block. Here it only takes the width it needs, so the
+ * indicator sits right after the label instead of at the cell boundary.
+ */
+:deep(.df-grid.card.header .df-grid.cell.has-pre-post > .content) {
+  flex: 0 1 auto;
+}
 
 .df-grid.cell.filter-cell {
   padding: 0.25em;

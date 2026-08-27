@@ -83,6 +83,19 @@ describe('SortingIndicator', () => {
   });
 
   // -------------------------------------------------------------------------
+  describe('sortable', () => {
+    it('draws the arrow svg when sortable is true (the default)', () => {
+      const wrapper = mountIndicator({});
+      expect(wrapper.find('svg').exists()).toBe(true);
+    });
+
+    it('draws no arrow svg when sortable is false', () => {
+      const wrapper = mountIndicator({ sortable: false });
+      expect(wrapper.find('svg').exists()).toBe(false);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   describe('sort-index badge', () => {
     it('shows the sort-index badge when index is provided', () => {
       const wrapper = mountIndicator({ direction: 'asc', index: 2 });
