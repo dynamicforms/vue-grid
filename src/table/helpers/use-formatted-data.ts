@@ -28,7 +28,6 @@ export interface FormattedDataProps {
   addRowResetItem?: boolean;
 }
 
-// eslint-disable-next-line import/prefer-default-export
 export function useFormattedData(props: FormattedDataProps) {
   const formattedData = computed(() => {
     const itemValue = props.item;

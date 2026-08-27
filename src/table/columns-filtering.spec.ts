@@ -134,12 +134,7 @@ describe('columns-filtering.ts', () => {
         mockProps.filterState = externalFilterState;
         const inputRecords = computed(() => mockRecords);
 
-        const { filterState, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         expect(filterState.value).toBe(externalFilterState);
         expect(filteredRecords.value.length).toBe(1);
@@ -156,12 +151,7 @@ describe('columns-filtering.ts', () => {
         });
         const inputRecords = computed(() => mockRecords);
 
-        const { filteredRecords } = useFiltering(
-          mockPropsReactive as GridProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filteredRecords } = useFiltering(mockPropsReactive as GridProps, mockEmit, mockUColumns, inputRecords);
 
         expect(filteredRecords.value.length).toBe(1);
         expect(filteredRecords.value[0].title).toBe('Apple');
@@ -177,12 +167,7 @@ describe('columns-filtering.ts', () => {
     describe('without external filterState prop (internal state)', () => {
       it('should create internal filterState when not provided', () => {
         const inputRecords = computed(() => mockRecords);
-        const { filterState, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         expect(filterState.value).toBeDefined();
         expect(filterState.value?.fields.title).toBeInstanceOf(Field);
@@ -194,12 +179,7 @@ describe('columns-filtering.ts', () => {
         mockUColumns.columns = computed(() => mockColumnsInternalOnly);
         mockUColumns.activeColumnsDefinition = computed(() => ({ columns: mockColumnsInternalOnly }));
         const inputRecords = computed(() => mockRecords);
-        const { emitWrapper, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { emitWrapper, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         const newFilterState = createFilterState(mockColumnsInternalOnly, { title: 'Mango' });
         emitWrapper('update:filterState', newFilterState);
@@ -216,12 +196,7 @@ describe('columns-filtering.ts', () => {
         mockUColumns.columns = computed(() => mockColumnsInternalOnly);
         mockUColumns.activeColumnsDefinition = computed(() => ({ columns: mockColumnsInternalOnly }));
         const inputRecords = computed(() => mockRecords);
-        const { filterState, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         filterState.value!.fields.title.value = 'an'; // matches "Banana", "Mango"
 
@@ -235,12 +210,7 @@ describe('columns-filtering.ts', () => {
         mockUColumns.columns = computed(() => mockColumnsInternalOnly);
         mockUColumns.activeColumnsDefinition = computed(() => ({ columns: mockColumnsInternalOnly }));
         const inputRecords = computed(() => mockRecords);
-        const { filterState, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         filterState.value!.fields.year.value = 2020;
 
@@ -253,12 +223,7 @@ describe('columns-filtering.ts', () => {
         mockUColumns.columns = computed(() => mockColumnsInternalOnly);
         mockUColumns.activeColumnsDefinition = computed(() => ({ columns: mockColumnsInternalOnly }));
         const inputRecords = computed(() => mockRecords);
-        const { filterState, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         filterState.value!.fields.active.value = true;
 
@@ -271,20 +236,13 @@ describe('columns-filtering.ts', () => {
         mockUColumns.columns = computed(() => mockColumnsInternalOnly);
         mockUColumns.activeColumnsDefinition = computed(() => ({ columns: mockColumnsInternalOnly }));
         const inputRecords = computed(() => mockRecords);
-        const { filterState, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         filterState.value!.fields.artist.value = 'Alpha';
         filterState.value!.fields.active.value = true;
 
         expect(filteredRecords.value.length).toBe(2);
-        expect(filteredRecords.value.every((r) => r.artist === 'Alpha' && r.active === true)).toBe(
-          true,
-        );
+        expect(filteredRecords.value.every((r) => r.artist === 'Alpha' && r.active === true)).toBe(true);
       });
 
       it('should ignore empty/null filter values', () => {
@@ -292,12 +250,7 @@ describe('columns-filtering.ts', () => {
         mockUColumns.columns = computed(() => mockColumnsInternalOnly);
         mockUColumns.activeColumnsDefinition = computed(() => ({ columns: mockColumnsInternalOnly }));
         const inputRecords = computed(() => mockRecords);
-        const { filterState, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         filterState.value!.fields.title.value = '';
         filterState.value!.fields.year.value = null;
@@ -307,12 +260,7 @@ describe('columns-filtering.ts', () => {
 
       it('should handle external filter columns', async () => {
         const inputRecords = computed(() => mockRecords);
-        const { filterState, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         // External filter should not filter locally
         filterState.value!.fields.external.value = 'some value';
@@ -326,12 +274,7 @@ describe('columns-filtering.ts', () => {
         mockUColumns.activeColumnsDefinition = computed(() => ({ columns: mockColumnsInternalOnly }));
         const inputRecords = computed(() => mockRecords);
         const originalIds = mockRecords.map((r) => r.id);
-        const { filterState, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         filterState.value!.fields.title.value = 'Apple';
 
@@ -346,12 +289,7 @@ describe('columns-filtering.ts', () => {
         mockUColumns.columns = computed(() => mockColumnsInternalOnly);
         mockUColumns.activeColumnsDefinition = computed(() => ({ columns: mockColumnsInternalOnly }));
         const inputRecords = computed(() => mockRecords);
-        const { filterState, filteredRecords } = useFiltering(
-          mockProps,
-          mockEmit,
-          mockUColumns,
-          inputRecords,
-        );
+        const { filterState, filteredRecords } = useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
         filterState.value!.fields.artist.value = 'Alpha';
 
@@ -580,8 +518,7 @@ describe('columns-filtering.ts', () => {
 
     describe('validation warnings', () => {
       it('should warn about non-filterable columns in filterState', async () => {
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {
-        });
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const filterStateWithInvalid = new Group({
           id: new Field({ value: 123 }), // id is not filterable
           title: new Field({ value: 'test' }),
@@ -591,9 +528,7 @@ describe('columns-filtering.ts', () => {
 
         useFiltering(mockProps, mockEmit, mockUColumns, inputRecords);
 
-        expect(consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining('non-filterable column: id'),
-        );
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('non-filterable column: id'));
 
         consoleSpy.mockRestore();
       });

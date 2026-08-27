@@ -82,15 +82,15 @@ export interface ColumnSortState {
   sortable?: boolean;
 }
 
-export type ColumnDefinitionWithSortState<T extends keyof RendererOptionsMap = 'plain'> =
-  ColumnDefinition<T> & { sortState: ColumnSortState };
+export type ColumnDefinitionWithSortState<T extends keyof RendererOptionsMap = 'plain'> = ColumnDefinition<T> & {
+  sortState: ColumnSortState;
+};
 
 export interface GridSortEvent {
   sortActionClicked?: 'asc' | 'desc' | 'sort-index';
   sortColumnClicked: string;
   previousSort: SortState;
   suggestedSort: SortState;
-
 }
 type SortActionClicked = GridSortEvent['sortActionClicked'];
 
@@ -120,7 +120,7 @@ function validateSortState(
       } else if (sortConfig.direction !== 'both' && sortConfig.direction !== sortCol.direction) {
         console.warn(
           `[df-grid] sortState specifies direction "${sortCol.direction}" for column "${sortCol.columnName}" ` +
-          `but column only allows "${sortConfig.direction}"`,
+            `but column only allows "${sortConfig.direction}"`,
         );
       } else {
         validatedState.push(sortCol);
@@ -208,7 +208,12 @@ export function useSorting(
   const sortedRecords = computed(() => applySorting(inputRecords, validatedSortState.value, uColumns.columns));
 
   // Watch for external prop changes
-  watch(() => props.sortState, (newVal) => { internalSortState.value = newVal ?? []; });
+  watch(
+    () => props.sortState,
+    (newVal) => {
+      internalSortState.value = newVal ?? [];
+    },
+  );
 
   // Wrap emit to intercept update:sortState and update internal state
   const emitWrapper = ((event: any, ...args: any[]) => {
@@ -216,7 +221,7 @@ export function useSorting(
       // Update internal state - it will be used when sort config is not provided as prop to table
       internalSortState.value = args[0];
     }
-    // @ts-expect-error
+    // @ts-expect-error spread args don't match emit's per-event tuple signature
     return emit(event, ...args);
   }) as EmitFn<GridEmits>;
 
@@ -249,9 +254,9 @@ export function processSortEvent(
   const target = event.target as HTMLElement;
   const previousSort = sortState;
   const suggestedSort = cloneDeep(previousSort);
-  const sortActionClicked = ((
-    target.getAttribute('data-sort') || target.closest('[data-sort]')?.getAttribute('data-sort')
-  ) ?? undefined) as SortActionClicked;
+  const sortActionClicked = ((target.getAttribute('data-sort') ||
+    target.closest('[data-sort]')?.getAttribute('data-sort')) ??
+    undefined) as SortActionClicked;
   const columnSortConfig = getSortConfig(
     uColumns.columns.value.find((c) => c.fieldName === sortColumnClicked)?.sortable,
   );
@@ -292,7 +297,7 @@ export function processSortEvent(
       };
     } else {
       // here we cycle the existing sort order on this column
-      // eslint-disable-next-line no-lonely-if
+
       if (columnSortConfig.direction !== 'both' || sortColumnState.direction === 'desc') {
         // clicking on the column makes the column unsorted right now
         sortColumnState = undefined;

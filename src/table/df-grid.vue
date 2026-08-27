@@ -5,14 +5,18 @@
     class="df-grid container d-flex flex-column"
     :class="{ selection: isSelectionActive, exclusion: uSelection.selectionMode.value === 'exclusion' }"
     :style="[`--${templateColumns}`, { '--df-grid-scrollbar-width': `${scrollbarWidth}px` }]"
-    @mousedown="($event) => { if ($event.shiftKey && !props.recentlyAdded?.isAdding.value) $event.preventDefault(); }"
+    @mousedown="
+      ($event) => {
+        if ($event.shiftKey && !props.recentlyAdded?.isAdding.value) $event.preventDefault();
+      }
+    "
     @click="($event) => processMouse('click', $event)"
     @dblclick="($event) => processMouse('dblclick', $event)"
-    @keydown.enter="void (0)"
+    @keydown.enter="void 0"
   >
     <div v-if="$slots['toolbar-start'] || $slots['toolbar-end']" class="df-grid-toolbar" data-section="toolbar">
-      <slot name="toolbar-start"/>
-      <slot name="toolbar-end"/>
+      <slot name="toolbar-start" />
+      <slot name="toolbar-end" />
     </div>
     <df-grid-header
       ref="headerRef"
@@ -30,9 +34,9 @@
       @cancel-selection="uSelection.clearSelection()"
       @invert-selection="uSelection.invertMode()"
     >
-      <template #header="headerSlotProps"><slot name="header" v-bind="headerSlotProps"/></template>
-      <template #statusBar="statusBarProps"><slot name="statusBar" v-bind="statusBarProps"/></template>
-      <template #groupActions><slot name="groupActions"/></template>
+      <template #header="headerSlotProps"><slot name="header" v-bind="headerSlotProps" /></template>
+      <template #statusBar="statusBarProps"><slot name="statusBar" v-bind="statusBarProps" /></template>
+      <template #groupActions><slot name="groupActions" /></template>
     </df-grid-header>
     <div class="df-grid-body">
       <virtual-scroll
@@ -67,7 +71,7 @@
           </div>
         </template>
         <template #header>
-          <excessive-scroll :height="-excessiveScrollAmount" direction="top"/>
+          <excessive-scroll :height="-excessiveScrollAmount" direction="top" />
         </template>
         <template #footer>
           <div
@@ -78,19 +82,19 @@
             <slot name="summary-bar">
               <div v-if="loading" class="df-summary-loading">
                 <slot name="loading">
-                  <cached-icon name="mdi-loading" class="df-summary-spin"/>
+                  <cached-icon name="mdi-loading" class="df-summary-spin" />
                   <span>Loading…</span>
                 </slot>
               </div>
               <div v-else-if="!props.records.length" class="df-summary-no-data">
                 <slot name="no-data">
-                  <cached-icon name="mdi-database-off"/>
+                  <cached-icon name="mdi-database-off" />
                   <span>No data</span>
                 </slot>
               </div>
             </slot>
           </div>
-          <excessive-scroll :height="excessiveScrollAmount" direction="bottom"/>
+          <excessive-scroll :height="excessiveScrollAmount" direction="bottom" />
         </template>
       </virtual-scroll>
       <template v-if="props.recentlyAdded">
@@ -104,20 +108,20 @@
           Comment VNode which Vue's ensureValidVNode treats as empty — triggering the
           incoming-arc fallback wave instead of a blank slot.
           -->
-          <slot v-if="$slots['incoming-arc-top']" name="incoming-arc-top"/>
+          <slot v-if="$slots['incoming-arc-top']" name="incoming-arc-top" />
         </incoming-arc>
         <incoming-arc
           direction="bottom"
           :trigger="props.recentlyAdded.bottomArcFlashTick.value"
           :max-opacity="props.incomingArcMaxOpacity ?? 1"
         >
-          <slot v-if="$slots['incoming-arc-bottom']" name="incoming-arc-bottom"/>
+          <slot v-if="$slots['incoming-arc-bottom']" name="incoming-arc-bottom" />
         </incoming-arc>
       </template>
     </div>
     <div v-if="$slots['footer-start'] || $slots['footer-end']" class="df-grid-footer" data-section="footer">
-      <slot name="footer-start"/>
-      <slot name="footer-end"/>
+      <slot name="footer-start" />
+      <slot name="footer-end" />
     </div>
     <shadow-grid
       ref="shadowRef"
@@ -140,7 +144,6 @@
       <shadow-grid
         v-if="!shadowMeasurements[colsDef.name]"
         style="right: auto"
-
         :records="sortedRecords"
         :columns="colsDef.columnRenderOptsInternal.value"
         :renderers="DefaultRenderers"
@@ -148,7 +151,7 @@
         :offset="secondaryShadowOffset"
         :class="colsDef.cssClass"
         :key-field="keyField"
-        @onmeasure="(event) => shadowMeasurements[colsDef.name] = event.totalWidth"
+        @onmeasure="(event) => (shadowMeasurements[colsDef.name] = event.totalWidth)"
       />
     </div>
   </div>
@@ -175,20 +178,17 @@ import IncomingArc from './incoming-arc.vue';
 import { useSelection } from './selection';
 import { useExcessiveScroll } from './use-excessive-scroll';
 
-const props = withDefaults(
-  defineProps<GridProps>(),
-  {
-    mainShadowCount: 500,
-    secondaryShadowCount: 30,
-    columns: () => [],
-    showFilterRow: false,
-    showStatusBar: false,
-    showSummaryBar: false,
-    loading: false,
-    rowClass: (_item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
-    selectionMode: null,
-  },
-);
+const props = withDefaults(defineProps<GridProps>(), {
+  mainShadowCount: 500,
+  secondaryShadowCount: 30,
+  columns: () => [],
+  showFilterRow: false,
+  showStatusBar: false,
+  showSummaryBar: false,
+  loading: false,
+  rowClass: (_item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
+  selectionMode: null,
+});
 const emit = defineEmits<GridEmits>();
 
 const gridId = Symbol('df-grid');
@@ -199,10 +199,16 @@ const templateColumns = ref('');
 const uColumns = useColumns(props, gridId);
 
 // Processing pipeline: records → filter → sort → display
-const { filterState, emitWrapper: filterEmitWrapper, filteredRecords } =
-  useFiltering(props, emit, uColumns, toRef(props, 'records'));
-const { sortState, emitWrapper: sortEmitWrapper, sortedRecords } =
-  useSorting(props, filterEmitWrapper, uColumns, filteredRecords);
+const {
+  filterState,
+  emitWrapper: filterEmitWrapper,
+  filteredRecords,
+} = useFiltering(props, emit, uColumns, toRef(props, 'records'));
+const {
+  sortState,
+  emitWrapper: sortEmitWrapper,
+  sortedRecords,
+} = useSorting(props, filterEmitWrapper, uColumns, filteredRecords);
 
 const headerRef = ref();
 const shadowMeasurements: Record<string, any> = {};
@@ -212,35 +218,37 @@ const containerRef = ref<HTMLElement | null>(null);
 
 useHeaderContent().provideHeaderContent();
 
-const updateRenderedRows = throttle(
-  (range: { start: number; end: number }) => {
-    const mid = Math.round((range.start + range.end) / 2);
-    mainShadowOffset.value = Math.max(0, mid - Math.round(props.mainShadowCount / 2));
-    if (props.recentlyAdded) {
-      // Use scrollDetails.currentIndex / currentEndIndex for the TRULY visible
-      // range (excluding render buffers). The rendered `range` includes
-      // buffer-before + buffer-after items and is useless for viewport detection.
-      const sd = vsRef.value?.scrollDetails;
-      props.recentlyAdded.setVisibleRange(
-        sd != null ?
-          { start: sd.currentIndex, end: sd.currentEndIndex + 1 } :
-          range,
-      );
-    }
-  },
-  250,
-);
+const updateRenderedRows = throttle((range: { start: number; end: number }) => {
+  const mid = Math.round((range.start + range.end) / 2);
+  mainShadowOffset.value = Math.max(0, mid - Math.round(props.mainShadowCount / 2));
+  if (props.recentlyAdded) {
+    // Use scrollDetails.currentIndex / currentEndIndex for the TRULY visible
+    // range (excluding render buffers). The rendered `range` includes
+    // buffer-before + buffer-after items and is useless for viewport detection.
+    const sd = vsRef.value?.scrollDetails;
+    props.recentlyAdded.setVisibleRange(sd != null ? { start: sd.currentIndex, end: sd.currentEndIndex + 1 } : range);
+  }
+}, 250);
 
 const uSelection = useSelection(props, emit);
-const { processMouse } =
-  useGridMouseEvents(sortEmitWrapper, props, sortedRecords, sortState, headerRef, uColumns, uSelection);
+const { processMouse } = useGridMouseEvents(
+  sortEmitWrapper,
+  props,
+  sortedRecords,
+  sortState,
+  headerRef,
+  uColumns,
+  uSelection,
+);
 
 const isSelectionActive = computed(() => {
   const mode = uSelection.selectionMode.value;
   return mode !== null && mode !== 'non-select';
 });
 
-watch(uColumns.active, () => { templateColumns.value = ''; });
+watch(uColumns.active, () => {
+  templateColumns.value = '';
+});
 watch(isSelectionActive, async () => {
   await nextTick();
   const el = shadowRef.value?.containerEl as HTMLElement | undefined;
@@ -293,7 +301,7 @@ onMounted(() => {
       shadowRef.value?.reMeasure();
       if (bestLayout != null && bestLayout !== props.activeColumns) {
         templateColumns.value = '';
-        emit('update:activeColumns', <string> bestLayout);
+        emit('update:activeColumns', <string>bestLayout);
       }
     });
   });
@@ -318,20 +326,21 @@ onUpdated(() => {
   }
 });
 
-const doShadowMeasure = throttle(
-  (event: ShadowGridMeasurements) => { templateColumns.value = `grid-template-columns: ${event.columnWidths}`; },
-  100,
+const doShadowMeasure = throttle((event: ShadowGridMeasurements) => {
+  templateColumns.value = `grid-template-columns: ${event.columnWidths}`;
+}, 100);
+
+const columnRendererOptionsInternal = computed(() =>
+  uColumns.columns.value.map((column) => {
+    const opt: CellOptionsInternal = (column.rendererOptions ?? { nullHandler: 'null-null' }) as CellOptionsInternal;
+    opt[gridIdOption] = gridId;
+    opt[columnNameOption] = column.fieldName;
+    opt[columnIdOption] = Symbol('grid-column');
+
+    gridColumnCreate(gridId, column.renderer as keyof RendererOptionsMap, opt);
+    return { ...column, rendererOptions: opt };
+  }),
 );
-
-const columnRendererOptionsInternal = computed(() => uColumns.columns.value.map((column) => {
-  const opt: CellOptionsInternal = (column.rendererOptions ?? { nullHandler: 'null-null' }) as CellOptionsInternal;
-  opt[gridIdOption] = gridId;
-  opt[columnNameOption] = column.fieldName;
-  opt[columnIdOption] = Symbol('grid-column');
-
-  gridColumnCreate(gridId, column.renderer as keyof RendererOptionsMap, opt);
-  return { ...column, rendererOptions: opt };
-}));
 
 onUnmounted(() => gridDestroy(gridId));
 </script>
@@ -347,7 +356,8 @@ onUnmounted(() => gridDestroy(gridId));
    */
   position: relative;
 }
-.df-grid-toolbar, .df-grid-footer {
+.df-grid-toolbar,
+.df-grid-footer {
   display: flex;
   justify-content: space-between;
 }
@@ -368,7 +378,8 @@ onUnmounted(() => gridDestroy(gridId));
   gap: 0.5em;
   padding: 1em;
 }
-.df-summary-loading, .df-summary-no-data {
+.df-summary-loading,
+.df-summary-no-data {
   display: flex;
   align-items: center;
   gap: 0.5em;
@@ -376,7 +387,9 @@ onUnmounted(() => gridDestroy(gridId));
   opacity: 0.7;
 }
 @keyframes df-grid-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .df-summary-spin {
   animation: df-grid-spin 1s linear infinite;

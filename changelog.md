@@ -5,6 +5,18 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-08-27
+
+### Fixed
+- A column's header no longer draws sort-direction arrows when its `sortable` is `false`.
+  `SortingIndicator` read `direction` and `index` but never `sortable`, so every header drew the
+  asc/desc chevrons regardless of whether clicking them did anything - indistinguishable from an
+  actually-sortable, currently-unsorted column.
+- The sort indicator is toned down to `opacity: .55` so it no longer reads as bolder than the
+  column label it sits next to, and the header label no longer stretches to push the indicator to
+  the cell's far edge - it now sits right next to the label, so neighbouring columns' labels and
+  indicators don't run together across the gap between them.
+
 ## [0.3.1] - 2026-08-22
 
 ### Changed

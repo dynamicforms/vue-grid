@@ -151,7 +151,7 @@ describe('numbers.ts', () => {
     });
 
     it('should add opacity to trailing zeros in decimal part', () => {
-      const result = float(123.40, mockOptions);
+      const result = float(123.4, mockOptions);
       if (result.includes('.40')) {
         expect(result).toContain('opacity: .5');
       }

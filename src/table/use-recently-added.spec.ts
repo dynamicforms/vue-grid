@@ -66,12 +66,14 @@ function mountComposable(initialRecords: RowValue[] = [], keyField: string | Ref
   let api: UseRecentlyAdded;
 
   // onUnmounted only runs inside a component instance, so the composable needs a host.
-  const wrapper = mount(defineComponent({
-    setup() {
-      api = useRecentlyAdded(records, keyField);
-      return () => h('div');
-    },
-  }));
+  const wrapper = mount(
+    defineComponent({
+      setup() {
+        api = useRecentlyAdded(records, keyField);
+        return () => h('div');
+      },
+    }),
+  );
 
   return { api: api!, records, unmount: () => wrapper.unmount() };
 }

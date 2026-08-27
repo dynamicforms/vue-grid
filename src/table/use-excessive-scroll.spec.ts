@@ -95,12 +95,14 @@ function mountHost(options: HostOptions = {}) {
   const onTrigger = vi.fn();
 
   let amount!: Ref<number>;
-  const wrapper = mount(defineComponent({
-    setup() {
-      ({ amount } = useExcessiveScroll(containerRef, vsRef, loading, threshold, onTrigger));
-      return () => h('div');
-    },
-  }));
+  const wrapper = mount(
+    defineComponent({
+      setup() {
+        ({ amount } = useExcessiveScroll(containerRef, vsRef, loading, threshold, onTrigger));
+        return () => h('div');
+      },
+    }),
+  );
 
   return { wrapper, amount, container, onTrigger, loading, threshold };
 }
@@ -125,7 +127,9 @@ describe('useExcessiveScroll', () => {
 
     pendingFrames = [];
     nextFrameId = 1;
-    cancelFrameSpy = vi.fn((id: number) => { pendingFrames = pendingFrames.filter((f) => f.id !== id); });
+    cancelFrameSpy = vi.fn((id: number) => {
+      pendingFrames = pendingFrames.filter((f) => f.id !== id);
+    });
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
       const id = nextFrameId;
       nextFrameId += 1;

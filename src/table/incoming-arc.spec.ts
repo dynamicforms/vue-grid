@@ -75,7 +75,9 @@ describe('IncomingArc', () => {
 
     pendingFrames = [];
     nextFrameId = 1;
-    cancelFrameSpy = vi.fn((id: number) => { pendingFrames = pendingFrames.filter((f) => f.id !== id); });
+    cancelFrameSpy = vi.fn((id: number) => {
+      pendingFrames = pendingFrames.filter((f) => f.id !== id);
+    });
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
       const id = nextFrameId;
       nextFrameId += 1;
@@ -161,12 +163,10 @@ describe('IncomingArc', () => {
     it('never dims below 15% of maxOpacity, however long the burst runs', async () => {
       const wrapper = mountArc();
 
-      /* eslint-disable no-await-in-loop -- each flash must be observed before the next one */
       for (let i = 0; i < 20; i++) {
         clock += 100;
         await flash(wrapper);
       }
-      /* eslint-enable no-await-in-loop */
 
       expect(waveOpacity(wrapper)).toBeCloseTo(0.15);
     });

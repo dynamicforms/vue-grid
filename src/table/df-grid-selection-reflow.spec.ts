@@ -61,15 +61,14 @@ vi.mock('@pdanpdan/virtual-scroll', () => ({
     name: 'MockVirtualScroll',
     props: { items: { type: Array, default: () => [] }, loading: Boolean },
     setup(props, { slots }) {
-      return () => h('div', { class: 'virtual-scroll', 'data-section': 'body' }, [
-        slots.header?.(),
-        ...(props.items as unknown[]).map((item, i) => h(
-          'div',
-          { class: 'virtual-scroll-item', key: i },
-          slots.item?.({ item, index: i, active: true }),
-        )),
-        slots.footer?.(),
-      ]);
+      return () =>
+        h('div', { class: 'virtual-scroll', 'data-section': 'body' }, [
+          slots.header?.(),
+          ...(props.items as unknown[]).map((item, i) =>
+            h('div', { class: 'virtual-scroll-item', key: i }, slots.item?.({ item, index: i, active: true })),
+          ),
+          slots.footer?.(),
+        ]);
     },
   }),
 }));
@@ -223,9 +222,7 @@ describe('DfGrid — selection-column reflow', () => {
     expect(items.length).toBeGreaterThan(0); // sanity: VirtualScroll mock rendered items
 
     for (const item of items) {
-      expect(
-        (item.element as HTMLElement).style.getPropertyValue('--grid-template-columns'),
-      ).toBe('30px 200px');
+      expect((item.element as HTMLElement).style.getPropertyValue('--grid-template-columns')).toBe('30px 200px');
     }
   });
 
@@ -239,9 +236,7 @@ describe('DfGrid — selection-column reflow', () => {
     expect(items.length).toBeGreaterThan(0);
 
     for (const item of items) {
-      expect(
-        (item.element as HTMLElement).style.getPropertyValue('--grid-template-columns'),
-      ).toBe('30px 200px');
+      expect((item.element as HTMLElement).style.getPropertyValue('--grid-template-columns')).toBe('30px 200px');
     }
   });
 });

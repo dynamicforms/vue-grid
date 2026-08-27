@@ -10,7 +10,7 @@
       :add-row-reset-item="true"
       :no-wrapper-item="true"
     />
-    <component :is="() => headerContentVNodes"/>
+    <component :is="() => headerContentVNodes" />
   </div>
 </template>
 
@@ -68,7 +68,12 @@ function* idxAndItem() {
 function reMeasure() {
   checkShadowGridColumns();
 }
-defineExpose({ reMeasure, get containerEl() { return shadowGridRef.value; } });
+defineExpose({
+  reMeasure,
+  get containerEl() {
+    return shadowGridRef.value;
+  },
+});
 </script>
 
 <style>

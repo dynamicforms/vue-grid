@@ -47,8 +47,9 @@ export function useGridMouseEvents(
 
     const column = target.closest('.df-grid.cell');
     const row = target?.closest('.df-grid.card');
-    const columnClasses = [...(column?.classList ?? [])]
-      .filter((c: any) => !['df-grid', 'cell', 'df-header-cell'].includes(c));
+    const columnClasses = [...(column?.classList ?? [])].filter(
+      (c: any) => !['df-grid', 'cell', 'df-header-cell'].includes(c),
+    );
     const dataIdx = row?.getAttribute('data-idx') ?? '-1';
     let rowData: RowValue | undefined;
     let rowId: RowIndex;
@@ -111,7 +112,7 @@ export function useGridMouseEvents(
 export function useGridMouseEventsPosition() {
   function processPosition(eType: PositionEvents, event: TouchEvent | MouseEvent) {
     let buttonOn = false;
-    // eslint-disable-next-line no-bitwise
+
     if (event instanceof MouseEvent) buttonOn = (event.buttons & 1) === 1;
     else if (event instanceof TouchEvent) buttonOn = event.touches.length > 0;
     if (buttonOn) {

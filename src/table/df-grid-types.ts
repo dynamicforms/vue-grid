@@ -212,7 +212,4 @@ export interface GridEmits extends SelectionEmits {
   'update:selectionKeys': [keys: Set<any>, action: import('./selection').SelectionAction, key?: any];
 }
 
-export type GridEmit = <K extends keyof GridEmits>(
-  event: K,
-  ...args: GridEmits[K]
-) => void;
+export type GridEmit = <K extends keyof GridEmits>(event: K, ...args: GridEmits[K]) => void;

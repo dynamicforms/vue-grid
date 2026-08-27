@@ -25,11 +25,7 @@ import { defineComponent, getCurrentInstance, h, nextTick, onMounted, ref } from
 
 import DfGrid from './df-grid.vue';
 
-const {
-  scrollerBox,
-  resizeCallback,
-  measuredColumnWidths,
-} = vi.hoisted(() => ({
+const { scrollerBox, resizeCallback, measuredColumnWidths } = vi.hoisted(() => ({
   // What the mocked body scroller reports: a border box wider than its content box means the
   // scrollbar takes up space, an equal one means it does not (overlay scrollbars).
   scrollerBox: { offsetWidth: 615, clientWidth: 600 },
@@ -47,9 +43,10 @@ vi.mock('@pdanpdan/virtual-scroll', () => ({
         Object.defineProperty(el, 'offsetWidth', { configurable: true, get: () => scrollerBox.offsetWidth });
         Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => scrollerBox.clientWidth });
       });
-      return () => h('div', { class: 'virtual-scroll' }, [
-        ...(props.items as unknown[]).map((item, i) => h('div', { key: i }, slots.item?.({ item, index: i }))),
-      ]);
+      return () =>
+        h('div', { class: 'virtual-scroll' }, [
+          ...(props.items as unknown[]).map((item, i) => h('div', { key: i }, slots.item?.({ item, index: i }))),
+        ]);
     },
   }),
 }));
@@ -131,23 +128,20 @@ function mountGrid(props: Record<string, any> = {}) {
 }
 
 async function settle(rounds = 5) {
-  /* eslint-disable no-await-in-loop -- rounds must drain sequentially; that is what "settle" means */
   for (let i = 0; i < rounds; i++) {
     await nextTick();
     await flushPromises();
   }
-  /* eslint-enable no-await-in-loop */
 }
 
 /** Fire the container ResizeObserver the way the browser would after a width change. */
 async function resizeContainer(wrapper: ReturnType<typeof mountGrid>, width: number) {
-  resizeCallback.fn!(
-    [{ contentRect: { width } } as ResizeObserverEntry],
-    {} as ResizeObserver,
-  );
+  resizeCallback.fn!([{ contentRect: { width } } as ResizeObserverEntry], {} as ResizeObserver);
   // The measurement handler is throttled at 100ms and its leading edge was spent during
   // mount, so the trailing edge has to be waited out for the new widths to land.
-  await new Promise((resolve) => { setTimeout(resolve, 120); });
+  await new Promise((resolve) => {
+    setTimeout(resolve, 120);
+  });
   await settle();
 }
 
@@ -164,9 +158,8 @@ describe('DfGrid — column auto-sizing', () => {
     measuredColumnWidths.value = '200px 100px';
     resizeCallback.fn = null;
 
-    const getPropertyValue = (prop: string) => (
-      prop === 'grid-template-columns' ? measuredColumnWidths.value : '600px'
-    );
+    const getPropertyValue = (prop: string) =>
+      prop === 'grid-template-columns' ? measuredColumnWidths.value : '600px';
     vi.spyOn(window, 'getComputedStyle').mockReturnValue({ getPropertyValue } as CSSStyleDeclaration);
 
     // vitest 4 requires a real function here since the mock is invoked with `new`

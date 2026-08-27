@@ -1,7 +1,7 @@
 <template>
-  <messages-widget v-if="noWrapperItem" :message="formattedData" classes="df-grid cell"/>
+  <messages-widget v-if="noWrapperItem" :message="formattedData" classes="df-grid cell" />
   <div v-else class="df-grid card">
-    <messages-widget :message="formattedData" classes="df-grid cell"/>
+    <messages-widget :message="formattedData" classes="df-grid cell" />
   </div>
 </template>
 

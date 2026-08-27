@@ -40,14 +40,17 @@ vi.mock('@pdanpdan/virtual-scroll', () => ({
     emits: ['visible-range-change'],
     setup(props, { slots, emit, expose }) {
       emitVisibleRangeChange.fn = (range) => emit('visible-range-change', range);
-      expose({ get scrollDetails() { return scrollDetails.value; } });
-      return () => h('div', { class: 'virtual-scroll' }, [
-        ...(props.items as unknown[]).map((item, i) => h(
-          'div',
-          { class: 'virtual-scroll-item', key: i },
-          slots.item?.({ item, index: i, active: true }),
-        )),
-      ]);
+      expose({
+        get scrollDetails() {
+          return scrollDetails.value;
+        },
+      });
+      return () =>
+        h('div', { class: 'virtual-scroll' }, [
+          ...(props.items as unknown[]).map((item, i) =>
+            h('div', { class: 'virtual-scroll-item', key: i }, slots.item?.({ item, index: i, active: true })),
+          ),
+        ]);
     },
   }),
 }));
@@ -132,12 +135,10 @@ function mountGrid(props: Record<string, any> = {}) {
 }
 
 async function settle(rounds = 5) {
-  /* eslint-disable no-await-in-loop -- rounds must drain sequentially; that is what "settle" means */
   for (let i = 0; i < rounds; i++) {
     await nextTick();
     await flushPromises();
   }
-  /* eslint-enable no-await-in-loop */
 }
 
 function resize(width: number) {

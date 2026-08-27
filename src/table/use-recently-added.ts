@@ -39,10 +39,7 @@ export interface UseRecentlyAdded {
  * @param records  - reactive ref to the sorted/filtered records the grid is displaying
  * @param keyField - the field name used as pk (matches the grid's `keyField` prop)
  */
-export function useRecentlyAdded(
-  records: Ref<RowValue[]>,
-  keyField: MaybeRef<string>,
-): UseRecentlyAdded {
+export function useRecentlyAdded(records: Ref<RowValue[]>, keyField: MaybeRef<string>): UseRecentlyAdded {
   // pk → addedAt timestamp. Vue 3 reactive() wraps Maps with full reactivity.
   const entries = reactive(new Map<any, number>());
   const visibleRange = ref<{ start: number; end: number }>({ start: 0, end: 0 });
@@ -86,7 +83,9 @@ export function useRecentlyAdded(
     // Suppress click/tap for 300 ms to prevent mis-clicks during content shift.
     isAdding.value = true;
     if (isAddingTimer !== null) clearTimeout(isAddingTimer);
-    isAddingTimer = setTimeout(() => { isAdding.value = false; }, 300);
+    isAddingTimer = setTimeout(() => {
+      isAdding.value = false;
+    }, 300);
 
     // Capture the visible range NOW (before the virtual scroll has a chance to
     // update it in response to the records mutation). Virtual-scroll fires
@@ -123,7 +122,6 @@ export function useRecentlyAdded(
   }
 
   function timeSinceAdded(pk: any): number | null {
-    // eslint-disable-next-line no-void -- `void` is the point: read the ref purely to establish the dependency
     void ticker.value; // establish reactive dependency on the rAF tick
     const addedAt = entries.get(pk);
     return addedAt != null ? Date.now() - addedAt : null;
@@ -133,8 +131,12 @@ export function useRecentlyAdded(
     visibleRange.value = range;
   }
 
-  function triggerTopArc() { topArcFlashTick.value++; }
-  function triggerBottomArc() { bottomArcFlashTick.value++; }
+  function triggerTopArc() {
+    topArcFlashTick.value++;
+  }
+  function triggerBottomArc() {
+    bottomArcFlashTick.value++;
+  }
 
   return {
     addRecentlyAdded,

@@ -40,8 +40,18 @@ export function useSelection(props: GridProps, emit: EmitFn<GridEmits>) {
   const selectionMode = computed<SelectionMode>(() => props.selectionMode ?? internalSelectionMode.value);
   const selectionKeys = computed<Set<any>>(() => props.selectionKeys ?? internalSelectionKeys.value);
 
-  watch(() => props.selectionMode, (newVal) => { internalSelectionMode.value = newVal ?? null; });
-  watch(() => props.selectionKeys, (newVal) => { internalSelectionKeys.value = newVal ?? new Set(); });
+  watch(
+    () => props.selectionMode,
+    (newVal) => {
+      internalSelectionMode.value = newVal ?? null;
+    },
+  );
+  watch(
+    () => props.selectionKeys,
+    (newVal) => {
+      internalSelectionKeys.value = newVal ?? new Set();
+    },
+  );
 
   function isSelected(key: any): boolean {
     const mode = selectionMode.value;
