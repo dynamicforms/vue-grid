@@ -22,8 +22,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
-      '~': resolve(__dirname, '../../node_modules'),
+      '@': resolve(import.meta.dirname, './src'),
+      '~': resolve(import.meta.dirname, '../../node_modules'),
     },
     extensions: [
       '.js',
@@ -35,7 +35,7 @@ export default defineConfig({
     target: 'es2015',
     sourcemap: true,
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
+      entry: resolve(import.meta.dirname, 'src/index.ts'),
       formats: ['umd', 'es'],
       fileName: 'dynamicforms-vue-grid',
       name: 'dynamicforms-vue-grid.[name]',
@@ -58,7 +58,7 @@ export default defineConfig({
   test: {
     exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
     coverage: {
-      provider: 'istanbul',  // for some reason v8 was giving Serialized Error: { code: 'ERR_INSPECTOR_NOT_CONNECTED' }
+      provider: 'v8',
       include: [
         'src/**/*'
       ],

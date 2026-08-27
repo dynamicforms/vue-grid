@@ -168,15 +168,16 @@ describe('DfGrid — selection-column reflow', () => {
     } as CSSStyleDeclaration);
 
     // Mock ResizeObserver — the grid observes its container but that's not under test.
-    global.ResizeObserver = vi.fn().mockImplementation(() => ({
-      observe: vi.fn(),
-      disconnect: vi.fn(),
-    }));
+    // vitest 4 requires a real function here since the mock is invoked with `new`
+    // eslint-disable-next-line prefer-arrow-callback, func-names
+    globalThis.ResizeObserver = vi.fn().mockImplementation(function () {
+      return { observe: vi.fn(), disconnect: vi.fn() };
+    });
 
     // Suppress requestAnimationFrame so the --reflow-tick *cleanup* (removeProperty)
     // does not fire synchronously. This lets us assert the property's presence before
     // it would be removed in the next animation frame.
-    global.requestAnimationFrame = vi.fn();
+    globalThis.requestAnimationFrame = vi.fn();
   });
 
   afterEach(() => {

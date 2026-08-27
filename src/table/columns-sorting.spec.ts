@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { computed, nextTick, reactive, ref } from 'vue';
+import { computed, EmitFn, nextTick, reactive, ref } from 'vue';
 
 import type { RowValue } from './cell-renderers';
 import type { ColumnDefinition } from './columns';
@@ -11,7 +11,7 @@ import {
   type SortState,
   useSorting,
 } from './columns-sorting';
-import type { GridProps } from './df-grid-types';
+import type { GridEmits, GridProps } from './df-grid-types';
 
 // Mock data for testing
 const mockRecords: RowValue[] = [
@@ -68,13 +68,13 @@ describe('columns-sorting.ts', () => {
   });
 
   describe('processSortEvent', () => {
-    let mockEmit: ReturnType<typeof vi.fn>;
+    let mockEmit: ReturnType<typeof vi.fn> & EmitFn<GridEmits>;
     let mockHeaderRef: any;
     let mockUColumns: any;
     let mockEvent: MouseEvent;
 
     beforeEach(() => {
-      mockEmit = vi.fn();
+      mockEmit = vi.fn() as unknown as ReturnType<typeof vi.fn> & EmitFn<GridEmits>;
       mockHeaderRef = ref(null);
       mockUColumns = {
         columns: computed(() => mockColumns),
@@ -447,7 +447,7 @@ describe('columns-sorting.ts', () => {
 
   describe('useSorting hook', () => {
     let mockProps: GridProps;
-    let mockEmit: ReturnType<typeof vi.fn>;
+    let mockEmit: ReturnType<typeof vi.fn> & EmitFn<GridEmits>;
     let mockUColumns: any;
 
     beforeEach(() => {
@@ -456,7 +456,7 @@ describe('columns-sorting.ts', () => {
         columns: mockColumns,
         keyField: 'id',
       };
-      mockEmit = vi.fn();
+      mockEmit = vi.fn() as unknown as ReturnType<typeof vi.fn> & EmitFn<GridEmits>;
       mockUColumns = {
         columns: computed(() => mockColumns),
         activeColumnsDefinition: computed(() => ({ columns: mockColumns })),
