@@ -15,8 +15,8 @@
     @keydown.enter="void 0"
   >
     <div v-if="$slots['toolbar-start'] || $slots['toolbar-end']" class="df-grid-toolbar" data-section="toolbar">
-      <slot name="toolbar-start" />
-      <slot name="toolbar-end" />
+      <div class="df-grid-toolbar-start"><slot name="toolbar-start" /></div>
+      <div class="df-grid-toolbar-end"><slot name="toolbar-end" /></div>
     </div>
     <df-grid-header
       ref="headerRef"
@@ -360,6 +360,12 @@ onUnmounted(() => gridDestroy(gridId));
 .df-grid-footer {
   display: flex;
   justify-content: space-between;
+}
+.df-grid-toolbar-start,
+.df-grid-toolbar-end {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
 }
 .df-grid-body {
   position: relative;
