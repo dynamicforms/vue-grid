@@ -110,7 +110,6 @@
 
 <script setup lang="ts">
 import { DfCheckbox, DfDateTime, DfInput, DfSelect, FieldDensity } from '@dynamicforms/vuetify-inputs';
-import { isBoolean } from 'lodash-es';
 import { computed, onMounted, onUpdated, ref } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
 
@@ -118,7 +117,7 @@ import { DefaultRenderers, gridColumnCreate, RendererOptionsMap } from './cell-r
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { ColumnDefinition } from './columns';
 import { FilterState, getFilterConfig } from './columns-filtering';
-import type { ColumnSortState, SortState } from './columns-sorting';
+import { getSortConfig, type ColumnSortState, type SortState } from './columns-sorting';
 import { GridCard, useHeaderContent } from './helpers';
 import type { SelectionMode } from './selection';
 
@@ -151,7 +150,7 @@ const headerOptions = computed(() =>
     const singleSegment = props.sortState.length === 1;
     const sortState: ColumnSortState = {
       index: srtIdx === -1 ? undefined : srtIdx + (singleSegment ? 0 : 1),
-      sortable: isBoolean(column.sortable) ? column.sortable : column.sortable?.direction !== undefined,
+      sortable: getSortConfig(column.sortable).direction != null,
       direction: srt?.direction,
     };
 
