@@ -1,7 +1,7 @@
 {
   "name": "@dynamicforms/vue-grid",
   "private": false,
-  "version": "0.3.3",
+  "version": "0.3.4",
   "type": "module",
   "description": "High-performance virtual-scroll data grid for Vue 3 with sorting, filtering, and row selection.",
   "author": "Jure Erznožnik",
