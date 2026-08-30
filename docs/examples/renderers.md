@@ -3,7 +3,7 @@
 Every column has a `renderer` (defaults to `'plain'`). Four `rendererOptions` — `transform`, `nullHandler`,
 `preRender`, and `postRender` — let you customise any renderer without writing a custom one; see
 [Cell Renderers](/reference/renderers) for what each one does and the [Cookbook](/guide/cookbook) for applied
-recipes (clickable action icons, conditionally-empty cells, action-only columns).
+recipes (clickable action icons, conditionally-empty cells, columns computed from the whole record).
 
 ## Live demo
 

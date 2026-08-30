@@ -74,7 +74,7 @@ This is the same `CellRendererTransformer` type `setCellRenderer()` uses to repl
 (see [Cell Renderers](./renderers#custom-renderers)); passing one directly as `renderer` instead scopes it to a
 single column. `transform` can only ever produce an HTML string, never a component with its own event handlers, so
 it cannot express a cell whose whole content is interactive — this is why the option exists. See
-[An action-only column with no bound field](/guide/cookbook#an-action-only-column-with-no-bound-field) in the
+[A column that isn't tied to a single field](/guide/cookbook#a-column-that-isn-t-tied-to-a-single-field) in the
 Cookbook for a worked example.
 
 ## Responsive layouts

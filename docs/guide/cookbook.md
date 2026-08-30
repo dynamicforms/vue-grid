@@ -76,11 +76,13 @@ Note that `has-pre-post` is applied to every cell of a column that has `preRende
 regardless of what an individual row's callback returns — the class reflects the column's configuration, not any
 single row's content.
 
-## An action-only column with no bound field
+## A column that isn't tied to a single field
 
-Sometimes a column has no data value at all — its whole content is one or two action icons, not a decoration next
-to a real field. Give it a [custom renderer function](/reference/columns#custom-renderer-functions) instead of a registry
-name; the function owns the cell's entire content, so there's no field value to point it at and nothing to fake:
+Sometimes what a cell shows isn't one field's value at all — it's computed from the whole record: a status derived
+from several fields, a value assembled by combining fields, or interactive content like an action icon. Give the
+column a [custom renderer function](/reference/columns#custom-renderer-functions) instead of a registry name — the
+function's second argument is the full row, so it can ignore whatever `fieldName` names (or names nothing) and
+compute the cell's content from the record as a whole:
 
 ```typescript
 createColumn('actions', 'Delete', (_value, row) => new RenderableValue({
@@ -92,9 +94,11 @@ createColumn('actions', 'Delete', (_value, row) => new RenderableValue({
 } as SimpleComponentDef), { sortable: false, filterable: false });
 ```
 
-Reach for this instead of packing the action into the `preRender`/`postRender` of some other, data-bearing column —
-that couples UI that has nothing to do with the bound field to that field's column identity, and breaks the moment
-the field is removed or reordered.
+An action icon is one example — the same function could just as well return a computed summary string, a badge
+whose colour depends on several fields, or any other component built from `row`. Reach for this instead of packing
+unrelated content into the `preRender`/`postRender` of some other, data-bearing column — that couples UI that has
+nothing to do with the bound field to that field's column identity, and breaks the moment the field is removed or
+reordered.
 
 ## A dedicated selection checkbox column
 
@@ -158,7 +162,7 @@ colour using only the [CSS classes](/reference/selection#css-classes) approach, 
 
 ## Custom cell content beyond a single icon
 
-The [action-only column](#an-action-only-column-with-no-bound-field) recipe above generalises past a single icon:
+The [previous recipe](#a-column-that-isn-t-tied-to-a-single-field) generalises past a single icon:
 `componentName` names any component you've registered, and `componentProps` carries whatever props that component
 declares — the technique is the same whether the cell hosts one icon, several, or something else entirely, such as
 a chart or a badge. A column needing more than one action is just that technique with a component built to lay out
