@@ -3,12 +3,10 @@
  *
  * Tests for the `DynamicFormsVueGrid` Vue plugin (src/index.ts).
  *
- * `install()` independently controls two things via `options`:
- *  - `registerComponents` — globally registers every component in `./dynamicforms-components`
- *  - `registerDirectives` — globally registers the `v-longpress` directive
- *
- * `registerDirectives` defaults to `registerComponents` when omitted, so `{ registerComponents: true }` alone
- * registers the directive too.
+ * `install()` controls two independent things via `options`:
+ *  - `registerComponents` — globally registers every component in `./dynamicforms-components`. Default: `false`.
+ *  - `registerDirectives` — globally registers the `v-longpress` directive. Default: `true`, regardless of
+ *    `registerComponents`.
  */
 import type { App } from 'vue';
 
@@ -22,44 +20,37 @@ function mockApp(): App & { directive: ReturnType<typeof vi.fn>; component: Retu
 }
 
 describe('DynamicFormsVueGrid.install', () => {
-  it('registers nothing when no options are given', () => {
+  it('registers the directive but no component when no options are given', () => {
     const app = mockApp();
     DynamicFormsVueGrid.install(app);
-    expect(app.directive).not.toHaveBeenCalled();
+    expect(app.directive).toHaveBeenCalledWith('longpress', expect.anything());
     expect(app.component).not.toHaveBeenCalled();
   });
 
-  it('registers nothing when options is an empty object', () => {
+  it('registers the directive but no component when options is an empty object', () => {
     const app = mockApp();
     DynamicFormsVueGrid.install(app, {});
-    expect(app.directive).not.toHaveBeenCalled();
+    expect(app.directive).toHaveBeenCalledWith('longpress', expect.anything());
     expect(app.component).not.toHaveBeenCalled();
   });
 
-  it('registerComponents: true registers both components and the longpress directive', () => {
+  it('registerComponents: true registers components; the directive is registered independently', () => {
     const app = mockApp();
     DynamicFormsVueGrid.install(app, { registerComponents: true });
     expect(app.component).toHaveBeenCalled();
     expect(app.directive).toHaveBeenCalledWith('longpress', expect.anything());
   });
 
-  it('registerDirectives: true registers the directive without registering any component', () => {
-    const app = mockApp();
-    DynamicFormsVueGrid.install(app, { registerDirectives: true });
-    expect(app.directive).toHaveBeenCalledWith('longpress', expect.anything());
-    expect(app.component).not.toHaveBeenCalled();
-  });
-
-  it('registerComponents: true, registerDirectives: false registers components but not the directive', () => {
+  it('registerDirectives: false suppresses the directive even with registerComponents: true', () => {
     const app = mockApp();
     DynamicFormsVueGrid.install(app, { registerComponents: true, registerDirectives: false });
     expect(app.component).toHaveBeenCalled();
     expect(app.directive).not.toHaveBeenCalled();
   });
 
-  it('registerComponents: false, registerDirectives: true registers the directive but no component', () => {
+  it('registerComponents: false leaves components unregistered while the directive still registers', () => {
     const app = mockApp();
-    DynamicFormsVueGrid.install(app, { registerComponents: false, registerDirectives: true });
+    DynamicFormsVueGrid.install(app, { registerComponents: false });
     expect(app.directive).toHaveBeenCalledWith('longpress', expect.anything());
     expect(app.component).not.toHaveBeenCalled();
   });

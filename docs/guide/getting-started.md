@@ -15,28 +15,17 @@ const app = createApp(MyApp);
 app.use(router);
 app.use(vuetify);
 
-// registerComponents: true makes DfGrid available globally as a component
-app.use(DynamicFormsVueGrid, { registerComponents: true });
+app.use(DynamicFormsVueGrid, { registerComponents: true }); // makes <DfGrid> available globally
+// app.use(DynamicFormsVueGrid); // skip global registration; v-longpress is still installed
 ```
 
-If you prefer to register `<DfGrid>` locally in individual components instead of the `app.use(DynamicFormsVueGrid,
-{ registerComponents: true })` call above:
+If you prefer to register `<DfGrid>` locally in individual components:
 
 ```typescript
 import { DfGrid } from '@dynamicforms/vue-grid';
 ```
 
-Local registration covers the component only — it doesn't register the `v-longpress` directive (needed for
-long-press selection; see [Selection](/reference/selection#activating-selection)). Install the plugin with
-`registerDirectives: true` to get the directive without also globally registering every component:
-
-```typescript
-app.use(DynamicFormsVueGrid, { registerDirectives: true });
-```
-
-`registerDirectives` defaults to whatever `registerComponents` is when not given explicitly, so
-`{ registerComponents: true }` alone registers both the directive and every component. Set
-`registerDirectives: false` alongside `registerComponents: true` to register components without the directive.
+See [`DynamicFormsVueGridOptions`](/reference/index#plugin-options) for the full set of install options.
 
 ## Basic Usage
 

@@ -31,7 +31,7 @@ Users activate selection mode without any prop wiring:
 
 In `'non-select'` mode neither gesture changes the selection.
 
-Long-press relies on the `v-longpress` directive, which the grid does not register itself — it comes from installing the plugin with `registerDirectives: true` (implied by `registerComponents: true` too, unless `registerDirectives: false` is given explicitly): `app.use(DynamicFormsVueGrid, { registerDirectives: true })`. When `<DfGrid>` is imported and registered locally without either option, the directive is missing and long-press does nothing; shift+click remains the way to enter selection mode. See [Getting Started → Installation](/guide/getting-started#installation).
+Long-press relies on the `v-longpress` directive, which the grid does not register itself — it comes from installing the plugin: `app.use(DynamicFormsVueGrid)`, which registers it by default. When `<DfGrid>` is imported and used directly without that call, the directive is missing and long-press does nothing; shift+click remains the way to enter selection mode. See [Plugin options](/reference/index#plugin-options).
 
 Once active, a status bar appears at the bottom of the header area with:
 

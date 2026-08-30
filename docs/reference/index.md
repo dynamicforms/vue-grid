@@ -18,6 +18,22 @@ recipes ("how do I put a clickable icon in a cell", "how do I build a responsive
 | `<SortingIndicator>` | The ascending / descending / sort-index glyph drawn in header cells. |
 | `<IncomingArc>` | The flash overlay rendered at the top and bottom edge of the body when `recentlyAdded` is supplied. |
 
+## Plugin options
+
+```typescript
+interface DynamicFormsVueGridOptions {
+  registerComponents: boolean;  // globally registers every component (<DfGrid> included). Default: false.
+  registerDirectives: boolean;  // globally registers the v-longpress directive. Default: true.
+}
+```
+
+`app.use(DynamicFormsVueGrid, options)` accepts these independently — `registerComponents` and `registerDirectives`
+each control exactly one thing and don't affect each other. `registerDirectives` defaults to `true` regardless of
+`registerComponents`, so installing the plugin at all (even with no options, or with `registerComponents: false`)
+registers `v-longpress`; pass `registerDirectives: false` to opt out. `<DfGrid>` itself is unaffected by either
+option when imported and used directly, without `app.use(DynamicFormsVueGrid, ...)` at all — see [Column
+Definitions](./columns) and [`<DfGrid>`](./df-grid) for the component itself.
+
 ## Concepts
 
 | Topic | Description |
