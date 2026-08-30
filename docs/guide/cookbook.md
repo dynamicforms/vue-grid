@@ -93,8 +93,14 @@ createColumn('actions', 'Delete', (_value, row) => new RenderableValue({
     name: 'mdi-delete',
     onClick: (e: MouseEvent) => { e.stopPropagation(); deleteRow(row.id); },
   },
-} as SimpleComponentDef), { sortable: false, filterable: false });
+} as SimpleComponentDef), { sortable: false, filterable: false, rendererOptions: {} });
 ```
+
+The empty `rendererOptions: {}` is required, not decorative: a column with no `rendererOptions` at all is given
+`{ nullHandler: 'null-null' }` (see [`nullHandler`](/reference/renderers#common-options-celloptions)), and that check
+runs on the raw record value before the renderer function is ever called. Since `fieldName` here names no real data,
+the raw value is always `null`, so without an explicit (even empty) `rendererOptions` the `null-null` renderer would
+handle every cell and the custom function would never run.
 
 An action icon is one example — the same function could just as well return a computed summary string, a badge
 whose colour depends on several fields, or any other component built from `row`. Reach for this instead of packing
@@ -199,8 +205,12 @@ function actionsFor(row: RowValue): Action[] {
 const combinedActionsCol = createColumn('actions', 'Actions', (_value, row) => new RenderableValue({
   componentName: 'DfActions',
   componentProps: { actions: actionsFor(row) },
-} as SimpleComponentDef), { filterable: false, sortable: false });
+} as SimpleComponentDef), { filterable: false, sortable: false, rendererOptions: {} });
 ```
+
+As above, the empty `rendererOptions: {}` is required to opt out of the default `nullHandler: 'null-null'` — without
+it, the `actions` field name (which names no real data) always resolves to `null`, and the renderer function is
+never called.
 
 Clicking a `DfActions` action does not bubble to the row the way a plain element's click does — no
 `stopPropagation()` needed here, unlike the `CachedIcon`-based recipes above. Registering `DfActions` (via
