@@ -150,6 +150,12 @@ purpose: a function renderer always returns a `RenderableValue`, so it has no eq
 `null` — it would have to construct an empty placeholder for every row while selection is inactive, leaving the CSS
 above to hide a checkbox component that was still created rather than never created at all.
 
+A dedicated column is one of several ways to show selection state — the [Full-featured Demo](/examples/table) runs
+all three side by side across its responsive layouts: `single-line` uses this dedicated column, `three-row` combines
+the checkbox with a row action in the same cell (see [Two actions sharing one cell](#two-actions-sharing-one-cell)
+below), and `single-column` marks selected rows with a background colour using only the
+[CSS classes](/reference/selection#css-classes) approach, no extra column at all.
+
 ## Two actions sharing one cell
 
 Splitting two actions across `preRender` and `postRender` of the same column is tempting when a narrow responsive
