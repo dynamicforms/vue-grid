@@ -49,28 +49,8 @@ A column that specifies no `rendererOptions` at all is given `{ nullHandler: 'nu
 
 Unlike `transform` — whose return value always ends up wrapped in an HTML string (`componentVHtml`) — `preRender`
 and `postRender` can return a `RenderableValue` wrapping a real Vue component, which is what makes them the only way
-to put an interactive element (an icon with its own click handler, say) inside a cell.
-
-```typescript
-import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
-
-createColumn('favorite', 'Favorite', 'checkbox', {
-  rendererOptions: {
-    postRender: (value, row) => new RenderableValue({
-      componentName: 'CachedIcon',
-      componentProps: {
-        name: 'mdi-shuffle',
-        onClick: (e: MouseEvent) => {
-          e.stopPropagation();
-          row.favorite = !row.favorite;
-        },
-      },
-    } as SimpleComponentDef),
-  },
-})
-```
-
-`SimpleComponentDef` (from `@dynamicforms/vue-forms`) is what both `preRender`/`postRender` and `setCellRenderer()` build:
+to put an interactive element (an icon with its own click handler, say) inside a cell. `SimpleComponentDef` (from
+`@dynamicforms/vue-forms`) is what both `preRender`/`postRender` and `setCellRenderer()` build:
 
 ```typescript
 interface SimpleComponentDef {
@@ -81,8 +61,7 @@ interface SimpleComponentDef {
 ```
 
 `componentName` is resolved as a **globally registered** component name — a component only imported locally in your
-`<script setup>` will not resolve. `CachedIcon`, used above, is registered globally by the plugin when installed with
-`registerComponents: true` (see [Getting Started](/guide/getting-started#installation)).
+`<script setup>` will not resolve.
 
 ::: warning Always call `stopPropagation()`
 `preRender`/`postRender` content sits inside the same row card the grid's own click handler listens on. Without
@@ -93,8 +72,8 @@ handler.
 
 Returning `null` leaves that zone genuinely absent from the DOM for that row; returning `''` (a plain renderer's
 default when `transform` yields an empty string) still renders as an empty component. See the
-[Cookbook](/guide/cookbook) for the conditionally-empty-cell, action-only-column, and selection-checkbox-column
-patterns built on top of this.
+[Cookbook](/guide/cookbook) for the clickable-icon, conditionally-empty-cell, action-only-column, and
+selection-checkbox-column recipes built on top of this.
 
 ## Numeric options (`int`, `float`, `decimal`)
 

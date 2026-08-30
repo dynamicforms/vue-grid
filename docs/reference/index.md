@@ -1,8 +1,12 @@
-# API Reference
+# Reference
 
 This section documents the parts of `@dynamicforms/vue-grid` you use to build a grid: the components, the column,
 sorting, filtering and selection APIs, and the built-in cell renderers. The package exports more symbols than are
 covered here — the bundled type declarations are the authoritative list.
+
+This is reference material — types, props, and the rules the grid follows — not a tutorial. For task-oriented
+recipes ("how do I put a clickable icon in a cell", "how do I build a responsive card layout"), see the
+[Cookbook](/guide/cookbook).
 
 ## Components
 

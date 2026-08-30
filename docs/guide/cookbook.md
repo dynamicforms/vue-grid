@@ -1,7 +1,7 @@
 # Cookbook
 
 Short, standalone recipes for tasks that come up once you go past a plain data column. Each recipe assumes you
-already know [`createColumn()`](/api/columns) and the [`preRender`/`postRender` options](/api/renderers#interactive-content-via-prerender-postrender)
+already know [`createColumn()`](/reference/columns) and the [`preRender`/`postRender` options](/reference/renderers#interactive-content-via-prerender-postrender)
 — read those first if the shapes below look unfamiliar.
 
 ## A clickable icon in a cell
@@ -79,7 +79,7 @@ single row's content.
 ## An action-only column with no bound field
 
 Sometimes a column has no data value at all — its whole content is one or two action icons, not a decoration next
-to a real field. Give it a [custom renderer function](/api/columns#custom-renderer-functions) instead of a registry
+to a real field. Give it a [custom renderer function](/reference/columns#custom-renderer-functions) instead of a registry
 name; the function owns the cell's entire content, so there's no field value to point it at and nothing to fake:
 
 ```typescript
@@ -98,7 +98,7 @@ the field is removed or reordered.
 
 ## A dedicated selection checkbox column
 
-The [CSS classes](/api/selection#css-classes) approach (`selected`/`unselected` on the row card) styles the whole
+The [CSS classes](/reference/selection#css-classes) approach (`selected`/`unselected` on the row card) styles the whole
 row. If you instead want an explicit checkbox that only takes up space while selection is active — appearing and
 disappearing as part of the layout rather than as a style change — combine the two recipes above into one column:
 
@@ -140,12 +140,12 @@ class, so the column collapses to zero width when selection is inactive:
 ```
 
 `selectionMode`, `isSelected()` and `toggleSelection()` here are your own state — either the `ref`s you pass to
-`v-model:selection-mode`/`v-model:selection-keys` in [controlled mode](/api/selection#controlled-mode-external-state),
+`v-model:selection-mode`/`v-model:selection-keys` in [controlled mode](/reference/selection#controlled-mode-external-state),
 or mirrors of the grid's internal state kept via the `update:selection-*` events. The column's own click handler
 toggles the row directly instead of relying on the grid's built-in click-to-toggle gesture, which is what lets the
 checkbox and a plain click anywhere else in the row behave independently.
 
-This one stays on `postRender` rather than a [custom renderer function](/api/columns#custom-renderer-functions) on
+This one stays on `postRender` rather than a [custom renderer function](/reference/columns#custom-renderer-functions) on
 purpose: a function renderer always returns a `RenderableValue`, so it has no equivalent to `postRender` returning
 `null` — it would have to construct an empty placeholder for every row while selection is inactive, leaving the CSS
 above to hide a checkbox component that was still created rather than never created at all.
@@ -158,7 +158,7 @@ layout needs to fit a delete icon and a selection checkbox into a single cell in
 their spacing or alignment; with more than one small icon on either side, they stop lining up cleanly with each
 other and with the row.
 
-Use a [custom renderer function](/api/columns#custom-renderer-functions) instead, and delegate to your own small
+Use a [custom renderer function](/reference/columns#custom-renderer-functions) instead, and delegate to your own small
 Vue component that lays both icons out in a single flex container it controls — `componentProps` can carry any
 props a component you register defines, not just the ones a built-in renderer happens to use:
 
@@ -207,7 +207,7 @@ the two single-purpose columns from the recipes above instead.
 
 ## A responsive multi-row card layout
 
-[Responsive column layouts](/api/columns#responsive-layouts) let the grid pick which *columns* are active at a given
+[Responsive column layouts](/reference/columns#responsive-layouts) let the grid pick which *columns* are active at a given
 width, but the grid placement of each cell within the card is entirely your own CSS — the library never rearranges
 cells for you. A single column list can be reused across layouts; only the `cssClass` differs, and that class is
 what your CSS keys off:
@@ -262,7 +262,7 @@ to the same cell elements when `narrow` is active:
 
 The `!important` on the reset (and on `bio`'s `wide` placement, if another rule could otherwise outweigh it) matters
 for the same reason `--grid-template-columns` itself is applied with `!important`
-([Card layout CSS](/api/df-grid#card-layout-css)): the grid measures each layout's shadow copy and republishes a
+([Card layout CSS](/reference/df-grid#card-layout-css)): the grid measures each layout's shadow copy and republishes a
 pixel track list over whatever `grid-template-columns` you wrote, but it publishes exactly as many tracks as your
 CSS declared — `narrow`'s single `auto` track is what turns that measurement into "one column, one row per cell."
 Declaring the track *count* and *cell placement* stays entirely your responsibility; the grid only refines the
@@ -270,3 +270,108 @@ widths.
 
 See `table-basic.vue`'s `three-row` layout, linked from the [Full-featured Demo](/examples/table), for a worked
 example that pins several fields into a compact three-row card the same way.
+
+## Pull-to-refresh at the top
+
+You want the classic mobile gesture: pull past the top of the list to refresh it. The grid already detects the
+overscroll gesture and exposes it as the `excessive-scroll` event — see
+[Pull to refresh](/reference/df-grid#pull-to-refresh) for the firing conditions and payload — you just act on it:
+
+```vue
+<template>
+  <df-grid
+    :columns="columns"
+    :records="records"
+    key-field="id"
+    :loading="loading"
+    :excessive-scroll-threshold="80"
+    @excessive-scroll="onExcessiveScroll"
+  />
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const loading = ref(false);
+const records = ref([]);
+
+async function onExcessiveScroll(amount: number) {
+  if (amount < 0 && !loading.value) {
+    // Negative amount = user pulled past the top → refresh
+    loading.value = true;
+    records.value = await fetchRecords();
+    loading.value = false;
+  }
+}
+</script>
+```
+
+`:loading="true"` while the fetch is in flight both shows the built-in spinner and, since the event is silenced
+until the overscroll falls back below the threshold, keeps a slow refresh from re-triggering itself.
+
+## Delegating sorting, filtering, and pagination to a server
+
+For a large dataset you want the backend to sort, filter, and page through records — the grid should only manage UI
+state and fire events, never touch `records` on its own. Mark the relevant columns with the
+[`sortExternal`](/reference/sorting#sortexternal) and [`filterExternal`](/reference/filtering#filterexternal)
+sentinels, and wire up `@sort`, `@filter`, and `@load`:
+
+```typescript
+import { sortExternal, filterExternal, createColumn } from '@dynamicforms/vue-grid';
+import type { GridSortEvent, GridFilterEvent } from '@dynamicforms/vue-grid';
+
+const columns = [
+  createColumn('title', 'Title', 'plain', {
+    sortable: { key: sortExternal },
+    filterable: { key: filterExternal },
+  }),
+];
+
+const sortState = ref<SortState>([]);
+const currentFilters = ref<Record<string, any>>({});
+const loading = ref(false);
+const records = ref([]);
+
+function onSort({ suggestedSort }: GridSortEvent) {
+  sortState.value = suggestedSort;
+  reload();
+}
+
+function onFilter({ filterValues }: GridFilterEvent) {
+  currentFilters.value = filterValues;
+  reload();
+}
+
+async function reload() {
+  loading.value = true;
+  records.value = await fetchPage(0, sortState.value, currentFilters.value);
+  loading.value = false;
+}
+
+async function loadNextPage() {
+  loading.value = true;
+  const page = await fetchPage(records.value.length, sortState.value, currentFilters.value);
+  records.value = [...records.value, ...page];
+  loading.value = false;
+}
+```
+
+```vue
+<df-grid
+  v-model:sortState="sortState"
+  :columns="columns"
+  :records="records"
+  :loading="loading"
+  key-field="id"
+  show-filter-row
+  @sort="onSort"
+  @filter="onFilter"
+  @load="loadNextPage"
+/>
+```
+
+`@filter` fires on every filter input change, keystrokes included, and the grid does not debounce it — debounce
+inside `onFilter` when each change should start a request. `@load` fires when the user scrolls within 200px of the
+end **and** `loading` is `false`; keeping `:loading="true"` for the duration of each fetch is what suppresses
+duplicate `@load` events while a page is in flight, so `reload()` and `loadNextPage()` don't need to guard against
+re-entrancy themselves.

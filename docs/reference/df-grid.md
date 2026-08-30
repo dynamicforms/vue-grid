@@ -12,41 +12,124 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `columns` | `ResponsiveColumnDefinitions` | — | Column layout definitions. Can be a flat list or a responsive array. See [Column Definitions](./columns). |
-| `records` | `RowValue[]` | — | Array of row data objects. Each item should contain at least the `keyField` property. |
-| `keyField` | `string` | — | Name of the property used as a unique row identifier (like a primary key). |
-| `activeColumns` | `string` | first layout | Name of the currently active responsive layout: the `name` of a `ResponsiveColumnDefinition`, or its `cssClass` when the definition has no `name`. A flat column list forms a single layout named `default`. Supports `v-model`. |
-| `sortState` | `SortState` | — | External sort state. Use with `v-model:sortState` for controlled sorting. When omitted the grid sorts internally. |
-| `filterState` | `FilterState` | — | External filter state. Use with `v-model:filterState` for controlled filtering. When omitted the grid filters internally. |
-| `showFilterRow` | `boolean` | `false` | Show the filter input row below the column headers. |
-| `showStatusBar` | `boolean` | `false` | Show the status bar below the filter row (displays the active filter count). The bar also appears automatically while selection mode is active, showing the selection controls instead. |
-| `showSummaryBar` | `boolean` | `false` | Show the summary bar below the data rows. The bar also appears automatically when `loading` is `true` or when `records` is empty. The automatic appearance is decided from the `records` prop, before filtering, so a local filter that matches no rows leaves the bar hidden. |
-| `loading` | `boolean` | `false` | Indicates that data is being fetched. When `true` the default summary bar shows a loading spinner; the no-data indicator is suppressed even when `records` is empty. |
-| `mainShadowCount` | `number` | `500` | Number of rows rendered in the main shadow grid used for column width measurement. Rarely needs changing. |
-| `secondaryShadowCount` | `number` | `30` | Number of rows rendered in secondary shadow grids (one per responsive layout). Rarely needs changing. |
-| `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | zebra striping (`'even'`/`'odd'`) | Returns CSS classes applied to each data row card. Receives the row data object and its 0-based index. Return type matches Vue's `:class` binding — a string, an array, or an object. Overriding this prop replaces the default even/odd zebra striping entirely; include the logic yourself if you still want it. |
-| `selectionMode` | `SelectionMode` | `null` | Active selection mode (`null`, `'selection'`, `'exclusion'`, or `'non-select'`). Use with `v-model:selectionMode` for controlled selection. See [Selection](./selection). |
-| `selectionKeys` | `Set<any>` | — | Set of selected (or excluded) row keys. Use with `v-model:selectionKeys`. See [Selection](./selection). |
-| `recentlyAdded` | `UseRecentlyAdded` | — | Composable instance returned by `useRecentlyAdded`. Rows whose key is in the recently-added list get the `state-adding` CSS class, and flash arc overlays are rendered at the top/bottom edge of the body when newly added records land outside the visible viewport. The grid keeps the composable's visible range up to date as the viewport scrolls. See [Incoming Records Indicator](/examples/incoming). |
-| `incomingArcMaxOpacity` | `number` | `1` | Peak opacity (0–1) of the incoming-records arc overlay. Applies to the first flash; flashes that follow within 1.5 s start progressively dimmer, down to 15 % of this peak. |
-| `excessiveScrollThreshold` | `number` | — | Percentage (0–100) of the maximum overscroll displacement (60 px) at which the `excessive-scroll` event fires. When omitted the event is never emitted. See [Pull to refresh](#pull-to-refresh). |
+| Prop | Type | Default |
+|------|------|---------|
+| `columns` | `ResponsiveColumnDefinitions` | — |
+| `records` | `RowValue[]` | — |
+| `keyField` | `string` | — |
+| `activeColumns` | `string` | first layout |
+| `sortState` | `SortState` | — |
+| `filterState` | `FilterState` | — |
+| `showFilterRow` | `boolean` | `false` |
+| `showStatusBar` | `boolean` | `false` |
+| `showSummaryBar` | `boolean` | `false` |
+| `loading` | `boolean` | `false` |
+| `mainShadowCount` | `number` | `500` |
+| `secondaryShadowCount` | `number` | `30` |
+| `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | zebra striping (`'even'`/`'odd'`) |
+| `selectionMode` | `SelectionMode` | `null` |
+| `selectionKeys` | `Set<any>` | — |
+| `recentlyAdded` | `UseRecentlyAdded` | — |
+| `incomingArcMaxOpacity` | `number` | `1` |
+| `excessiveScrollThreshold` | `number` | — |
+
+`columns` — column layout definitions. Can be a flat list or a responsive array. See [Column Definitions](./columns).
+
+`records` — array of row data objects. Each item should contain at least the `keyField` property.
+
+`keyField` — name of the property used as a unique row identifier (like a primary key).
+
+`activeColumns` — name of the currently active responsive layout: the `name` of a `ResponsiveColumnDefinition`, or
+its `cssClass` when the definition has no `name`. A flat column list forms a single layout named `default`. Supports
+`v-model`.
+
+`sortState` — external sort state. Use with `v-model:sortState` for controlled sorting. When omitted the grid sorts
+internally.
+
+`filterState` — external filter state. Use with `v-model:filterState` for controlled filtering. When omitted the
+grid filters internally.
+
+`showFilterRow` — show the filter input row below the column headers.
+
+`showStatusBar` — show the status bar below the filter row (displays the active filter count). The bar also
+appears automatically while selection mode is active, showing the selection controls instead.
+
+`showSummaryBar` — show the summary bar below the data rows. The bar also appears automatically when `loading` is
+`true` or when `records` is empty. The automatic appearance is decided from the `records` prop, before filtering,
+so a local filter that matches no rows leaves the bar hidden.
+
+`loading` — indicates that data is being fetched. When `true` the default summary bar shows a loading spinner; the
+no-data indicator is suppressed even when `records` is empty.
+
+`mainShadowCount` — number of rows rendered in the main shadow grid used for column width measurement. Rarely needs
+changing.
+
+`secondaryShadowCount` — number of rows rendered in secondary shadow grids (one per responsive layout). Rarely
+needs changing.
+
+`rowClass` — returns CSS classes applied to each data row card. Receives the row data object and its 0-based index.
+Return type matches Vue's `:class` binding — a string, an array, or an object. Overriding this prop replaces the
+default even/odd zebra striping entirely; include the logic yourself if you still want it.
+
+`selectionMode` — active selection mode (`null`, `'selection'`, `'exclusion'`, or `'non-select'`). Use with
+`v-model:selectionMode` for controlled selection. See [Selection](./selection).
+
+`selectionKeys` — set of selected (or excluded) row keys. Use with `v-model:selectionKeys`. See [Selection](./selection).
+
+`recentlyAdded` — composable instance returned by `useRecentlyAdded`. Rows whose key is in the recently-added list
+get the `state-adding` CSS class, and flash arc overlays are rendered at the top/bottom edge of the body when newly
+added records land outside the visible viewport. The grid keeps the composable's visible range up to date as the
+viewport scrolls. See [Incoming Records Indicator](/examples/incoming).
+
+`incomingArcMaxOpacity` — peak opacity (0–1) of the incoming-records arc overlay. Applies to the first flash;
+flashes that follow within 1.5 s start progressively dimmer, down to 15 % of this peak.
+
+`excessiveScrollThreshold` — percentage (0–100) of the maximum overscroll displacement (60 px) at which the
+`excessive-scroll` event fires. When omitted the event is never emitted. See [Pull to refresh](#pull-to-refresh).
 
 ## Emits
 
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `click` | `GridClickEvent` | Fired on a click on a data row when `selectionMode` is `null` and Shift is not held, and on every click on a data row when `selectionMode` is `'non-select'`. In `'selection'` and `'exclusion'` mode the click toggles the row instead, as does Shift+click while `selectionMode` is anything other than `'non-select'`; no event is emitted in those cases. Clicks on the header always fire. |
-| `sort` | `GridSortEvent` | Fired when the user clicks or long-presses a column header cell. The payload carries the clicked column and the sort state the grid would apply. See [Sorting → User interaction model](./sorting#user-interaction-model). |
-| `filter` | `GridFilterEvent` | Fired when any filter value changes. |
-| `load` | `'vertical' \| 'horizontal'` | Fired when the user scrolls within 200 px of the end of the list and the grid is not in loading state. Use this to fetch and append the next page. Set `:loading="true"` while fetching to suppress duplicate events. Proxied from the underlying virtual-scroll `load` event. |
-| `excessive-scroll` | `number` | Fired when the user overscrolls past the `excessiveScrollThreshold`. Payload is the signed displacement in pixels: positive = past the bottom, negative = past the top. Re-fires only after 1 second has elapsed **and** the overscroll has fallen back below the threshold. Requires `excessiveScrollThreshold` to be set. |
-| `update:activeColumns` | `string` | Fired when the grid's ResizeObserver selects a different responsive layout. |
-| `update:sortState` | `SortState` | Fired immediately after every `sort` event, carrying the same `suggestedSort` array. Use with `v-model:sortState`. |
-| `update:filterState` | `FilterState` | Fired together with `filter` when filter state changes internally. |
-| `update:selectionMode` | `SelectionMode` | Fired when selection mode changes. Use with `v-model:selectionMode`. |
-| `update:selectionKeys` | `Set<any>, SelectionAction, key?` | Fired when the selected key set changes. `action` is `'add'`, `'remove'`, or `'clear'`. |
+| Event | Payload |
+|-------|---------|
+| `click` | `GridClickEvent` |
+| `sort` | `GridSortEvent` |
+| `filter` | `GridFilterEvent` |
+| `load` | `'vertical' \| 'horizontal'` |
+| `excessive-scroll` | `number` |
+| `update:activeColumns` | `string` |
+| `update:sortState` | `SortState` |
+| `update:filterState` | `FilterState` |
+| `update:selectionMode` | `SelectionMode` |
+| `update:selectionKeys` | `Set<any>, SelectionAction, key?` |
+
+`click` — fired on a click on a data row when `selectionMode` is `null` and Shift is not held, and on every click on
+a data row when `selectionMode` is `'non-select'`. In `'selection'` and `'exclusion'` mode the click toggles the row
+instead, as does Shift+click while `selectionMode` is anything other than `'non-select'`; no event is emitted in
+those cases. Clicks on the header always fire.
+
+`sort` — fired when the user clicks or long-presses a column header cell. The payload carries the clicked column
+and the sort state the grid would apply. See [Sorting → User interaction model](./sorting#user-interaction-model).
+
+`filter` — fired when any filter value changes.
+
+`load` — fired when the user scrolls within 200 px of the end of the list and the grid is not in loading state. Use
+this to fetch and append the next page. Set `:loading="true"` while fetching to suppress duplicate events. Proxied
+from the underlying virtual-scroll `load` event.
+
+`excessive-scroll` — fired when the user overscrolls past the `excessiveScrollThreshold`. Payload is the signed
+displacement in pixels: positive = past the bottom, negative = past the top. Re-fires only after 1 second has
+elapsed **and** the overscroll has fallen back below the threshold. Requires `excessiveScrollThreshold` to be set.
+
+`update:activeColumns` — fired when the grid's ResizeObserver selects a different responsive layout.
+
+`update:sortState` — fired immediately after every `sort` event, carrying the same `suggestedSort` array. Use with
+`v-model:sortState`.
+
+`update:filterState` — fired together with `filter` when filter state changes internally.
+
+`update:selectionMode` — fired when selection mode changes. Use with `v-model:selectionMode`.
+
+`update:selectionKeys` — fired when the selected key set changes. `action` is `'add'`, `'remove'`, or `'clear'`.
 
 ### `GridClickEvent`
 
@@ -235,33 +318,4 @@ This prevents repeated rapid firings while the user holds the scroll position ab
 | positive (`amount > 0`) | Overscroll past the **bottom** of the list (pull-to-load-more) |
 | negative (`amount < 0`) | Overscroll past the **top** of the list (pull-to-refresh) |
 
-### Example — pull-to-refresh at the top
-
-```vue
-<template>
-  <df-grid
-    :columns="columns"
-    :records="records"
-    key-field="id"
-    :loading="loading"
-    :excessive-scroll-threshold="80"
-    @excessive-scroll="onExcessiveScroll"
-  />
-</template>
-
-<script setup lang="ts">
-import { ref } from 'vue';
-
-const loading = ref(false);
-const records = ref([]);
-
-async function onExcessiveScroll(amount: number) {
-  if (amount < 0 && !loading.value) {
-    // Negative amount = user pulled past the top → refresh
-    loading.value = true;
-    records.value = await fetchRecords();
-    loading.value = false;
-  }
-}
-</script>
-```
+See [Pull-to-refresh at the top](/guide/cookbook#pull-to-refresh-at-the-top) in the Cookbook for a worked example.

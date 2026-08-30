@@ -175,46 +175,9 @@ These classes are added to each row card **only while selection mode is active**
 
 The default `rowClass` prop already adds `even` and `odd` alternating row classes regardless of selection state.
 
-## Dedicated selection column
-
-The CSS classes above style the whole row card. If you instead want an explicit checkbox that takes up space of its
-own — appearing and disappearing as part of the column layout rather than as a style change — build a column whose
-`postRender` returns `null` while selection is inactive and a checkbox icon otherwise, and hide that column's cell
-with CSS by default:
-
-```typescript
-import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
-import { createColumn } from '@dynamicforms/vue-grid';
-
-const selectionCol = createColumn('_selection', '', 'plain', {
-  filterable: false,
-  sortable: false,
-  rendererOptions: {
-    postRender: (_value, row) => {
-      if (selectionMode.value === null) return null;
-      return new RenderableValue({
-        componentName: 'CachedIcon',
-        componentProps: {
-          name: isSelected(row.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
-          onClick: (e: MouseEvent) => {
-            e.stopPropagation();
-            toggleSelection(row.id);
-          },
-        },
-      } as SimpleComponentDef);
-    },
-  },
-});
-```
-
-```css
-.df-grid.cell._selection { display: none; }
-.df-grid.container.selection .df-grid.cell._selection { display: flex; align-items: center; justify-content: center; }
-```
-
-The click handler toggles the row itself rather than relying on the grid's click-to-toggle gesture, so the checkbox
-and a plain click elsewhere in the row behave independently. See the [Cookbook](/guide/cookbook#a-dedicated-selection-checkbox-column)
-for the full recipe, including a variant that combines the checkbox with a row action icon in the same cell.
+An explicit selection checkbox, as its own column rather than a row-card style change, is also possible — combining
+`postRender` with the CSS classes above. See [A dedicated selection checkbox column](/guide/cookbook#a-dedicated-selection-checkbox-column)
+in the Cookbook for the full recipe.
 
 ## Click events and selection
 
