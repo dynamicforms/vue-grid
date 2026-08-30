@@ -26,11 +26,18 @@ If you prefer to register `<DfGrid>` locally in individual components instead of
 import { DfGrid } from '@dynamicforms/vue-grid';
 ```
 
-Local registration covers the component only. The `v-longpress` directive (needed for long-press selection — see
-[Selection](/reference/selection#activating-selection)) is registered by that same `app.use(DynamicFormsVueGrid, {
-registerComponents: true })` call and by nothing else, so call it as well if you want long-press selection, even
-if you also import `DfGrid` locally elsewhere — the two don't conflict, and there is no way to register the
-directive on its own.
+Local registration covers the component only — it doesn't register the `v-longpress` directive (needed for
+long-press selection; see [Selection](/reference/selection#activating-selection)). Install the plugin with
+`registerDirectives: true` to get the directive without also globally registering every component:
+
+```typescript
+app.use(DynamicFormsVueGrid, { registerDirectives: true });
+```
+
+`registerComponents: true` on its own still registers the directive too, exactly as before — `registerDirectives`
+defaults to whatever `registerComponents` is when not given explicitly, so existing `{ registerComponents: true }`
+calls keep working unchanged. Set `registerDirectives: false` alongside `registerComponents: true` if you want
+components but not the directive.
 
 ## Basic Usage
 
@@ -57,20 +64,31 @@ const records = [
   { id: 2, name: 'Bob',   email: 'bob@example.com' },
 ];
 </script>
-```
 
-## Card layout CSS
-
-The card's grid comes from your own stylesheet — make `.df-grid.card` a grid and give it a base track list, one
-track per column; the grid measures and republishes the actual widths for you:
-
-```css
+<style>
 .df-grid.card {
   display:               grid;
   grid-template-columns: minmax(2em, 4em) 1fr 1fr;
   gap:                   0.25em;
   padding:               0.35em 0.5em;
 }
+</style>
+```
+
+::: warning The `<style>` block above is required, not optional polish
+The template and script alone render every cell stacked on its own line, one per row of text, not a table — the
+grid has no fallback layout of its own. `.df-grid.card` has to be `display: grid` with a track per column before
+anything lines up. See [Card layout CSS](#card-layout-css) below for why.
+:::
+
+## Card layout CSS
+
+The card's grid comes from your own stylesheet, as set above — make `.df-grid.card` a grid and give it a base track
+list, one track per column; the grid measures and republishes the actual widths for you. Each cell carries its
+column's `fieldName` as a CSS class, so you can target individual columns by name once the base grid is in place:
+
+```css
+.df-grid.cell.id { text-align: right; }
 ```
 
 See [Card layout CSS](/reference/df-grid#card-layout-css) for how column widths are measured and published, and
