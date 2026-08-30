@@ -3,10 +3,9 @@
  *
  * Tests for the `DynamicFormsVueGrid` Vue plugin (src/index.ts).
  *
- * `install()` controls two independent things via `options`:
+ * `install()`'s `options`:
  *  - `registerComponents` — globally registers every component in `./dynamicforms-components`. Default: `false`.
- *  - `registerDirectives` — globally registers the `v-longpress` directive. Default: `true`, regardless of
- *    `registerComponents`.
+ *  - `registerDirectives` — globally registers the `v-longpress` directive. Default: `true`.
  */
 import type { App } from 'vue';
 
@@ -34,7 +33,7 @@ describe('DynamicFormsVueGrid.install', () => {
     expect(app.component).not.toHaveBeenCalled();
   });
 
-  it('registerComponents: true registers components; the directive is registered independently', () => {
+  it('registerComponents: true registers both components and the directive', () => {
     const app = mockApp();
     DynamicFormsVueGrid.install(app, { registerComponents: true });
     expect(app.component).toHaveBeenCalled();

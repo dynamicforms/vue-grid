@@ -15,8 +15,10 @@ const app = createApp(MyApp);
 app.use(router);
 app.use(vuetify);
 
-app.use(DynamicFormsVueGrid, { registerComponents: true }); // makes <DfGrid> available globally
-// app.use(DynamicFormsVueGrid); // skip global registration; v-longpress is still installed
+// makes <DfGrid> available globally
+app.use(DynamicFormsVueGrid, { registerComponents: true });
+// skip global component registration; still registers v-longpress
+// app.use(DynamicFormsVueGrid);
 ```
 
 If you prefer to register `<DfGrid>` locally in individual components:

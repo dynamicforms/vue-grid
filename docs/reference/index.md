@@ -27,12 +27,10 @@ interface DynamicFormsVueGridOptions {
 }
 ```
 
-`app.use(DynamicFormsVueGrid, options)` accepts these independently — `registerComponents` and `registerDirectives`
-each control exactly one thing and don't affect each other. `registerDirectives` defaults to `true` regardless of
-`registerComponents`, so installing the plugin at all (even with no options, or with `registerComponents: false`)
-registers `v-longpress`; pass `registerDirectives: false` to opt out. `<DfGrid>` itself is unaffected by either
-option when imported and used directly, without `app.use(DynamicFormsVueGrid, ...)` at all — see [Column
-Definitions](./columns) and [`<DfGrid>`](./df-grid) for the component itself.
+Installing the plugin with no options, or with `registerComponents: false`, still registers `v-longpress`, since
+`registerDirectives` defaults to `true`. Pass `registerDirectives: false` to skip it. Importing and using `<DfGrid>`
+directly, without calling `app.use(DynamicFormsVueGrid, ...)` at all, leaves `v-longpress` unregistered — see
+[Column Definitions](./columns) and [`<DfGrid>`](./df-grid) for the component itself.
 
 ## Concepts
 

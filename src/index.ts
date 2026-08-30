@@ -8,7 +8,7 @@ export * from './table';
 export interface DynamicFormsVueGridOptions {
   /** Globally registers every component in `dynamicforms-components` (`<DfGrid>` included). Default: `false`. */
   registerComponents: boolean;
-  /** Globally registers the `v-longpress` directive, independently of `registerComponents`. Default: `true`. */
+  /** Globally registers the `v-longpress` directive. Default: `true`. */
   registerDirectives: boolean;
   registerVuetifyComponents: boolean;
 }
