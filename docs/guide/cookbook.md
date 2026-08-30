@@ -79,40 +79,22 @@ single row's content.
 ## An action-only column with no bound field
 
 Sometimes a column has no data value at all — its whole content is one or two action icons, not a decoration next
-to a real field. The main content zone of a cell always goes through the column's declared renderer and `transform`,
-which can only ever produce an HTML string (`transform`'s return value is wrapped into `componentVHtml`); it can
-never host a component with its own event handlers. `preRender`/`postRender` are the only zones that accept a
-`RenderableValue` wrapping a real component, so they are also the only way to put an interactive icon in a cell —
-even when that icon is the column's entire purpose, not a side decoration.
-
-Point the column's `fieldName` at a property your records don't have, and leave `renderer` as `'plain'` with no
-`transform`. The main zone then renders `undefined`, which comes out empty, and the column's real content lives
-entirely in `postRender` (and `preRender`, for a second icon):
+to a real field. Give it a [custom renderer function](/api/columns#custom-renderer-functions) instead of a registry
+name; the function owns the cell's entire content, so there's no field value to point it at and nothing to fake:
 
 ```typescript
-createColumn('actions', 'Delete', 'plain', {
-  sortable: false,
-  filterable: false,
-  rendererOptions: {
-    postRender: (_value, row) => new RenderableValue({
-      componentName: 'CachedIcon',
-      componentProps: {
-        name: 'mdi-delete',
-        onClick: (e: MouseEvent) => { e.stopPropagation(); deleteRow(row.id); },
-      },
-    } as SimpleComponentDef),
+createColumn('actions', 'Delete', (_value, row) => new RenderableValue({
+  componentName: 'CachedIcon',
+  componentProps: {
+    name: 'mdi-delete',
+    onClick: (e: MouseEvent) => { e.stopPropagation(); deleteRow(row.id); },
   },
-});
+} as SimpleComponentDef), { sortable: false, filterable: false });
 ```
 
-Do not supply a `nullHandler` here — as soon as `rendererOptions` is present, the column loses the implicit
-`nullHandler: 'null-null'` default and the `'plain'` renderer receives the `undefined` value directly, rendering it
-as an empty cell rather than the literal text `null`. See [`nullHandler`](/api/renderers#common-options-celloptions)
-for why that default only applies when `rendererOptions` is entirely absent.
-
-Reach for this instead of splitting one action into `preRender` and packing an unrelated second action into the
-`postRender` of some other, data-bearing column — that couples UI that has nothing to do with the bound field to
-that field's column identity, and breaks the moment the field is removed or reordered.
+Reach for this instead of packing the action into the `preRender`/`postRender` of some other, data-bearing column —
+that couples UI that has nothing to do with the bound field to that field's column identity, and breaks the moment
+the field is removed or reordered.
 
 ## A dedicated selection checkbox column
 
@@ -163,42 +145,65 @@ or mirrors of the grid's internal state kept via the `update:selection-*` events
 toggles the row directly instead of relying on the grid's built-in click-to-toggle gesture, which is what lets the
 checkbox and a plain click anywhere else in the row behave independently.
 
+This one stays on `postRender` rather than a [custom renderer function](/api/columns#custom-renderer-functions) on
+purpose: a function renderer always returns a `RenderableValue`, so it has no equivalent to `postRender` returning
+`null` — it would have to construct an empty placeholder for every row while selection is inactive, leaving the CSS
+above to hide a checkbox component that was still created rather than never created at all.
+
 ## Two actions sharing one cell
 
-`preRender` and `postRender` can both be set on the same column, each independently returning `null` per row —
-useful when a narrow responsive layout needs to fit a delete icon and a selection checkbox into a single cell
-instead of two separate columns:
+Splitting two actions across `preRender` and `postRender` of the same column is tempting when a narrow responsive
+layout needs to fit a delete icon and a selection checkbox into a single cell instead of two separate columns — but
+`pre` and `post` are two independently flexed zones with no shared container between them, so nothing coordinates
+their spacing or alignment; with more than one small icon on either side, they stop lining up cleanly with each
+other and with the row.
 
-```typescript
-const combinedActionsCol = createColumn('actions', 'Actions', 'plain', {
-  filterable: false,
-  sortable: false,
-  rendererOptions: {
-    preRender: (_value, row) => new RenderableValue({
-      componentName: 'CachedIcon',
-      componentProps: {
-        name: 'mdi-delete',
-        style: { color: 'red' },
-        onClick: (e: MouseEvent) => { e.stopPropagation(); deleteRow(row.id); },
-      },
-    } as SimpleComponentDef),
-    postRender: (_value, row) => {
-      if (selectionMode.value === null) return null;
-      return new RenderableValue({
-        componentName: 'CachedIcon',
-        componentProps: {
-          name: isSelected(row.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
-          onClick: (e: MouseEvent) => { e.stopPropagation(); toggleSelection(row.id); },
-        },
-      } as SimpleComponentDef);
-    },
-  },
-});
+Use a [custom renderer function](/api/columns#custom-renderer-functions) instead, and delegate to your own small
+Vue component that lays both icons out in a single flex container it controls — `componentProps` can carry any
+props a component you register defines, not just the ones a built-in renderer happens to use:
+
+```vue
+<!-- RowActionIcons.vue — register it globally the same way CachedIcon is registered -->
+<template>
+  <div style="display: flex; gap: 0.25em; align-items: center">
+    <cached-icon
+      v-for="action in actions"
+      :key="action.name"
+      :name="action.name"
+      :style="action.style"
+      @click.stop="action.onClick"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+defineProps<{ actions: { name: string; style?: Record<string, string>; onClick: (e: MouseEvent) => void }[] }>();
+</script>
 ```
 
+```typescript
+const combinedActionsCol = createColumn('actions', 'Actions', (_value, row) => new RenderableValue({
+  componentName: 'RowActionIcons',
+  componentProps: {
+    actions: [
+      { name: 'mdi-delete', style: { color: 'red' }, onClick: () => deleteRow(row.id) },
+      ...(selectionMode.value === null ? [] : [{
+        name: isSelected(row.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
+        onClick: () => toggleSelection(row.id),
+      }]),
+    ],
+  },
+} as SimpleComponentDef), { filterable: false, sortable: false });
+```
+
+`@click.stop` inside `RowActionIcons` plays the same role `e.stopPropagation()` plays in the earlier recipes — it's
+still needed, just written once inside the wrapper instead of in every column definition that uses it. If you want a
+ready-made actions-group component instead of writing your own, `DfActions` from `@dynamicforms/vuetify-inputs`
+(already a peer dependency of this package) is built for exactly this; see its own documentation for the `Action`
+API it expects.
+
 Use this column in place of a plain content column in the layout that needs it; a wider responsive layout can use
-the two single-purpose columns from the recipes above instead. See the [Full-featured Demo](/examples/table) for
-this exact column used across three responsive layouts at once.
+the two single-purpose columns from the recipes above instead.
 
 ## A responsive multi-row card layout
 
