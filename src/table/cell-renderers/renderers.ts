@@ -8,8 +8,11 @@
  *   null-empty, null-null, plain, header, md, color, checkbox, link, email, file,
  *   ip4, ip6, ip, date, time, datetime, int, float, decimal.
  *
- * The `wrapWithPrePost` helper (internal) wraps a main `RenderableValue` with optional
- * pre/post render values when `preRender`/`postRender` are configured on the options.
+ * `wrapWithPrePost` wraps a main `RenderableValue` with optional pre/post render values when
+ * `preRender`/`postRender` are configured on the options. It is exported so a `ColumnDefinition.renderer`
+ * function — see `useFormattedData`, which applies it to a column-level custom renderer's result the
+ * same way every built-in renderer already applies it to its own — can be composed the same way outside
+ * this file too, e.g. from a `setCellRenderer()` replacement.
  *
  * Runtime customisation:
  *  - `setCellRenderer(type, fn)` — replaces a renderer in `DefaultRenderers`
@@ -43,7 +46,7 @@ const toRv = (val: RenderableValue | string | null): RenderableValue | null => {
   return val;
 };
 
-const wrapWithPrePost = (
+export const wrapWithPrePost = (
   main: RenderableValue,
   value: any,
   rowValue: RowValue,

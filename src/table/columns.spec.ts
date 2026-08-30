@@ -10,6 +10,7 @@
  *      - sets `sortable: true` by default (can be overridden via `otherOptions`)
  *      - when renderer is `'header'`, automatically adds a default `sortState` to
  *        `rendererOptions` (only when `sortState` is not already present)
+ *      - `renderer` also accepts a `CellRendererTransformer` function directly, stored as-is
  *
  * 2. **filterColumns** — selects a subset from a flat column list using mixed selectors:
  *      - `number` selector → column at that index
@@ -28,9 +29,11 @@
  *      - exposed computed refs: `name`, `cssClass`, `columns`, `active`, `builtColumns`,
  *        `activeColumnsDefinition`
  */
+import { RenderableValue } from '@dynamicforms/vue-forms';
 import { vi } from 'vitest';
 import { nextTick, reactive } from 'vue';
 
+import type { CellRendererTransformer } from './cell-renderers';
 import {
   createColumn,
   filterColumns,
@@ -115,6 +118,14 @@ describe('createColumn', () => {
     const col = createColumn('col', 'Col', 'plain');
 
     expect((col.rendererOptions as any)?.sortState).toBeUndefined();
+  });
+
+  it('accepts a function as renderer and stores it as-is', () => {
+    const customRenderer: CellRendererTransformer = (value) => new RenderableValue(String(value));
+    const col = createColumn('actions', 'Actions', customRenderer, { sortable: false, filterable: false });
+
+    expect(col.renderer).toBe(customRenderer);
+    expect(col.sortable).toBe(false);
   });
 });
 

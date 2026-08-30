@@ -1,2 +1,2 @@
 export * from './renderers';
-export type { CellOptions, RowValue } from './interfaces';
+export type { CellOptions, CellRendererTransformer, RowValue } from './interfaces';
