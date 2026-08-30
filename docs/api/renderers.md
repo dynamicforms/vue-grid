@@ -85,6 +85,10 @@ A `Date` instance is formatted as-is and `parseISOPrefix` is not applied to it. 
 
 ## Custom renderers
 
+`setCellRenderer()` replaces one of the built-in renderers **application-wide**. For a renderer scoped to a single
+column instead, pass the same kind of function directly as that column's `renderer` — see
+[Custom renderer functions](./columns#custom-renderer-functions).
+
 `setCellRenderer()` replaces one of the built-in renderers:
 
 ```typescript

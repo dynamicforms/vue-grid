@@ -43,6 +43,7 @@ import {
   gridDestroy,
   type RendererOptionsMap,
   setCellRenderer,
+  wrapWithPrePost,
 } from './renderers';
 
 // ---------------------------------------------------------------------------
@@ -386,5 +387,15 @@ describe('preRender / postRender wrapping', () => {
     };
 
     expect(() => DefaultRenderers.plain('value', {}, optsWithNullPre)).not.toThrow();
+  });
+
+  it('is exported so a column-level custom renderer can compose with it directly', () => {
+    const opts = makeMockOptions();
+    const optsWithPost: CellOptionsInternal = { ...opts, postRender: () => new RenderableValue('post') };
+    const main = new RenderableValue('custom content');
+
+    const result = wrapWithPrePost(main, 'value', {}, optsWithPost);
+
+    expect(result.classes).toContain('has-pre-post');
   });
 });

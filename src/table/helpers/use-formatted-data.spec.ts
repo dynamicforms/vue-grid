@@ -12,7 +12,10 @@
  * 1. **One output per column** — `formattedData` length always equals the column count.
  *
  * 2. **Renderer selection** — for each column the composable picks the renderer named by
- *    `column.renderer` (or `'plain'` when `renderer` is absent).
+ *    `column.renderer` (or `'plain'` when `renderer` is absent). When `column.renderer` is a
+ *    function instead of a registry name, that function is called directly (bypassing the
+ *    registry lookup entirely) and its result is wrapped with `preRender`/`postRender` the
+ *    same way every registry renderer already wraps itself.
  *
  * 3. **nullHandler** — when the cell value is `null` or `undefined` and the column's
  *    `rendererOptions.nullHandler` names a different renderer, that alternative renderer is
@@ -155,6 +158,99 @@ describe('useFormattedData', () => {
       expect(formattedData.value).toHaveLength(1);
 
       expect(plainSpy).toHaveBeenCalledWith('Carol', row, expect.anything());
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe('custom function renderer', () => {
+    it('calls a function renderer directly instead of looking it up in the registry', () => {
+      const customRenderer = vi.fn((value: any) => new RenderableValue(String(value)));
+
+      const { formattedData } = useFormattedData({
+        item: { actions: 'ignored' },
+        columns: [{ fieldName: 'actions', label: 'Actions', renderer: customRenderer, rendererOptions: {} as any }],
+        renderers,
+      });
+
+      expect(formattedData.value).toHaveLength(1);
+      expect(customRenderer).toHaveBeenCalledWith('ignored', { actions: 'ignored' }, expect.anything());
+    });
+
+    it('wraps a function renderer result with preRender/postRender like any built-in renderer', () => {
+      const customRenderer = () => new RenderableValue('main');
+
+      const { formattedData } = useFormattedData({
+        item: { actions: null },
+        columns: [
+          {
+            fieldName: 'actions',
+            label: 'Actions',
+            renderer: customRenderer,
+            rendererOptions: { postRender: () => new RenderableValue('post') } as any,
+          },
+        ],
+        renderers,
+      });
+
+      const result = formattedData.value[0];
+      expect(result.classes).toContain('has-pre-post');
+    });
+
+    it('does not wrap a function renderer result when neither preRender nor postRender is set', () => {
+      const customRenderer = () => new RenderableValue('main');
+
+      const { formattedData } = useFormattedData({
+        item: { actions: null },
+        columns: [{ fieldName: 'actions', label: 'Actions', renderer: customRenderer, rendererOptions: {} as any }],
+        renderers,
+      });
+
+      const result = formattedData.value[0];
+      expect(result.classes).not.toContain('has-pre-post');
+    });
+
+    it('uses nullHandler instead of a function renderer when the value is null', () => {
+      const customRenderer = vi.fn(() => new RenderableValue('main'));
+      const nullEmptySpy = vi.fn(renderers['null-empty']);
+
+      const { formattedData } = useFormattedData({
+        item: { actions: null },
+        columns: [
+          {
+            fieldName: 'actions',
+            label: 'Actions',
+            renderer: customRenderer,
+            rendererOptions: { nullHandler: 'null-empty' } as any,
+          },
+        ],
+        renderers: { ...renderers, 'null-empty': nullEmptySpy },
+      });
+
+      expect(formattedData.value).toHaveLength(1);
+      expect(nullEmptySpy).toHaveBeenCalled();
+      expect(customRenderer).not.toHaveBeenCalled();
+    });
+
+    it('applies the same fieldName/cssClass injection to a function renderer result', () => {
+      const customRenderer = () => new RenderableValue('main');
+
+      const { formattedData } = useFormattedData({
+        item: { actions: 'x' },
+        columns: [
+          {
+            fieldName: 'actions',
+            label: 'Actions',
+            cssClass: 'centered',
+            renderer: customRenderer,
+            rendererOptions: {} as any,
+          },
+        ],
+        renderers,
+      });
+
+      const classes = formattedData.value[0].classes as string[];
+      expect(classes[0]).toBe('actions');
+      expect(classes[1]).toBe('centered');
     });
   });
 

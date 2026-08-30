@@ -52,6 +52,40 @@ const columns = [
 ];
 ```
 
+## Custom renderer functions
+
+`renderer` accepts a function instead of a registry name, for a column whose content isn't a formatted field
+value at all — an actions column, say, built entirely from `RenderableValue`-wrapped components:
+
+```typescript
+type CellRendererTransformer = (
+  value: any,
+  rowValue: RowValue,
+  options: CellOptionsInternal,
+) => RenderableValue;
+```
+
+```typescript
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+import { createColumn } from '@dynamicforms/vue-grid';
+
+createColumn('actions', 'Actions', (_value, row) => new RenderableValue({
+  componentName: 'DfActions',
+  componentProps: { actions: buildActionsFor(row) },
+} as SimpleComponentDef), { sortable: false, filterable: false });
+```
+
+The function is called directly instead of looking up a renderer in the registry, and takes full ownership of the
+cell's main content — no `transform` or type-specific formatting runs, since there is no registry renderer in the
+loop at all. It still composes with `preRender`/`postRender`: whatever the function returns is wrapped exactly the
+way a built-in renderer wraps its own output, so a column can combine a fully custom main renderer with a
+decoration on either side.
+
+This is the same `CellRendererTransformer` type `setCellRenderer()` uses to replace a *named* renderer application-wide
+(see [Cell Renderers](./renderers#custom-renderers)); passing one directly as `renderer` instead scopes it to a
+single column. `transform` can only ever produce an HTML string, never a component with its own event handlers, so
+it cannot express a cell whose whole content is interactive — this is why the option exists.
+
 ## Responsive layouts
 
 To define multiple layouts that activate at different container widths, pass an array of `ResponsiveColumnDefinition` objects:

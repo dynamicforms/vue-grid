@@ -4,7 +4,10 @@
  * Column definitions, utilities, and the `useColumns` Vue composable for df-grid.
  *
  * Key exports:
- *  - `ColumnDefinition<R>` — typed column descriptor that links a data field to a renderer
+ *  - `ColumnDefinition<R>` — typed column descriptor that links a data field to a renderer. `renderer`
+ *    is either a name from the built-in registry (`RendererOptionsMap`) or a `CellRendererTransformer`
+ *    function that owns the cell's entire main content, for columns whose content isn't a formatted
+ *    field value (an actions column, say) — see `useFormattedData` for how the two are dispatched.
  *  - `createColumn()` — convenience factory that builds a ColumnDefinition with safe defaults
  *  - `filterColumns()` — selects a subset of columns by numeric index, field name string, or
  *    `{ fieldName: n }` object (nth occurrence of a repeated field)
@@ -17,7 +20,7 @@
 import { filter, find, isArray, isEmpty, isNumber, isObject, isString } from 'lodash-es';
 import { computed } from 'vue';
 
-import { gridColumnCreate, RendererOptionsMap } from './cell-renderers';
+import { CellRendererTransformer, gridColumnCreate, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { Filterable } from './columns-filtering';
 import { Sortable } from './columns-sorting';
@@ -26,7 +29,7 @@ import { GridProps } from './df-grid-types';
 export interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> {
   fieldName: string;
   label: string;
-  renderer?: R;
+  renderer?: R | CellRendererTransformer;
   rendererOptions?: RendererOptionsMap[R];
   sortable?: Sortable;
   filterable?: Filterable;
@@ -37,10 +40,10 @@ export type AnyColumnDefinition = {
   [K in keyof RendererOptionsMap]: ColumnDefinition<K>;
 }[keyof RendererOptionsMap];
 
-export function createColumn<R extends keyof RendererOptionsMap>(
+export function createColumn<R extends keyof RendererOptionsMap = 'plain'>(
   fieldName: string,
   label: string,
-  renderer?: R,
+  renderer?: R | CellRendererTransformer,
   otherOptions?: Omit<ColumnDefinition<R>, 'fieldName' | 'label' | 'renderer'>,
 ): ColumnDefinition<R> {
   const result = { fieldName, label, renderer, sortable: true, ...(otherOptions ?? {}) };
