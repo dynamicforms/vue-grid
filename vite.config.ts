@@ -63,7 +63,11 @@ export default defineConfig({
         'src/**/*'
       ],
       exclude: [
-        '**/index.ts',
+        // Pure re-export barrels, no logic to cover. src/index.ts also holds
+        // DynamicFormsVueGrid.install()'s registration logic, so it stays out of this list.
+        'src/table/index.ts',
+        'src/table/helpers/index.ts',
+        'src/table/cell-renderers/index.ts',
       ],
     },
     server: {
