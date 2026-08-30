@@ -54,8 +54,8 @@ const columns = [
 
 ## Custom renderer functions
 
-`renderer` accepts a function instead of a registry name, for a column whose content isn't a formatted field
-value at all — an actions column, say, built entirely from `RenderableValue`-wrapped components:
+`renderer` accepts a function instead of a registry name, for a column whose content isn't a formatted field value
+at all:
 
 ```typescript
 type CellRendererTransformer = (
@@ -65,26 +65,17 @@ type CellRendererTransformer = (
 ) => RenderableValue;
 ```
 
-```typescript
-import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
-import { createColumn } from '@dynamicforms/vue-grid';
-
-createColumn('actions', 'Actions', (_value, row) => new RenderableValue({
-  componentName: 'DfActions',
-  componentProps: { actions: buildActionsFor(row) },
-} as SimpleComponentDef), { sortable: false, filterable: false });
-```
-
 The function is called directly instead of looking up a renderer in the registry, and takes full ownership of the
 cell's main content — no `transform` or type-specific formatting runs, since there is no registry renderer in the
 loop at all. It still composes with `preRender`/`postRender`: whatever the function returns is wrapped exactly the
-way a built-in renderer wraps its own output, so a column can combine a fully custom main renderer with a
-decoration on either side.
+way a built-in renderer wraps its own output.
 
 This is the same `CellRendererTransformer` type `setCellRenderer()` uses to replace a *named* renderer application-wide
 (see [Cell Renderers](./renderers#custom-renderers)); passing one directly as `renderer` instead scopes it to a
 single column. `transform` can only ever produce an HTML string, never a component with its own event handlers, so
-it cannot express a cell whose whole content is interactive — this is why the option exists.
+it cannot express a cell whose whole content is interactive — this is why the option exists. See
+[A column that isn't tied to a single field](/guide/cookbook#a-column-that-isn-t-tied-to-a-single-field) in the
+Cookbook for a worked example.
 
 ## Responsive layouts
 
@@ -132,6 +123,10 @@ const columnsResponsive: ResponsiveColumnDefinitions = [
   key-field="id"
 />
 ```
+
+Only the active *column list* changes between layouts — the grid placement of each cell within the card is your own
+CSS, keyed off the layout's `cssClass`. See the [Cookbook](/guide/cookbook#a-responsive-multi-row-card-layout) for a
+worked example, including collapsing a wide layout into a stacked, single-column one.
 
 ## `filterColumns()`
 

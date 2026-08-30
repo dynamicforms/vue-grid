@@ -31,7 +31,7 @@ Users activate selection mode without any prop wiring:
 
 In `'non-select'` mode neither gesture changes the selection.
 
-Long-press relies on the `v-longpress` directive, which the grid does not register itself — it comes with the plugin: `app.use(DynamicFormsVueGrid, { registerComponents: true })`. When `<DfGrid>` is imported and registered locally instead, the directive is missing and long-press does nothing; shift+click remains the way to enter selection mode.
+Long-press relies on the `v-longpress` directive, which the grid does not register itself — it comes from installing the plugin: `app.use(DynamicFormsVueGrid)`, which registers it by default. When `<DfGrid>` is imported and used directly without that call, the directive is missing and long-press does nothing; shift+click remains the way to enter selection mode. See [Plugin options](/reference/index#plugin-options).
 
 Once active, a status bar appears at the bottom of the header area with:
 
@@ -174,6 +174,10 @@ These classes are added to each row card **only while selection mode is active**
 ```
 
 The default `rowClass` prop already adds `even` and `odd` alternating row classes regardless of selection state.
+
+An explicit selection checkbox, as its own column rather than a row-card style change, is also possible — combining
+`postRender` with the CSS classes above. See [A dedicated selection checkbox column](/guide/cookbook#a-dedicated-selection-checkbox-column)
+in the Cookbook for the full recipe.
 
 ## Click events and selection
 

@@ -43,7 +43,37 @@ The `transform` function receives the raw cell value and the full row object, an
 
 A column that specifies no `rendererOptions` at all is given `{ nullHandler: 'null-null' }`, so its `null` and `undefined` cells are rendered by `null-null`. As soon as you supply a `rendererOptions` object, that default is gone: without a `nullHandler` key the column's own renderer receives the `null`. The choice is made on the raw record value, before `transform` runs.
 
-`preRender` and `postRender` allow injecting additional content to the left or right of the main cell value. When either is set, the cell switches to a flex layout with three zones: `pre`, `content`, and `post`. Such cells carry the extra CSS class `has-pre-post`, which is what the flex layout is attached to.
+`preRender` and `postRender` allow injecting additional content to the left or right of the main cell value. When either is set, the cell switches to a flex layout with three zones: `pre`, `content`, and `post`. Such cells carry the extra CSS class `has-pre-post`, which is what the flex layout is attached to. `has-pre-post` is applied whenever the column has `preRender`/`postRender` configured, regardless of what an individual row's callback returns.
+
+### Interactive content via preRender/postRender
+
+Unlike `transform` — whose return value always ends up wrapped in an HTML string (`componentVHtml`) — `preRender`
+and `postRender` can return a `RenderableValue` wrapping a real Vue component, which is what makes them the only way
+to put an interactive element (an icon with its own click handler, say) inside a cell. `SimpleComponentDef` (from
+`@dynamicforms/vue-forms`) is what both `preRender`/`postRender` and `setCellRenderer()` build:
+
+```typescript
+interface SimpleComponentDef {
+  componentName: string;              // name of a globally registered component, or a native tag like 'div'
+  componentProps?: Record<any, any>;  // props/attrs/event handlers passed to the component
+  componentVHtml?: string;            // raw HTML rendered via v-html; mutually exclusive in practice with componentProps' children
+}
+```
+
+`componentName` is resolved as a **globally registered** component name — a component only imported locally in your
+`<script setup>` will not resolve.
+
+::: warning Always call `stopPropagation()`
+`preRender`/`postRender` content sits inside the same row card the grid's own click handler listens on. Without
+`e.stopPropagation()` in the component's own handler, the click also bubbles up and is interpreted as a click on the
+row — which, while selection mode is active, toggles the row's selection instead of (or in addition to) running your
+handler.
+:::
+
+Returning `null` leaves that zone genuinely absent from the DOM for that row; returning `''` (a plain renderer's
+default when `transform` yields an empty string) still renders as an empty component. See the
+[Cookbook](/guide/cookbook) for the clickable-icon, conditionally-empty-cell, action-only-column, and
+selection-checkbox-column recipes built on top of this.
 
 ## Numeric options (`int`, `float`, `decimal`)
 

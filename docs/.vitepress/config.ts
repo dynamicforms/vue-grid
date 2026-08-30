@@ -9,7 +9,7 @@ export default defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/getting-started' },
-      { text: 'API', link: '/api/index' },
+      { text: 'Reference', link: '/reference/index' },
       { text: 'Examples', link: '/examples/index' },
     ],
     sidebar: {
@@ -19,6 +19,7 @@ export default defineConfig({
           items: [
             { text: 'Installation', link: '/guide/getting-started#installation' },
             { text: 'Basic Usage', link: '/guide/getting-started#basic-usage' },
+            { text: 'Cookbook', link: '/guide/cookbook' },
           ]
         },
         {
@@ -29,17 +30,17 @@ export default defineConfig({
           ]
         }
       ],
-      '/api/': [
+      '/reference/': [
         {
-          text: 'API Reference',
+          text: 'Reference',
           items: [
-            { text: 'Overview', link: '/api/index' },
-            { text: '<DfGrid> Component', link: '/api/df-grid' },
-            { text: 'Column Definitions', link: '/api/columns' },
-            { text: 'Sorting', link: '/api/sorting' },
-            { text: 'Filtering', link: '/api/filtering' },
-            { text: 'Selection', link: '/api/selection' },
-            { text: 'Cell Renderers', link: '/api/renderers' },
+            { text: 'Overview', link: '/reference/index' },
+            { text: '<DfGrid> Component', link: '/reference/df-grid' },
+            { text: 'Column Definitions', link: '/reference/columns' },
+            { text: 'Sorting', link: '/reference/sorting' },
+            { text: 'Filtering', link: '/reference/filtering' },
+            { text: 'Selection', link: '/reference/selection' },
+            { text: 'Cell Renderers', link: '/reference/renderers' },
           ]
         }
       ],
