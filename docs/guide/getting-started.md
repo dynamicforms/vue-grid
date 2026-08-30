@@ -34,10 +34,9 @@ long-press selection; see [Selection](/reference/selection#activating-selection)
 app.use(DynamicFormsVueGrid, { registerDirectives: true });
 ```
 
-`registerComponents: true` on its own still registers the directive too, exactly as before — `registerDirectives`
-defaults to whatever `registerComponents` is when not given explicitly, so existing `{ registerComponents: true }`
-calls keep working unchanged. Set `registerDirectives: false` alongside `registerComponents: true` if you want
-components but not the directive.
+`registerDirectives` defaults to whatever `registerComponents` is when not given explicitly, so
+`{ registerComponents: true }` alone registers both the directive and every component. Set
+`registerDirectives: false` alongside `registerComponents: true` to register components without the directive.
 
 ## Basic Usage
 

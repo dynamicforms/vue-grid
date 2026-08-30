@@ -7,9 +7,8 @@
  *  - `registerComponents` — globally registers every component in `./dynamicforms-components`
  *  - `registerDirectives` — globally registers the `v-longpress` directive
  *
- * `registerDirectives` defaults to `registerComponents` when omitted, so a bare
- * `{ registerComponents: true }` call — the only form that existed before `registerDirectives`
- * was added — keeps registering the directive exactly as before.
+ * `registerDirectives` defaults to `registerComponents` when omitted, so `{ registerComponents: true }` alone
+ * registers the directive too.
  */
 import type { App } from 'vue';
 
