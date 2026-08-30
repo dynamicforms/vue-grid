@@ -200,4 +200,4 @@ additionally needs the `v-longpress` directive, which the plugin registers globa
 </df-grid>
 ```
 
-See [Selection](/api/selection) for the full API reference, including uncontrolled vs. controlled mode and reading the key set.
+See [Selection](/api/selection) for the full API reference, including uncontrolled vs. controlled mode and reading the key set, and the [Cookbook](/guide/cookbook) for a dedicated selection-checkbox-column recipe.

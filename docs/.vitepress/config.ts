@@ -22,6 +22,12 @@ export default defineConfig({
           ]
         },
         {
+          text: 'Cookbook',
+          items: [
+            { text: 'Cookbook', link: '/guide/cookbook' },
+          ]
+        },
+        {
           text: 'Changelog',
           items: [
             { text: 'Changelog', link: '/guide/changelog' },
