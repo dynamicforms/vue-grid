@@ -19,14 +19,18 @@ app.use(vuetify);
 app.use(DynamicFormsVueGrid, { registerComponents: true });
 ```
 
-If you prefer to register `<DfGrid>` locally in individual components:
+If you prefer to register `<DfGrid>` locally in individual components instead of the `app.use(DynamicFormsVueGrid,
+{ registerComponents: true })` call above:
 
 ```typescript
 import { DfGrid } from '@dynamicforms/vue-grid';
 ```
 
-Local registration covers the component only — the `v-longpress` directive comes from the plugin, so install the
-plugin as well if you want long-press selection.
+Local registration covers the component only. The `v-longpress` directive (needed for long-press selection — see
+[Selection](/reference/selection#activating-selection)) is registered by that same `app.use(DynamicFormsVueGrid, {
+registerComponents: true })` call and by nothing else, so call it as well if you want long-press selection, even
+if you also import `DfGrid` locally elsewhere — the two don't conflict, and there is no way to register the
+directive on its own.
 
 ## Basic Usage
 
