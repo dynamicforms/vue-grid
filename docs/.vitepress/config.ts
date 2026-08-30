@@ -19,11 +19,6 @@ export default defineConfig({
           items: [
             { text: 'Installation', link: '/guide/getting-started#installation' },
             { text: 'Basic Usage', link: '/guide/getting-started#basic-usage' },
-          ]
-        },
-        {
-          text: 'Cookbook',
-          items: [
             { text: 'Cookbook', link: '/guide/cookbook' },
           ]
         },

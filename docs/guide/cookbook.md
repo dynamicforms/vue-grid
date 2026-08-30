@@ -45,7 +45,8 @@ mode is active, toggles the row's selection instead of (or in addition to) runni
 
 Reaching for a raw HTML string with a `data-action` attribute and delegating clicks yourself from `@click` on
 `<df-grid>` works around the same problem the hard way — the grid already gives every `pre`/`post` slot a real
-component with its own event handlers.
+component with its own event handlers. See [Interactive content via preRender/postRender](/reference/renderers#interactive-content-via-prerender-postrender)
+for the `SimpleComponentDef` shape and the full `stopPropagation()` rule.
 
 ## A cell that's empty unless a condition holds
 
@@ -74,7 +75,8 @@ for that row.
 
 Note that `has-pre-post` is applied to every cell of a column that has `preRender` or `postRender` **configured**,
 regardless of what an individual row's callback returns — the class reflects the column's configuration, not any
-single row's content.
+single row's content. See [Common options (`CellOptions`)](/reference/renderers#common-options-celloptions) for the
+full `preRender`/`postRender`/`nullHandler` reference.
 
 ## A column that isn't tied to a single field
 
@@ -162,7 +164,8 @@ colour using only the [CSS classes](/reference/selection#css-classes) approach, 
 
 ## Custom cell content beyond a single icon
 
-The [previous recipe](#a-column-that-isn-t-tied-to-a-single-field) generalises past a single icon:
+The [previous recipe](#a-column-that-isn-t-tied-to-a-single-field), built on a
+[custom renderer function](/reference/columns#custom-renderer-functions), generalises past a single icon:
 `componentName` names any component you've registered, and `componentProps` carries whatever props that component
 declares — the technique is the same whether the cell hosts one icon, several, or something else entirely, such as
 a chart or a badge. A column needing more than one action is just that technique with a component built to lay out
