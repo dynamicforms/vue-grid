@@ -152,61 +152,55 @@ above to hide a checkbox component that was still created rather than never crea
 
 A dedicated column is one of several ways to show selection state — the [Full-featured Demo](/examples/table) runs
 all three side by side across its responsive layouts: `single-line` uses this dedicated column, `three-row` combines
-the checkbox with a row action in the same cell (see [Two actions sharing one cell](#two-actions-sharing-one-cell)
-below), and `single-column` marks selected rows with a background colour using only the
-[CSS classes](/reference/selection#css-classes) approach, no extra column at all.
+the checkbox with a row action in the same cell (see [Custom cell content beyond a single
+icon](#custom-cell-content-beyond-a-single-icon) below), and `single-column` marks selected rows with a background
+colour using only the [CSS classes](/reference/selection#css-classes) approach, no extra column at all.
 
-## Two actions sharing one cell
+## Custom cell content beyond a single icon
 
-Splitting two actions across `preRender` and `postRender` of the same column is tempting when a narrow responsive
-layout needs to fit a delete icon and a selection checkbox into a single cell instead of two separate columns — but
-`pre` and `post` are two independently flexed zones with no shared container between them, so nothing coordinates
-their spacing or alignment; with more than one small icon on either side, they stop lining up cleanly with each
-other and with the row.
+The [action-only column](#an-action-only-column-with-no-bound-field) recipe above generalises past a single icon:
+`componentName` names any component you've registered, and `componentProps` carries whatever props that component
+declares — the technique is the same whether the cell hosts one icon, several, or something else entirely, such as
+a chart or a badge. A column needing more than one action is just that technique with a component built to lay out
+several of them, rather than reaching for `preRender`/`postRender` — those are two independently flexed zones with
+no shared container between them, so nothing coordinates the spacing of more than one small icon on either side.
 
-Use a [custom renderer function](/reference/columns#custom-renderer-functions) instead, and delegate to your own small
-Vue component that lays both icons out in a single flex container it controls — `componentProps` can carry any
-props a component you register defines, not just the ones a built-in renderer happens to use:
-
-```vue
-<!-- RowActionIcons.vue — register it globally the same way CachedIcon is registered -->
-<template>
-  <div style="display: flex; gap: 0.25em; align-items: center">
-    <cached-icon
-      v-for="action in actions"
-      :key="action.name"
-      :name="action.name"
-      :style="action.style"
-      @click.stop="action.onClick"
-    />
-  </div>
-</template>
-
-<script setup lang="ts">
-defineProps<{ actions: { name: string; style?: Record<string, string>; onClick: (e: MouseEvent) => void }[] }>();
-</script>
-```
+`DfActions` (from `@dynamicforms/vuetify-inputs`, already a peer dependency of this package) is one such component,
+built specifically to lay out a group of actions. It takes an `Action` (from `@dynamicforms/vue-forms`) per action,
+each holding an icon/label and an `ExecuteAction` that runs on click:
 
 ```typescript
+import { Action, ExecuteAction, RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+import { createColumn } from '@dynamicforms/vue-grid';
+
+function actionsFor(row: RowValue): Action[] {
+  const actions = [
+    new Action({
+      value: { icon: 'mdi-delete' },
+      actions: [new ExecuteAction(() => deleteRow(row.id))],
+    }),
+  ];
+  if (selectionMode.value !== null) {
+    actions.push(new Action({
+      value: { icon: isSelected(row.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' },
+      actions: [new ExecuteAction(() => toggleSelection(row.id))],
+    }));
+  }
+  return actions;
+}
+
 const combinedActionsCol = createColumn('actions', 'Actions', (_value, row) => new RenderableValue({
-  componentName: 'RowActionIcons',
-  componentProps: {
-    actions: [
-      { name: 'mdi-delete', style: { color: 'red' }, onClick: () => deleteRow(row.id) },
-      ...(selectionMode.value === null ? [] : [{
-        name: isSelected(row.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
-        onClick: () => toggleSelection(row.id),
-      }]),
-    ],
-  },
+  componentName: 'DfActions',
+  componentProps: { actions: actionsFor(row) },
 } as SimpleComponentDef), { filterable: false, sortable: false });
 ```
 
-`@click.stop` inside `RowActionIcons` plays the same role `e.stopPropagation()` plays in the earlier recipes — it's
-still needed, just written once inside the wrapper instead of in every column definition that uses it. If you want a
-ready-made actions-group component instead of writing your own, `DfActions` from `@dynamicforms/vuetify-inputs`
-(already a peer dependency of this package) is built for exactly this; see its own documentation for the `Action`
-API it expects.
+Clicking a `DfActions` action does not bubble to the row the way a plain element's click does — no
+`stopPropagation()` needed here, unlike the `CachedIcon`-based recipes above. Registering `DfActions` (via
+`app.use(DynamicFormsInputs, { registerComponents: true })`) and constructing `Action`/`ExecuteAction` correctly is
+`@dynamicforms/vuetify-inputs` and `@dynamicforms/vue-forms` territory — see their own documentation for the full
+`Action` API. Nothing about it is specific to this recipe: any component that accepts props and handles its own
+clicks can stand in for `DfActions` here.
 
 Use this column in place of a plain content column in the layout that needs it; a wider responsive layout can use
 the two single-purpose columns from the recipes above instead.
