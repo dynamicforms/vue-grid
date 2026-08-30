@@ -133,6 +133,10 @@ const columnsResponsive: ResponsiveColumnDefinitions = [
 />
 ```
 
+Only the active *column list* changes between layouts — the grid placement of each cell within the card is your own
+CSS, keyed off the layout's `cssClass`. See the [Cookbook](/guide/cookbook#a-responsive-multi-row-card-layout) for a
+worked example, including collapsing a wide layout into a stacked, single-column one.
+
 ## `filterColumns()`
 
 A helper to select a subset of columns by index or field name:

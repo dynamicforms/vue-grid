@@ -199,3 +199,69 @@ const combinedActionsCol = createColumn('actions', 'Actions', 'plain', {
 Use this column in place of a plain content column in the layout that needs it; a wider responsive layout can use
 the two single-purpose columns from the recipes above instead. See the [Full-featured Demo](/examples/table) for
 this exact column used across three responsive layouts at once.
+
+## A responsive multi-row card layout
+
+[Responsive column layouts](/api/columns#responsive-layouts) let the grid pick which *columns* are active at a given
+width, but the grid placement of each cell within the card is entirely your own CSS — the library never rearranges
+cells for you. A single column list can be reused across layouts; only the `cssClass` differs, and that class is
+what your CSS keys off:
+
+```typescript
+import { createColumn } from '@dynamicforms/vue-grid';
+import type { ResponsiveColumnDefinitions } from '@dynamicforms/vue-grid';
+
+const columns = [
+  createColumn('id', 'ID', 'int'),
+  createColumn('name', 'Name', 'plain'),
+  createColumn('email', 'Email', 'email'),
+  createColumn('role', 'Role', 'plain'),
+  createColumn('bio', 'Bio', 'plain'),
+];
+
+const columnsResponsive: ResponsiveColumnDefinitions = [
+  { cssClass: 'wide', columns },
+  { cssClass: 'narrow', columns },
+];
+```
+
+Give the `wide` layout one track per column, and pin `bio` to its own full-width row underneath the rest:
+
+```css
+.df-grid.card.wide {
+  display: grid;
+  grid-template-columns: 3em 1fr 1fr 6em;
+  gap: 0.25em;
+}
+.df-grid.card.wide .df-grid.cell.bio {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+```
+
+For `narrow`, collapse to a single track and force every cell onto its own row — including `bio`, whose `wide`-layout
+span and row have to be cancelled explicitly, since CSS class selectors are additive and both layouts' rules apply
+to the same cell elements when `narrow` is active:
+
+```css
+.df-grid.card.narrow {
+  display: grid;
+  grid-template-columns: auto;
+}
+.df-grid.card.narrow > * {
+  grid-column: 1 / 2 !important;
+  grid-row: auto !important;
+  grid-area: auto !important;
+}
+```
+
+The `!important` on the reset (and on `bio`'s `wide` placement, if another rule could otherwise outweigh it) matters
+for the same reason `--grid-template-columns` itself is applied with `!important`
+([Card layout CSS](/api/df-grid#card-layout-css)): the grid measures each layout's shadow copy and republishes a
+pixel track list over whatever `grid-template-columns` you wrote, but it publishes exactly as many tracks as your
+CSS declared — `narrow`'s single `auto` track is what turns that measurement into "one column, one row per cell."
+Declaring the track *count* and *cell placement* stays entirely your responsibility; the grid only refines the
+widths.
+
+See `table-basic.vue`'s `three-row` layout, linked from the [Full-featured Demo](/examples/table), for a worked
+example that pins several fields into a compact three-row card the same way.
