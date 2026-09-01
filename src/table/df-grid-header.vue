@@ -33,7 +33,7 @@
             v-if="getFilterableConfig(column)!.choices"
             :control="filterState!.fields[column.fieldName]"
             :choices="getFilterableConfig(column)!.choices"
-            :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
+            :placeholder="getFilterableConfig(column)?.placeholder ?? filterPlaceholder(column)"
             :clearable="true"
             :allow-null="true"
             :multiple="true"
@@ -44,7 +44,7 @@
           <df-date-time
             v-else-if="getFilterableConfig(column)!.fieldType === 'date'"
             :control="filterState!.fields[column.fieldName]"
-            :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
+            :placeholder="getFilterableConfig(column)?.placeholder ?? filterPlaceholder(column)"
             :clearable="true"
             input-type="date"
             :density="filterInputDensity"
@@ -61,7 +61,7 @@
           <df-input
             v-else
             :control="filterState!.fields[column.fieldName]"
-            :placeholder="getFilterableConfig(column)?.placeholder ?? `Filter ${column.label}...`"
+            :placeholder="getFilterableConfig(column)?.placeholder ?? filterPlaceholder(column)"
             :input-type="getFilterableConfig(column)!.fieldType === 'number' ? 'number' : 'text'"
             :density="filterInputDensity"
             :passthrough-attrs="getFilterableConfig(column)!.fieldType === 'number' ? { controlVariant: 'hidden' } : {}"
@@ -82,16 +82,14 @@
           <cached-icon
             name="mdi-close"
             class="selection-icon"
-            title="Cancel selection mode"
+            :title="translatableStrings.CancelSelectionMode"
             @click="emit('cancel-selection')"
           />
-          <span class="selection-count">
-            {{ props.selectionKeys?.size ?? 0 }} items {{ selectionMode === 'selection' ? 'selected' : 'excluded' }}
-          </span>
+          <span class="selection-count">{{ selectionCountText }}</span>
           <cached-icon
             name="mdi-shuffle"
             class="selection-icon"
-            title="Invert selection"
+            :title="translatableStrings.InvertSelection"
             @click="emit('invert-selection')"
           />
         </div>
@@ -101,7 +99,7 @@
       </template>
       <template v-else>
         <slot name="statusBar" :filter-state="filterState">
-          <div class="status-section">Active filters: {{ activeFilterCount }}</div>
+          <div class="status-section">{{ activeFiltersText }}</div>
         </slot>
       </template>
     </div>
@@ -109,6 +107,7 @@
 </template>
 
 <script setup lang="ts">
+import { interpolate } from '@dynamicforms/translatable';
 import { DfCheckbox, DfDateTime, DfInput, DfSelect, FieldDensity } from '@dynamicforms/vuetify-inputs';
 import { computed, onMounted, onUpdated, ref } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
@@ -120,6 +119,7 @@ import { FilterState, getFilterConfig } from './columns-filtering';
 import { getSortConfig, type ColumnSortState, type SortState } from './columns-sorting';
 import { GridCard, useHeaderContent } from './helpers';
 import type { SelectionMode } from './selection';
+import { translatableStrings } from './translations';
 
 const filterInputDensity = ref<FieldDensity>('inline');
 
@@ -178,7 +178,17 @@ function getFilterableConfig(column: ColumnDefinition<keyof RendererOptionsMap>)
   return config.fieldType || config.choices ? config : null;
 }
 
+function filterPlaceholder(column: ColumnDefinition<keyof RendererOptionsMap>) {
+  return interpolate(translatableStrings.FilterColumn, { column: column.label });
+}
+
 const isSelectionActive = computed(() => props.selectionMode != null && props.selectionMode !== 'non-select');
+
+const selectionCountText = computed(() => {
+  const count = props.selectionKeys?.size ?? 0;
+  const key = props.selectionMode === 'selection' ? 'SelectionCountSelected' : 'SelectionCountExcluded';
+  return interpolate(translatableStrings[key], { count });
+});
 
 const activeFilterCount = computed(() => {
   if (!props.filterState) return 0;
@@ -186,6 +196,10 @@ const activeFilterCount = computed(() => {
   if (!filterValues) return 0;
   return Object.values(filterValues).filter((v) => v != null && v !== '' && v !== undefined).length;
 });
+
+const activeFiltersText = computed(() =>
+  interpolate(translatableStrings.ActiveFilters, { count: activeFilterCount.value }),
+);
 
 function calcHeaderHeight() {
   if (headerRef.value) {

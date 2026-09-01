@@ -25,6 +25,8 @@
  */
 import { MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
 
+import { translatableStrings } from '../translations';
+
 import { header, HeaderOptions } from './header-renderers';
 import { CellOptions, CellOptionsInternal, CellRendererTransformer, RowValue } from './interfaces';
 import { float, floatGridColumnCreate, floatGridDestroy, int, IntOptions } from './numbers';
@@ -110,7 +112,11 @@ export const DefaultRenderers: RenderersMap = {
   'null-empty': (value, rowValue, options) => wrapWithPrePost(new RenderableValue(''), value, rowValue, options),
   'null-null': (value, rowValue, options) =>
     wrapWithPrePost(
-      new RenderableValue({ componentName: 'div', componentVHtml: 'null', componentProps: { class: 'df-cell-null' } }),
+      new RenderableValue({
+        componentName: 'div',
+        componentVHtml: translatableStrings.NullValue,
+        componentProps: { class: 'df-cell-null' },
+      }),
       value,
       rowValue,
       options,

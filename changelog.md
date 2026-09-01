@@ -5,6 +5,21 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-09-01
+
+### Added
+
+- Every user-facing string the grid draws itself is translatable through `translatableStrings`/`translateStrings`,
+  from `@dynamicforms/translatable`: the loading and no-data indicators, the filter row's default placeholder, the
+  selection status bar's cancel/invert tooltips and item count, the active-filter count, and the placeholder text
+  a cell with a `null` value renders. Reading a key inside a template or a `computed` subscribes to it, so a later
+  `translateStrings` call reaches what's already on screen.
+
+### Changed
+
+- Bumps the `@dynamicforms/vue-forms` peer range to `^1.0.0` and `@dynamicforms/vuetify-inputs` to `^0.11.0`, and
+  adds `@dynamicforms/translatable` (`^0.1.0`) as a peer dependency.
+
 ## [0.3.3] - 2026-08-28
 
 ### Fixed

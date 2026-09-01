@@ -21,6 +21,12 @@
  * the viewport — from the ResizeObserver's point of view this is identical to a window resize
  * (it only ever sees the container's own contentRect), and it sidesteps the sidebar entirely.
  *
+ * A layout's breakpoint is measured text width (`df-grid.vue`'s `shadowMeasurements`), which
+ * shifts by a few pixels between rendering engines and font sets. A fixed starting width can
+ * therefore land close enough to the breakpoint that narrowing by a few pixels crosses it — so
+ * the same-layout case finds its breakpoint live, by binary-searching the container width in
+ * this browser, and only then narrows from a point with a safety margin above it.
+ *
  * None of this can be verified in JSDOM, which has no layout engine and gives
  * `getComputedStyle` nothing to measure. Hence a real browser.
  */
@@ -88,24 +94,56 @@ async function trackedColumns(page: Page) {
   });
 }
 
+async function setContainerWidth(page: Page, width: number, settleMs = 500) {
+  await page.evaluate((w) => {
+    const container = document.querySelector('.df-grid.container') as HTMLElement;
+    container.style.setProperty('width', `${w}px`, 'important');
+    container.style.setProperty('flex', 'none', 'important');
+  }, width);
+  await page.waitForTimeout(settleMs);
+}
+
+async function containerWidth(page: Page): Promise<number> {
+  return page.evaluate(
+    () => (document.querySelector('.df-grid.container') as HTMLElement).getBoundingClientRect().width,
+  );
+}
+
+// Binary-searches the container width down from `startWidth` (known to select `targetLayout`)
+// to the narrowest width that still does, i.e. `targetLayout`'s own breakpoint in this browser.
+async function findLayoutBreakpoint(page: Page, startWidth: number, targetLayout: string): Promise<number> {
+  let lo = 100; // narrow enough to select a different (narrower) layout than any real breakpoint
+  let hi = startWidth;
+  while (hi - lo > 2) {
+    const mid = Math.round((lo + hi) / 2);
+    // eslint-disable-next-line no-await-in-loop
+    await setContainerWidth(page, mid, 300);
+    // eslint-disable-next-line no-await-in-loop
+    const { layout } = await trackedColumns(page);
+    if (layout === targetLayout) hi = mid; else lo = mid;
+  }
+  return hi;
+}
+
 test.describe('shadow-grid — container resize', () => {
   test('a resize within the same layout re-measures but does not recreate the shadow grid\'s cards', async ({ page }) => {
     await trackShadowMeasureCalls(page);
     await gotoGrid(page, 1600);
+    const targetLayout = (await trackedColumns(page)).layout;
+
+    const NARROW_BY = 10;
+    const SAFETY_MARGIN = 60; // several times NARROW_BY, so the narrow below cannot reach the breakpoint
+    const breakpoint = await findLayoutBreakpoint(page, await containerWidth(page), targetLayout);
+    await setContainerWidth(page, breakpoint + SAFETY_MARGIN, 1_500);
     const before = await trackedColumns(page);
+    expect(before.layout, 'could not find a starting width safely inside the layout under test').toBe(targetLayout);
 
     await watchShadowMutations(page);
     await page.evaluate(() => { (window as any).__shadowMeasureCalls = 0; });
 
     // Narrow the container itself by 10px — small enough to stay inside the current
     // responsive layout, but a real geometry change the ResizeObserver must react to.
-    await page.evaluate(() => {
-      const container = document.querySelector('.df-grid.container') as HTMLElement;
-      const currentWidth = container.getBoundingClientRect().width;
-      container.style.setProperty('width', `${currentWidth - 10}px`, 'important');
-      container.style.setProperty('flex', 'none', 'important');
-    });
-    await page.waitForTimeout(1_500);
+    await setContainerWidth(page, breakpoint + SAFETY_MARGIN - NARROW_BY, 1_500);
 
     const { mutations, measureCalls } = await collectWatchers(page);
     const after = await trackedColumns(page);

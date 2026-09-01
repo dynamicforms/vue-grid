@@ -84,6 +84,43 @@ column's `fieldName` as a CSS class, so you can target individual columns by nam
 See [Card layout CSS](/reference/df-grid#card-layout-css) for how column widths are measured and published, and
 [Grid structure](/reference/df-grid#grid-structure) for the full section layout diagram.
 
+## Translation
+
+The grid draws a small number of English strings of its own, each under a key naming what it says rather than
+its English text. The library never picks a locale itself — call `translateStrings` once per locale to supply
+translations for as many of them as you have.
+
+The authoritative list is
+[`src/table/translations.ts`](https://github.com/dynamicforms/vue-grid/blob/main/src/table/translations.ts) - the
+object passed to `createTranslatable` there is the whole catalogue. As of this writing it holds:
+
+| Key | English default | Where it appears |
+|-----|-----------------|-------------------|
+| `Loading` | `Loading…` | Summary bar, while `loading` is `true` |
+| `NoData` | `No data` | Summary bar, when `records` is empty |
+| `FilterColumn` | `Filter {column}...` | Filter row's default placeholder, when a filterable column has none of its own |
+| `CancelSelectionMode` | `Cancel selection mode` | Selection status bar's cancel icon tooltip |
+| `InvertSelection` | `Invert selection` | Selection status bar's invert icon tooltip |
+| `SelectionCountSelected` | `{count} items selected` | Selection status bar, in `'selection'` mode |
+| `SelectionCountExcluded` | `{count} items excluded` | Selection status bar, in `'exclusion'` mode |
+| `ActiveFilters` | `Active filters: {count}` | Status bar's default `statusBar` slot content |
+| `NullValue` | `null` | A cell's content when its value is `null`/`undefined` and no `nullHandler` says otherwise |
+
+A translation keeps a message's `{name}` placeholders as they stand — they are substituted after translation.
+
+```typescript
+import { translateStrings } from '@dynamicforms/vue-grid';
+
+function applyLocale(locale: string) {
+  const dictionary = translations[locale]; // however your app keeps its translations
+  translateStrings((key, defaultValue) => dictionary[key] ?? defaultValue);
+}
+```
+
+The callback receives the key and its English default, and returns the translation for the current locale, or
+`null`/`undefined` to leave the English default in place. Reading a translated key inside a template or a
+`computed` subscribes to it, so a grid already on screen picks up a later `translateStrings` call on its own.
+
 ## Next steps
 
 The example above covers a plain, read-only grid. From here:

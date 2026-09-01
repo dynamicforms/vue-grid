@@ -26,6 +26,8 @@ A (not so) simple, (but hopefully) fast Vue 3 grid component with virtual scroll
   operations
 - Loading and empty states — a spinner in the summary bar while `loading` is `true`, a "No data" indicator when
   `records` is empty; both replaceable through the `#loading`, `#no-data` and `#summary-bar` slots
+- Localisable — `translateStrings()` replaces every string the grid draws itself: loading/no-data, the filter
+  placeholder, the selection status bar, and a `null` cell's placeholder
 
 ## Installation
 
