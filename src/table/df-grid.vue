@@ -83,13 +83,13 @@
               <div v-if="loading" class="df-summary-loading">
                 <slot name="loading">
                   <cached-icon name="mdi-loading" class="df-summary-spin" />
-                  <span>Loading…</span>
+                  <span>{{ translatableStrings.Loading }}</span>
                 </slot>
               </div>
               <div v-else-if="!props.records.length" class="df-summary-no-data">
                 <slot name="no-data">
                   <cached-icon name="mdi-database-off" />
-                  <span>No data</span>
+                  <span>{{ translatableStrings.NoData }}</span>
                 </slot>
               </div>
             </slot>
@@ -176,6 +176,7 @@ import ExcessiveScroll from './excessive-scroll.vue';
 import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from './helpers';
 import IncomingArc from './incoming-arc.vue';
 import { useSelection } from './selection';
+import { translatableStrings } from './translations';
 import { useExcessiveScroll } from './use-excessive-scroll';
 
 const props = withDefaults(defineProps<GridProps>(), {
