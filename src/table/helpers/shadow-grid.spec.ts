@@ -9,7 +9,10 @@
  *    clamps at end of records, and yields nothing when offset is out of bounds.
  *
  * 2. **onmeasure event** — emitted after initial render and on `reMeasure()`, carrying
- *    totalWidth and grid-template-columns from the computed style.
+ *    totalWidth and grid-template-columns from the computed style. When the computed style
+ *    still reads back "none" (the grid CSS rule not applied to the element yet), the emit is
+ *    withheld and retried on the next animation frame instead of handing listeners a value they
+ *    cannot use.
  *
  * 3. **containerEl expose** — the exposed getter returns the root DOM element.
  *
@@ -176,6 +179,45 @@ describe('ShadowGrid', () => {
       await nextTick();
       await nextTick();
       const events = wrapper.emitted('onmeasure') as any[][];
+      expect(events[0][0].columnWidths).toBe('200px 200px 200px');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe('onmeasure retry when grid-template-columns reads back as "none"', () => {
+    let pendingFrame: FrameRequestCallback | null;
+
+    beforeEach(() => {
+      pendingFrame = null;
+      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+        pendingFrame = cb;
+        return 1;
+      });
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('withholds onmeasure and retries on the next frame instead of emitting "none"', async () => {
+      let calls = 0;
+      computedStyleSpy.mockImplementation(() => {
+        calls += 1;
+        const columns = calls === 1 ? 'none' : '200px 200px 200px';
+        return { getPropertyValue: (prop: string) => (prop === 'width' ? '600px' : columns) } as CSSStyleDeclaration;
+      });
+
+      const wrapper = mountShadowGrid();
+      await nextTick();
+      await nextTick();
+
+      expect(wrapper.emitted('onmeasure')).toBeFalsy();
+      expect(pendingFrame).not.toBeNull();
+
+      pendingFrame!(0);
+
+      const events = wrapper.emitted('onmeasure') as any[][];
+      expect(events).toBeTruthy();
       expect(events[0][0].columnWidths).toBe('200px 200px 200px');
     });
   });

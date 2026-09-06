@@ -46,15 +46,36 @@ const emits = defineEmits<Emits>();
 const { headerContentVNodes } = useHeaderContent();
 const shadowGridRef = ref();
 
-function checkShadowGridColumns() {
+// Resolves once a valid measurement has actually been emitted, retrying across animation frames
+// in the meantime — the caller doesn't need its own knowledge of the "none" race to await
+// completion.
+function checkShadowGridColumns(): Promise<void> {
   // istanbul ignore next — shadowGridRef.value is always set when the component is mounted;
   // the null branch is a defensive guard that cannot be triggered through normal component usage.
-  if (!shadowGridRef.value) return;
+  if (!shadowGridRef.value) return Promise.resolve();
 
-  const computedStyle = window.getComputedStyle(shadowGridRef.value);
-  const totalWidth = Math.ceil(Number.parseFloat(computedStyle.getPropertyValue('width').replace('px', '')));
+  return new Promise((resolve) => {
+    const attempt = () => {
+      const computedStyle = window.getComputedStyle(shadowGridRef.value);
+      const columnWidths = computedStyle.getPropertyValue('grid-template-columns');
 
-  emits('onmeasure', { totalWidth, columnWidths: computedStyle.getPropertyValue('grid-template-columns') });
+      // `grid-template-columns` reads back as its initial value, "none", for the one frame
+      // between the element existing in the DOM and the stylesheet rule that makes it a grid
+      // taking effect. Emitting that would hand every `onmeasure` listener a value none of them
+      // can use meaningfully — retrying here, once, on the next frame is cheaper than every
+      // listener re-deriving "was this reading valid" for itself.
+      if (!columnWidths || columnWidths === 'none') {
+        requestAnimationFrame(attempt);
+        return;
+      }
+
+      const totalWidth = Math.ceil(Number.parseFloat(computedStyle.getPropertyValue('width').replace('px', '')));
+
+      emits('onmeasure', { totalWidth, columnWidths });
+      resolve();
+    };
+    attempt();
+  });
 }
 
 function* idxAndItem() {
@@ -65,8 +86,8 @@ function* idxAndItem() {
   }
 }
 
-function reMeasure() {
-  checkShadowGridColumns();
+function reMeasure(): Promise<void> {
+  return checkShadowGridColumns();
 }
 defineExpose({
   reMeasure,
