@@ -154,6 +154,36 @@ See [Sorting → GridSortEvent](./sorting#gridsortevent).
 
 See [Filtering → GridFilterEvent](./filtering#gridfilterevent).
 
+## Exposed methods
+
+Access these through a template ref on `<df-grid>`.
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `reMeasure()` | `Promise<void>` | Re-measures column widths off the shadow grid and copies them onto the container. |
+
+`reMeasure()` — forces the same column-width measurement a container resize triggers automatically,
+for layout changes the grid has no way to detect on its own — for example a column's rendered
+content changing width without the container itself resizing. The returned promise resolves once
+the new widths have actually reached the container, not merely once they were measured.
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue';
+import { DfGrid } from '@dynamicforms/vue-grid';
+
+const gridRef = ref<InstanceType<typeof DfGrid>>();
+
+async function onContentResized() {
+  await gridRef.value?.reMeasure();
+}
+</script>
+
+<template>
+  <df-grid ref="gridRef" :columns="columns" :records="records" key-field="id" />
+</template>
+```
+
 ## Slots
 
 | Slot | Scope | Description |

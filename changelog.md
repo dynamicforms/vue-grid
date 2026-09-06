@@ -5,6 +5,23 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-09-06
+
+### Added
+
+- `<DfGrid>` exposes `reMeasure()` on its template ref: re-measures column widths off the shadow
+  grid and copies them onto the container, for layout changes the grid cannot detect on its own -
+  for example a column's rendered content changing width without the container itself resizing.
+  Returns a promise that resolves once the new widths have actually reached the container.
+
+### Fixed
+
+- The shadow grid's column-width measurement no longer briefly reads `grid-template-columns` as
+  `"none"` and copies that onto the container, collapsing the row layout for a frame. That value
+  is what the property reads back as in the gap between the shadow grid's element existing in the
+  DOM and the stylesheet rule that makes it a grid taking effect; it is now retried on the next
+  animation frame instead.
+
 ## [0.4.0] - 2026-09-01
 
 ### Added
