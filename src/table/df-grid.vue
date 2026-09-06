@@ -344,6 +344,21 @@ const columnRendererOptionsInternal = computed(() =>
 );
 
 onUnmounted(() => gridDestroy(gridId));
+
+defineExpose({
+  // Forces the column widths to be re-measured off the shadow grid and copied onto the real
+  // rows, for layout changes the ResizeObserver has no way to see on its own — e.g. a column's
+  // content changing width without the container itself resizing. The returned promise resolves
+  // once the new widths have actually reached the container, not merely once they were measured:
+  // `doShadowMeasure` is throttled against the flood of `onmeasure` events a resize produces, so
+  // an explicit, one-off request flushes it instead of leaving the caller to guess how long the
+  // throttle window has left to run.
+  reMeasure: async () => {
+    await shadowRef.value?.reMeasure();
+    doShadowMeasure.flush();
+    await nextTick();
+  },
+});
 </script>
 
 <style>

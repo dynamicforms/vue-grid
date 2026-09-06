@@ -9,6 +9,8 @@
  * --------------------
  *  - the measured track list reaches the container, and stale widths are dropped when the
  *    active layout changes;
+ *  - the exposed `reMeasure()` forces the same re-measurement without needing a resize, and its
+ *    returned promise resolves only once the new widths have actually landed on the container;
  *  - a container resize re-measures the shadow and selects the widest layout that still fits;
  *  - the width the body scroller reserves for its vertical scrollbar is measured (not assumed)
  *    and published as `--df-grid-scrollbar-width`, which is what keeps the header — which sits
@@ -186,6 +188,19 @@ describe('DfGrid — column auto-sizing', () => {
 
       measuredColumnWidths.value = '150px 150px';
       await resizeContainer(wrapper, 600);
+
+      expect(containerStyle(wrapper)).toContain('--grid-template-columns: 150px 150px');
+    });
+
+    it('exposes reMeasure() to force a re-measurement without a container resize', async () => {
+      const wrapper = mountGrid({ activeColumns: 'wide' });
+      await settle();
+
+      measuredColumnWidths.value = '150px 150px';
+      // Resolves only once the new widths have actually landed — no arbitrary wait needed for
+      // the measurement handler's throttle window, unlike a plain resize (see resizeContainer).
+      await (wrapper.vm as any).reMeasure();
+      await settle();
 
       expect(containerStyle(wrapper)).toContain('--grid-template-columns: 150px 150px');
     });
