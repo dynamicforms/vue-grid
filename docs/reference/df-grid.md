@@ -25,6 +25,8 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `showSummaryBar` | `boolean` | `false` |
 | `loading` | `boolean` | `false` |
 | `secondaryShadowCount` | `number` | `30` |
+| `estimatedRowHeight` | `number` | `30` |
+| `minRenderedRows` | `number` | `30` |
 | `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | zebra striping (`'even'`/`'odd'`) |
 | `selectionMode` | `SelectionMode` | `null` |
 | `selectionKeys` | `Set<any>` | — |
@@ -63,6 +65,17 @@ no-data indicator is suppressed even when `records` is empty.
 `secondaryShadowCount` — number of rows rendered in secondary shadow grids (one per responsive layout, used to
 pre-measure a layout's width before it becomes active so the resize handler can pick the right one). Rarely needs
 changing.
+
+`estimatedRowHeight` — row height, in pixels, assumed for a record that hasn't been rendered (and therefore
+measured) yet. Only the currently-windowed rows and a small buffer around them are ever mounted; everything else is
+represented by a placeholder sized from this estimate until it actually scrolls into range and gets measured. Pick
+something close to your actual row height — the grid does not average measured heights to refine this for you, so a
+badly-off estimate leaves the scrollbar and scroll position visibly wrong until enough of the dataset has been
+scrolled past.
+
+`minRenderedRows` — minimum number of records kept mounted outside the strictly visible range, on each side (a
+buffer above and below the viewport). Smooths scrolling, and keeps enough real rows mounted for the shared grid's
+native column auto-sizing to have a representative sample to size columns from.
 
 `rowClass` — returns CSS classes applied to each data row card. Receives the row data object and its 0-based index.
 Return type matches Vue's `:class` binding — a string, an array, or an object. Overriding this prop replaces the
