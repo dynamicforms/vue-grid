@@ -65,6 +65,13 @@ export interface ResponsiveColumnDefinition {
   name?: string;
   cssClass: string;
   columns: ColumnDefinitionsList;
+  /**
+   * Grid rows this layout's cards occupy per record — the physical row count implied by the
+   * layout's own CSS (e.g. 3 for a wrapping/three-row layout). Default 1. Every record's cells
+   * are placed on grid rows relative to this count (see `use-row-placement.ts`), since a shared
+   * grid has no other way to know where one record's card ends and the next begins.
+   */
+  rows?: number;
 }
 
 export type ResponsiveColumnDefinitions = ColumnDefinitionsList | ResponsiveColumnDefinition[];
@@ -109,6 +116,7 @@ export function useColumns(props: GridProps, gridId: symbol) {
           name: cDef.name ?? cDef.cssClass,
           cssClass: cDef.cssClass,
           columns: cDef.columns,
+          rows: cDef.rows ?? 1,
           columnRenderOptsInternal: computed(() => makeColumnRenderOptsInternal(cDef.columns, gridId)),
         };
         if (!isString(ret.name) || isEmpty(ret.name)) {
@@ -122,6 +130,7 @@ export function useColumns(props: GridProps, gridId: symbol) {
         name: 'default',
         cssClass: '',
         columns: props.columns,
+        rows: 1,
         columnRenderOptsInternal: computed(() =>
           makeColumnRenderOptsInternal(props.columns as ColumnDefinitionsList, gridId),
         ),
@@ -141,5 +150,6 @@ export function useColumns(props: GridProps, gridId: symbol) {
     name: computed(() => columns.value.name!),
     cssClass: computed(() => columns.value.cssClass),
     columns: computed(() => columns.value.columns),
+    rowsPerRecord: computed(() => columns.value.rows),
   };
 }

@@ -26,14 +26,6 @@ export interface GridProps extends SelectionProps {
   keyField: string;
 
   /**
-   * Number of rows rendered in the main shadow grid for column width measurement. The primary shadow grid is
-   * responsible for real-time column width measuring so that all cells are rendered within correct boundaries and
-   * available space is optimised for the content
-   * @default 500
-   */
-  mainShadowCount?: number;
-
-  /**
    * Number of rows rendered in secondary shadow grids (one per responsive layout).
    * The secondary shadow grids are used for measuring required widths for responsive layouts. The measurements will be
    * used for determining when a different layout should be used because the browser window had resized

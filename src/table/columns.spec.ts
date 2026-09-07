@@ -224,6 +224,14 @@ describe('useColumns', () => {
 
       expect(active.value).toBe('default');
     });
+
+    it('defaults rowsPerRecord to 1 for a flat column list', () => {
+      const flatColumns = [{ fieldName: 'title', label: 'Title' }] as ColumnDefinitionsList;
+
+      const { rowsPerRecord } = useColumns(makeGridProps(flatColumns), GRID_ID);
+
+      expect(rowsPerRecord.value).toBe(1);
+    });
   });
 
   describe('responsive column definitions', () => {
@@ -272,6 +280,23 @@ describe('useColumns', () => {
       const { cssClass } = useColumns(makeGridProps(responsiveColumns, 'desktop'), GRID_ID);
 
       expect(cssClass.value).toBe('desktop');
+    });
+
+    it('defaults rowsPerRecord to 1 when a responsive group does not declare rows', () => {
+      const { rowsPerRecord } = useColumns(makeGridProps(responsiveColumns, 'desktop'), GRID_ID);
+
+      expect(rowsPerRecord.value).toBe(1);
+    });
+
+    it('reflects rows declared on the active responsive group', () => {
+      const withRows = [
+        { name: 'mobile', cssClass: 'mobile', columns: [{ fieldName: 'title', label: 'Title' }] },
+        { name: 'card', cssClass: 'card', rows: 3, columns: [{ fieldName: 'title', label: 'Title' }] },
+      ] as any;
+
+      const { rowsPerRecord } = useColumns(makeGridProps(withRows, 'card'), GRID_ID);
+
+      expect(rowsPerRecord.value).toBe(3);
     });
 
     it('falls back to cssClass as group name when no explicit name is given', () => {

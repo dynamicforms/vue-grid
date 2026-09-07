@@ -39,64 +39,55 @@
       <template #groupActions><slot name="groupActions" /></template>
     </df-grid-header>
     <div class="df-grid-body">
-      <virtual-scroll
-        ref="vsRef"
-        class="cards-grid"
-        data-section="body"
-        :items="sortedRecords"
-        :loading="loading"
-        :default-item-size="30"
-        :buffer-before="30"
-        :buffer-after="30"
-        @visible-range-change="updateRenderedRows"
-        @load="(direction) => emit('load', direction)"
-      >
-        <template #item="{ item, index }">
-          <div class="df-grid dynamic-scroller-item">
-            <slot name="item" :item="item" :index="index" :active="true">
-              <grid-card
-                :item="item"
-                :columns="columnRendererOptionsInternal"
-                :renderers="DefaultRenderers"
-                :class="[
-                  uColumns.cssClass.value,
-                  props.rowClass?.(item, index),
-                  isSelectionActive ? (uSelection.isSelected(item[props.keyField]) ? 'selected' : 'unselected') : null,
-                  props.recentlyAdded?.isPendingAdd(item[props.keyField]) ? 'state-adding' : null,
-                ]"
-                :data-pk="item[keyField]"
-                :data-idx="index"
-              />
+      <excessive-scroll :height="-excessiveScrollAmount" direction="top" />
+      <div ref="bodyGridRef" class="df-grid body-grid" :class="uColumns.cssClass.value" data-section="body">
+        <div style="display: contents; visibility: hidden" :style="headerRowBaseVars(uColumns.rowsPerRecord.value)">
+          <component :is="() => headerContentVNodes" />
+        </div>
+        <div
+          v-for="(item, index) in sortedRecords"
+          :key="item[keyField]"
+          style="display: contents"
+          :style="rowBaseVars(index, uColumns.rowsPerRecord.value)"
+        >
+          <slot name="item" :item="item" :index="index" :active="true">
+            <div
+              class="df-grid card"
+              :class="[
+                uColumns.cssClass.value,
+                props.rowClass?.(item, index),
+                isSelectionActive ? (uSelection.isSelected(item[props.keyField]) ? 'selected' : 'unselected') : null,
+                props.recentlyAdded?.isPendingAdd(item[props.keyField]) ? 'state-adding' : null,
+              ]"
+              :data-pk="item[keyField]"
+              :data-idx="index"
+            />
+            <grid-card
+              :item="item"
+              :columns="columnRendererOptionsInternal"
+              :renderers="DefaultRenderers"
+              :no-wrapper-item="true"
+            />
+          </slot>
+        </div>
+      </div>
+      <div v-if="showSummaryBar || loading || !props.records.length" class="df-summary-bar" data-section="summary-bar">
+        <slot name="summary-bar">
+          <div v-if="loading" class="df-summary-loading">
+            <slot name="loading">
+              <cached-icon name="mdi-loading" class="df-summary-spin" />
+              <span>{{ translatableStrings.Loading }}</span>
             </slot>
           </div>
-        </template>
-        <template #header>
-          <excessive-scroll :height="-excessiveScrollAmount" direction="top" />
-        </template>
-        <template #footer>
-          <div
-            v-if="showSummaryBar || loading || !props.records.length"
-            class="df-summary-bar"
-            data-section="summary-bar"
-          >
-            <slot name="summary-bar">
-              <div v-if="loading" class="df-summary-loading">
-                <slot name="loading">
-                  <cached-icon name="mdi-loading" class="df-summary-spin" />
-                  <span>{{ translatableStrings.Loading }}</span>
-                </slot>
-              </div>
-              <div v-else-if="!props.records.length" class="df-summary-no-data">
-                <slot name="no-data">
-                  <cached-icon name="mdi-database-off" />
-                  <span>{{ translatableStrings.NoData }}</span>
-                </slot>
-              </div>
+          <div v-else-if="!props.records.length" class="df-summary-no-data">
+            <slot name="no-data">
+              <cached-icon name="mdi-database-off" />
+              <span>{{ translatableStrings.NoData }}</span>
             </slot>
           </div>
-          <excessive-scroll :height="excessiveScrollAmount" direction="bottom" />
-        </template>
-      </virtual-scroll>
+        </slot>
+      </div>
+      <excessive-scroll :height="excessiveScrollAmount" direction="bottom" />
       <template v-if="props.recentlyAdded">
         <incoming-arc
           direction="top"
@@ -123,18 +114,6 @@
       <slot name="footer-start" />
       <slot name="footer-end" />
     </div>
-    <shadow-grid
-      ref="shadowRef"
-      :records="sortedRecords"
-      :columns="columnRendererOptionsInternal"
-      :renderers="DefaultRenderers"
-      :count="mainShadowCount!"
-      :offset="mainShadowOffset"
-      :class="uColumns.cssClass.value"
-      :key-field="keyField"
-      :selection-active="isSelectionActive"
-      @onmeasure="(event) => doShadowMeasure(event)"
-    />
     <div v-for="colsDef in uColumns.builtColumns.value" :key="colsDef.name">
       <!--
       we only render secondary shadows once (v-if="!shadowMeasurements[colsDef.name]") to get ballpark width figures.
@@ -158,11 +137,9 @@
 </template>
 
 <script setup lang="ts">
-import { VirtualScroll } from '@pdanpdan/virtual-scroll';
 import { keys, maxBy, pickBy, throttle } from 'lodash-es';
-import { computed, nextTick, onMounted, onUnmounted, onUpdated, ref, toRef, watch } from 'vue';
+import { computed, h, nextTick, onMounted, onUnmounted, onUpdated, ref, toRef, watch } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
-import '@pdanpdan/virtual-scroll/style.css';
 
 import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap, RowValue } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
@@ -173,14 +150,13 @@ import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
 import type { GridEmits, GridProps } from './df-grid-types';
 import ExcessiveScroll from './excessive-scroll.vue';
-import { GridCard, ShadowGrid, ShadowGridMeasurements, useHeaderContent } from './helpers';
+import { GridCard, headerRowBaseVars, rowBaseVars, ShadowGrid, useHeaderContent } from './helpers';
 import IncomingArc from './incoming-arc.vue';
 import { useSelection } from './selection';
 import { translatableStrings } from './translations';
 import { useExcessiveScroll } from './use-excessive-scroll';
 
 const props = withDefaults(defineProps<GridProps>(), {
-  mainShadowCount: 500,
   secondaryShadowCount: 30,
   columns: () => [],
   showFilterRow: false,
@@ -193,7 +169,6 @@ const props = withDefaults(defineProps<GridProps>(), {
 const emit = defineEmits<GridEmits>();
 
 const gridId = Symbol('df-grid');
-const mainShadowOffset = ref(0);
 const secondaryShadowOffset = ref(0);
 const templateColumns = ref('');
 
@@ -213,23 +188,18 @@ const {
 
 const headerRef = ref();
 const shadowMeasurements: Record<string, any> = {};
-const shadowRef = ref();
-const vsRef = ref<any>(null);
+const bodyGridRef = ref<HTMLElement | null>(null);
 const containerRef = ref<HTMLElement | null>(null);
 
-useHeaderContent().provideHeaderContent();
+const headerContentRef = useHeaderContent().provideHeaderContent();
+const headerContentVNodes = computed(() =>
+  headerContentRef.value.map((c) => h(c.tag, { ...c.attrs, innerHTML: c.content })),
+);
 
-const updateRenderedRows = throttle((range: { start: number; end: number }) => {
-  const mid = Math.round((range.start + range.end) / 2);
-  mainShadowOffset.value = Math.max(0, mid - Math.round(props.mainShadowCount / 2));
-  if (props.recentlyAdded) {
-    // Use scrollDetails.currentIndex / currentEndIndex for the TRULY visible
-    // range (excluding render buffers). The rendered `range` includes
-    // buffer-before + buffer-after items and is useless for viewport detection.
-    const sd = vsRef.value?.scrollDetails;
-    props.recentlyAdded.setVisibleRange(sd != null ? { start: sd.currentIndex, end: sd.currentEndIndex + 1 } : range);
-  }
-}, 250);
+// TODO(windowing stage): `recentlyAdded`'s incoming-record flash-arc needs the true visible
+// range (excluding render buffers) once rows are windowed again — restore this wiring against
+// the new windowing composable's scroll-position tracking. Until then every row is mounted, so
+// there is no meaningful "visible range" to report.
 
 const uSelection = useSelection(props, emit);
 const { processMouse } = useGridMouseEvents(
@@ -248,29 +218,34 @@ const isSelectionActive = computed(() => {
 });
 
 watch(uColumns.active, () => {
+  // Drop the stale widths now; `onUpdated` re-syncs once the body grid has actually
+  // re-rendered with the new layout's own `grid-template-columns`.
   templateColumns.value = '';
 });
 watch(isSelectionActive, async () => {
   await nextTick();
-  const el = shadowRef.value?.containerEl as HTMLElement | undefined;
-  if (!el) return;
-  const columnWidths = window.getComputedStyle(el).getPropertyValue('grid-template-columns');
-  if (columnWidths && columnWidths !== 'none') {
-    templateColumns.value = `grid-template-columns: ${columnWidths}`;
-    // `.virtual-scroll-item` elements carry `will-change: transform`, promoting them to
-    // GPU-composited layers. Chromium does not re-cascade CSS custom-property changes into
-    // composited subtrees — the row cards would keep the old column widths until the scroller
-    // recycles them on next scroll. Setting --grid-template-columns directly on each visible
-    // item bypasses the cascade boundary: the card finds the variable on its direct parent
-    // (within the same composited layer) and uses the new value immediately.
-    // Items that scroll into view later get the value via normal cascade from the container.
-    const items = containerRef.value?.querySelectorAll<HTMLElement>('.virtual-scroll-item') ?? [];
-    items.forEach((item) => item.style.setProperty('--grid-template-columns', columnWidths));
-  }
+  syncHeaderColumns();
 });
+
+// The header is a structurally separate box (its own filter row / status bar stack beneath it),
+// so it can't participate in the body grid's own native column auto-sizing. Its columns are kept
+// aligned by reading the body grid's own computed `grid-template-columns` (now resolved natively,
+// from real row content — no shadow grid involved) and broadcasting it onto the header via a CSS
+// variable, exactly the width the body actually settled on.
+function readBodyColumns(): string | null {
+  if (!bodyGridRef.value) return null;
+  const columnWidths = window.getComputedStyle(bodyGridRef.value).getPropertyValue('grid-template-columns');
+  return columnWidths && columnWidths !== 'none' ? columnWidths : null;
+}
+const syncHeaderColumns = throttle(() => {
+  const columnWidths = readBodyColumns();
+  if (columnWidths) templateColumns.value = `grid-template-columns: ${columnWidths}`;
+}, 100);
+
+const vsCompatRef = computed(() => ({ $el: bodyGridRef.value }));
 const { amount: excessiveScrollAmount } = useExcessiveScroll(
   containerRef,
-  vsRef,
+  vsCompatRef,
   toRef(props, 'loading'),
   toRef(props, 'excessiveScrollThreshold'),
   (amt) => emit('excessive-scroll', amt),
@@ -282,24 +257,21 @@ function measureScrollbarWidth() {
   // body columns they label. How much that is cannot be declared: classic scrollbars take
   // ~15px, overlay ones take none, and `scrollbar-gutter: stable` is honoured differently
   // between engines on the same platform. So we ask the scroller what it actually reserved.
-  const el = vsRef.value?.$el as HTMLElement | undefined;
+  const el = bodyGridRef.value;
   if (el) scrollbarWidth.value = el.offsetWidth - el.clientWidth;
 }
 
-let lastResizeWasShrink = true;
-let lastResizeWidth = 0;
 let resizeObserver: ResizeObserver | null = null;
 onMounted(() => {
   measureScrollbarWidth();
-  resizeObserver = new ResizeObserver((etries) => {
-    etries.forEach((entry) => {
+  syncHeaderColumns();
+  resizeObserver = new ResizeObserver((entries) => {
+    entries.forEach((entry) => {
       const { width } = entry.contentRect;
-      lastResizeWasShrink = width < lastResizeWidth;
-      lastResizeWidth = width;
       measureScrollbarWidth();
+      syncHeaderColumns();
       const filtered = pickBy(shadowMeasurements, (config) => config <= width);
       const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
-      shadowRef.value?.reMeasure();
       if (bestLayout != null && bestLayout !== props.activeColumns) {
         templateColumns.value = '';
         emit('update:activeColumns', <string>bestLayout);
@@ -313,23 +285,10 @@ onUnmounted(() => {
 });
 onUpdated(() => {
   // Rows arriving or leaving can make the body scrollbar appear or disappear without the
-  // container ever resizing.
+  // container ever resizing, and can change the body grid's own native column widths.
   measureScrollbarWidth();
-  const targetElement = containerRef.value?.querySelector('.df-grid.dynamic-scroller-item .df-grid.card');
-  if (targetElement != null && !lastResizeWasShrink) {
-    const computedStyle = window.getComputedStyle(targetElement);
-    const totalWidth = Math.ceil(Number.parseFloat(computedStyle.getPropertyValue('width').replace('px', '')));
-    const tSWidth = targetElement.scrollWidth;
-    if (tSWidth > totalWidth && tSWidth > shadowMeasurements[uColumns.active.value]) {
-      // console.log(totalWidth, tSWidth, shadowMeasurements[uColumns.active.value]);
-      shadowMeasurements[uColumns.active.value] = tSWidth;
-    }
-  }
+  syncHeaderColumns();
 });
-
-const doShadowMeasure = throttle((event: ShadowGridMeasurements) => {
-  templateColumns.value = `grid-template-columns: ${event.columnWidths}`;
-}, 100);
 
 const columnRendererOptionsInternal = computed(() =>
   uColumns.columns.value.map((column) => {
@@ -346,16 +305,17 @@ const columnRendererOptionsInternal = computed(() =>
 onUnmounted(() => gridDestroy(gridId));
 
 defineExpose({
-  // Forces the column widths to be re-measured off the shadow grid and copied onto the real
-  // rows, for layout changes the ResizeObserver has no way to see on its own — e.g. a column's
-  // content changing width without the container itself resizing. The returned promise resolves
-  // once the new widths have actually reached the container, not merely once they were measured:
-  // `doShadowMeasure` is throttled against the flood of `onmeasure` events a resize produces, so
-  // an explicit, one-off request flushes it instead of leaving the caller to guess how long the
+  // Forces the header's column widths to be re-read off the body grid's own native sizing, for
+  // layout changes the ResizeObserver has no way to see on its own — e.g. a column's content
+  // changing width without the container itself resizing. The returned promise resolves once the
+  // new widths have actually reached the header, not merely once they were read:
+  // `syncHeaderColumns` is throttled against the flood of updates a resize produces, so an
+  // explicit, one-off request flushes it instead of leaving the caller to guess how long the
   // throttle window has left to run.
   reMeasure: async () => {
-    await shadowRef.value?.reMeasure();
-    doShadowMeasure.flush();
+    await nextTick();
+    syncHeaderColumns();
+    syncHeaderColumns.flush();
     await nextTick();
   },
 });
@@ -364,11 +324,11 @@ defineExpose({
 <style>
 .df-grid.container {
   /*
-   * The containing block for the shadow grid, which is `position: absolute; left: 0; right: 0` and
-   * a direct child of this element. Without this the shadow stretches to whatever ancestor happens
-   * to be positioned - in a Vuetify app that is `.v-application__wrap`, the full page width - and
-   * the column widths it measures are then copied onto the real rows, which are only as wide as
-   * this container. The grid overflows by exactly the difference.
+   * The containing block for the secondary (per-alternate-layout) shadow grids, which are
+   * `position: absolute; left: 0; right: 0` and direct children of this element. Without this
+   * they stretch to whatever ancestor happens to be positioned - in a Vuetify app that is
+   * `.v-application__wrap`, the full page width - and the widths they measure would then be
+   * wrong for the container they're actually meant to describe.
    */
   position: relative;
 }
@@ -389,7 +349,7 @@ defineExpose({
   min-height: 0;
   overflow: hidden;
 }
-.df-grid-body .cards-grid {
+.df-grid-body .body-grid {
   height: 100%;
   overflow-y: scroll;
 }
@@ -416,9 +376,25 @@ defineExpose({
 .df-summary-spin {
   animation: df-grid-spin 1s linear infinite;
 }
-.df-grid.container .df-grid.card:not(.shadow-grid) {
+.df-grid.container .df-grid.card.header {
+  /*
+   * The header is a structurally separate box (its own filter-row/status-bar stack sits beneath
+   * it) so it can't be a native item of the body grid. Its columns are kept aligned with the
+   * body's own natively-sized columns by copying the body's resolved pixel widths here.
+   */
   /*noinspection CssUnresolvedCustomProperty*/
   grid-template-columns: var(--grid-template-columns) !important;
+}
+.df-grid.container .body-grid .df-grid.card {
+  /*
+   * The row-anchor: an otherwise-empty box giving each record something to style (zebra
+   * background, border, selection highlight) and something for click handling to `.closest()`
+   * onto, now that a record's cells are direct items of the shared body grid rather than being
+   * wrapped in their own per-row grid. `--row-base`/`--rows-per-record` are published per record
+   * (see use-row-placement.ts) on an ancestor `display:contents` wrapper and inherited here.
+   */
+  grid-column: 1 / -1;
+  grid-row: calc(var(--row-base) + 1) / span var(--rows-per-record);
 }
 .df-grid.cell.has-pre-post {
   display: flex;
