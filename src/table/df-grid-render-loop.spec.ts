@@ -106,7 +106,7 @@ describe('DfGrid — reactive render-loop detection', () => {
     // vitest 4 requires a real function here since the mock is invoked with `new`
 
     globalThis.ResizeObserver = vi.fn().mockImplementation(function () {
-      return { observe: vi.fn(), disconnect: vi.fn() };
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
     });
   });
 

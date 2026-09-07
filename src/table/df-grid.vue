@@ -45,6 +45,22 @@
           <component :is="() => headerContentVNodes" />
         </div>
         <!--
+        Stands in for the (unmounted) records before the windowed range, so the grid's own
+        scrollHeight reflects the estimated true total height — everything downstream that reads
+        scroll geometry (the load-threshold check, the scrollbar-width measurement) keeps working
+        unmodified because the browser is doing real layout on a real box, not because any of it
+        knows about windowing.
+        -->
+        <div
+          v-if="windowing.start.value > 0"
+          class="df-grid-row-spacer"
+          :style="{
+            gridColumn: '1 / -1',
+            gridRow: `1 / span ${windowing.start.value * uColumns.rowsPerRecord.value}`,
+            minHeight: `${windowing.topSpacerHeight.value}px`,
+          }"
+        />
+        <!--
         data-pk/data-idx are duplicated on this wrapper AND on the row-anchor below: the anchor
         carries them for the documented `.df-grid.card[data-pk="…"]` query pattern (a real box,
         addressable by class), while the wrapper carries them so useGridMouseEvents can find the
@@ -53,7 +69,7 @@
         only reach the row through an ancestor that actually carries the attribute.
         -->
         <div
-          v-for="(item, index) in sortedRecords"
+          v-for="{ item, index } in mountedItems"
           :key="item[keyField]"
           style="display: contents"
           :style="rowBaseVars(index, uColumns.rowsPerRecord.value)"
@@ -62,6 +78,7 @@
         >
           <slot name="item" :item="item" :index="index" :active="true">
             <div
+              :ref="(el) => handleRowAnchorRef(el as Element | null, item[keyField])"
               class="df-grid card"
               :class="[
                 uColumns.cssClass.value,
@@ -80,6 +97,15 @@
             />
           </slot>
         </div>
+        <div
+          v-if="windowing.end.value < sortedRecords.length"
+          class="df-grid-row-spacer"
+          :style="{
+            gridColumn: '1 / -1',
+            gridRow: bottomSpacerGridRow,
+            minHeight: `${windowing.bottomSpacerHeight.value}px`,
+          }"
+        />
       </div>
       <div v-if="showSummaryBar || loading || !props.records.length" class="df-summary-bar" data-section="summary-bar">
         <slot name="summary-bar">
@@ -165,6 +191,7 @@ import IncomingArc from './incoming-arc.vue';
 import { useSelection } from './selection';
 import { translatableStrings } from './translations';
 import { useExcessiveScroll } from './use-excessive-scroll';
+import { useGridWindowing } from './use-grid-windowing';
 
 const props = withDefaults(defineProps<GridProps>(), {
   secondaryShadowCount: 30,
@@ -175,6 +202,8 @@ const props = withDefaults(defineProps<GridProps>(), {
   loading: false,
   rowClass: (_item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
   selectionMode: null,
+  estimatedRowHeight: 30,
+  minRenderedRows: 30,
 });
 const emit = defineEmits<GridEmits>();
 
@@ -206,11 +235,45 @@ const headerContentVNodes = computed(() =>
   headerContentRef.value.map((c) => h(c.tag, { ...c.attrs, innerHTML: c.content })),
 );
 
-// Every row is currently mounted (windowing is a separate follow-up — see the migration notes
-// near `bodyGridRef`), so the true visible range has to be found by scanning the row-anchors'
-// own scroll position rather than reading it off a windowing library. This scan is cheap only
-// because nothing is virtualized yet; once windowing returns, replace it with a range the
-// windowing composable already tracks instead of re-deriving it from the DOM.
+const windowing = useGridWindowing({
+  records: sortedRecords,
+  keyField: props.keyField,
+  estimatedRowHeight: computed(() => props.estimatedRowHeight!),
+  bodyEl: bodyGridRef,
+  buffer: props.minRenderedRows!,
+});
+const mountedItems = computed(() =>
+  sortedRecords.value.slice(windowing.start.value, windowing.end.value).map((item, i) => ({
+    item,
+    index: windowing.start.value + i,
+  })),
+);
+const bottomSpacerGridRow = computed(() => {
+  const startRow = windowing.end.value * uColumns.rowsPerRecord.value + 1;
+  const rowSpan = (sortedRecords.value.length - windowing.end.value) * uColumns.rowsPerRecord.value;
+  return `${startRow} / span ${rowSpan}`;
+});
+
+// A single shared ResizeObserver measures each mounted row-anchor's real height, feeding the
+// windowing composable so the spacers standing in for un-mounted rows are sized from actual
+// measurements wherever they're available, falling back to `estimatedRowHeight` elsewhere.
+const observedRowElements = new Map<unknown, Element>();
+const rowElementKeys = new WeakMap<Element, unknown>();
+let rowResizeObserver: ResizeObserver | null = null;
+function handleRowAnchorRef(el: Element | null, key: unknown) {
+  const prev = observedRowElements.get(key);
+  if (prev && prev !== el) {
+    rowResizeObserver?.unobserve(prev);
+    rowElementKeys.delete(prev);
+    observedRowElements.delete(key);
+  }
+  if (el) {
+    observedRowElements.set(key, el);
+    rowElementKeys.set(el, key);
+    rowResizeObserver?.observe(el);
+  }
+}
+
 // Fired when a scroll comes within this many px of the end of the list, matching the documented
 // `GridEmits.load` contract (previously the underlying virtual-scroll library's own default).
 const LOAD_DISTANCE = 200;
@@ -218,6 +281,8 @@ const LOAD_DISTANCE = 200;
 const onBodyScrollSettle = throttle(() => {
   const el = bodyGridRef.value;
   if (!el) return;
+
+  windowing.recompute();
 
   if (props.recentlyAdded) {
     const viewportTop = el.scrollTop;
@@ -320,9 +385,17 @@ onMounted(() => {
     });
   });
   resizeObserver.observe(containerRef.value!);
+  rowResizeObserver = new ResizeObserver((entries) => {
+    entries.forEach((entry) => {
+      const key = rowElementKeys.get(entry.target);
+      if (key !== undefined) windowing.setMeasured(key, (entry.target as HTMLElement).offsetHeight);
+    });
+  });
+  observedRowElements.forEach((el) => rowResizeObserver!.observe(el));
 });
 onUnmounted(() => {
   resizeObserver?.disconnect();
+  rowResizeObserver?.disconnect();
   bodyGridRef.value?.removeEventListener('scroll', onBodyScrollSettle);
   // Cancel pending trailing-edge invocations — without this, a throttle window open at unmount
   // time fires later against a detached bodyGridRef for no purpose.
@@ -442,6 +515,15 @@ defineExpose({
    */
   grid-column: 1 / -1;
   grid-row: calc(var(--row-base) + 1) / span var(--rows-per-record);
+}
+.df-grid-row-spacer {
+  /*
+   * Stands in for windowed-out records so the grid's own scrollHeight reflects the estimated
+   * true total height. Not interactive, and deliberately undecorated — this is a layout device,
+   * not something a consumer's `.df-grid.card`-targeting CSS should touch.
+   */
+  pointer-events: none;
+  background: transparent;
 }
 .df-grid.cell.has-pre-post {
   display: flex;

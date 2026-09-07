@@ -181,9 +181,12 @@ describe('DfGrid — column auto-sizing', () => {
 
     // vitest 4 requires a real function here since the mock is invoked with `new`
 
+    // df-grid.vue now creates two ResizeObservers on mount (the container's, then a shared one
+    // for row-anchor height measurement) — capture only the first (the container's), which is
+    // the one `resizeContainer()` below needs to drive.
     globalThis.ResizeObserver = vi.fn().mockImplementation(function (cb: ResizeObserverCallback) {
-      resizeCallback.fn = cb;
-      return { observe: vi.fn(), disconnect: vi.fn() };
+      if (!resizeCallback.fn) resizeCallback.fn = cb;
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
     });
   });
 

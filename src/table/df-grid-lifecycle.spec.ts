@@ -5,11 +5,11 @@
  * df-grid-auto-sizing.spec.ts) nor a reactivity loop (df-grid-render-loop.spec.ts).
  *
  *  - **visible range reporting** — `recentlyAdded` needs the range of records actually on screen
- *    to decide which arc to flash. Rows aren't windowed in this stage of the single-shared-grid
- *    migration (every record is mounted), so this is found by scanning row-anchor positions
- *    against the body grid's own scroll position, rather than reading it off a windowing
- *    library — see `updateVisibleRange` in df-grid.vue.
- *  - **teardown** — the resize observer is disconnected, so a detached grid stops reacting.
+ *    to decide which arc to flash. Found by scanning mounted row-anchor positions against the
+ *    body grid's own scroll position — see `onBodyScrollSettle` in df-grid.vue. Mounted rows are
+ *    always a superset of the visible ones (the windowing buffer adds extras on both sides), so
+ *    this scan doesn't need to know about windowing at all.
+ *  - **teardown** — the resize observers are disconnected, so a detached grid stops reacting.
  *
  * One category this file used to cover is gone: **"learning that a layout needs more room"**
  * (the `onUpdated` overflow-learning block that credited a responsive layout with extra width
@@ -113,7 +113,7 @@ describe('DfGrid — lifecycle', () => {
 
     globalThis.ResizeObserver = vi.fn().mockImplementation(function (cb: ResizeObserverCallback) {
       resizeCallback.fn = cb;
-      return { observe: vi.fn(), disconnect };
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect };
     });
   });
 
