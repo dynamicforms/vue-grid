@@ -25,6 +25,7 @@
       :grid-id="gridId"
       :template-columns="templateColumns"
       :grid-class="uColumns.cssClass.value"
+      :rows-per-record="uColumns.rowsPerRecord.value"
       :sort-state="sortState"
       :show-filter-row="showFilterRow"
       :show-status-bar="showStatusBar"
@@ -40,7 +41,12 @@
     </df-grid-header>
     <div class="df-grid-body">
       <excessive-scroll :height="-excessiveScrollAmount" direction="top" />
-      <div ref="bodyGridRef" class="df-grid body-grid" :class="uColumns.cssClass.value" data-section="body">
+      <div
+        ref="bodyGridRef"
+        class="df-grid body-grid df-record-grid"
+        :class="uColumns.cssClass.value"
+        data-section="body"
+      >
         <div style="display: contents; visibility: hidden" :style="headerRowBaseVars(uColumns.rowsPerRecord.value)">
           <component :is="() => headerContentVNodes" />
         </div>
@@ -496,12 +502,17 @@ defineExpose({
 .df-summary-spin {
   animation: df-grid-spin 1s linear infinite;
 }
-.df-grid.container .df-grid.card.header {
+.df-grid.container .df-grid.card.header,
+.df-grid.container .df-grid.card.filter-row {
   /*
-   * The header is a structurally separate box (its own filter-row/status-bar stack sits beneath
-   * it) so it can't be a native item of the body grid. Its columns are kept aligned with the
-   * body's own natively-sized columns by copying the body's resolved pixel widths here.
+   * The header and filter row are structurally separate boxes (outside the body scroller, each
+   * other's siblings rather than body-grid items) so neither can be a native item of the body
+   * grid — unlike a real row's cells, their own `display: grid` has to be declared here rather
+   * than coming from whatever consumer CSS happens to style `.df-grid.body-grid`. Their columns
+   * are kept aligned with the body's own natively-sized columns by copying the body's resolved
+   * pixel widths here.
    */
+  display: grid;
   /*noinspection CssUnresolvedCustomProperty*/
   grid-template-columns: var(--grid-template-columns) !important;
 }

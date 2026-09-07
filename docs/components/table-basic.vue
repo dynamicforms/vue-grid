@@ -200,7 +200,7 @@ const columnsResponsive: ResponsiveColumnDefinitions = [
     rows: 3,
     columns: [...filterColumns(columns, [0, 1, 2, 3]), threeRowActionsCol, ...filterColumns(columns, [5, 6, 7, 8, 9, 10, 11])],
   },
-  { cssClass: 'single-column', columns },
+  { cssClass: 'single-column', rows: columns.length, columns },
 ];
 
 const activeColumDef = ref('three-row');
@@ -313,22 +313,91 @@ function addRows(count: number) {
   grid-template-columns: auto;
 }
 
-:deep(.df-grid.body-grid.single-column .df-grid.cell) {
+/*
+ * A record's row-anchor explicitly claims the record's whole `--rows-per-record`-tall band
+ * (`.df-grid.container .body-grid .df-grid.card` in df-grid.vue) so it can carry zebra/selection
+ * styling across it. In a single-column grid that band is the record's only column too, so an
+ * auto-placed cell (`grid-row: auto`) can never actually land inside its own record's band — the
+ * anchor, placed first in DOM order, has already claimed every row in it, and CSS grid auto-flow
+ * skips cells already spoken for regardless of which record they logically belong to. Cells need
+ * the same explicit, record-relative placement the anchor gets. There is no name shared by every
+ * field to select on (two columns here are both named `year`), so this keys off child position
+ * instead: a record's cells are its row-anchor's next thirteen siblings, in column declaration
+ * order, so under `.body-grid` (real rows) `:nth-child(2)` is the first field, `:nth-child(3)` the
+ * second, and so on. The header and filter row have no row-anchor of their own — each is just the
+ * thirteen cells directly — so the same field is one child position earlier there.
+ */
+:deep(.df-record-grid.single-column .df-grid.cell) {
   grid-column: 1 / 2 !important;
-  grid-row:    auto !important;
-  grid-area:   auto !important;
 }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(2)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(1))  { grid-row: calc(var(--row-base) + 1); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(3)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(2))  { grid-row: calc(var(--row-base) + 2); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(4)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(3))  { grid-row: calc(var(--row-base) + 3); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(5)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(4))  { grid-row: calc(var(--row-base) + 4); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(6)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(5))  { grid-row: calc(var(--row-base) + 5); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(7)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(6))  { grid-row: calc(var(--row-base) + 6); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(8)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(7))  { grid-row: calc(var(--row-base) + 7); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(9)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(8))  { grid-row: calc(var(--row-base) + 8); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(10)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(9))  { grid-row: calc(var(--row-base) + 9); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(11)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(10)) { grid-row: calc(var(--row-base) + 10); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(12)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(11)) { grid-row: calc(var(--row-base) + 11); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(13)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(12)) { grid-row: calc(var(--row-base) + 12); }
+:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(14)),
+:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(13)) { grid-row: calc(var(--row-base) + 13); }
 
 /* --- single-line: 13 columns; first column auto-sizes (0 when cell hidden, ~1.5em when visible) --- */
 :deep(.df-grid.body-grid.single-line) {
   grid-template-columns: max-content repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
 }
 
-:deep(.df-grid.body-grid.single-line .df-grid.cell) {
-  grid-column: auto !important;
-  grid-row:    auto !important;
-  grid-area:   auto !important;
+/*
+ * Same conflict as single-column's, one row instead of one column: the row-anchor claims the
+ * record's entire (single, since `rows` defaults to 1 here) row across every column, so an
+ * auto-placed cell (`grid-column: auto`) can never land in it. Cells get the same
+ * record-relative, nth-child-keyed explicit placement — see the single-column comment above,
+ * including the header/filter-row one-child-earlier offset (they have no row-anchor sibling).
+ */
+:deep(.df-record-grid.single-line .df-grid.cell) {
+  grid-row: calc(var(--row-base) + 1) !important;
 }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(2)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(1))  { grid-column: 1; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(3)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(2))  { grid-column: 2; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(4)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(3))  { grid-column: 3; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(5)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(4))  { grid-column: 4; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(6)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(5))  { grid-column: 5; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(7)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(6))  { grid-column: 6; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(8)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(7))  { grid-column: 7; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(9)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(8))  { grid-column: 8; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(10)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(9))  { grid-column: 9; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(11)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(10)) { grid-column: 10; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(12)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(11)) { grid-column: 11; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(13)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(12)) { grid-column: 12; }
+:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(14)),
+:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(13)) { grid-column: 13; }
 
 /* --- selection checkbox cell: hidden by default; shown when selection is active --- */
 :deep(.df-grid.cell._selection) {
@@ -348,7 +417,9 @@ function addRows(count: number) {
   padding:       0 .25em;
 }
 
-:deep(.df-grid.cell.title), :deep(.df-grid.cell.artist), :deep(.df-grid.cell.genres) {
+:deep(.df-record-grid.three-row .df-grid.cell.title),
+:deep(.df-record-grid.three-row .df-grid.cell.artist),
+:deep(.df-record-grid.three-row .df-grid.cell.genres) {
   grid-column: span 2;
 }
 
@@ -367,11 +438,11 @@ function addRows(count: number) {
  * already advanced to, the browser cannot backfill columns 1-2 in that row and instead grows
  * the grid with implicit extra columns to fit the item in.
  */
-:deep(.df-grid.body-grid.three-row .df-grid.cell.title) {
+:deep(.df-record-grid.three-row .df-grid.cell.title) {
   grid-column: 1 / 3;
   grid-row:    calc(var(--row-base) + 1);
 }
-:deep(.df-grid.body-grid.three-row .df-grid.cell.artist) {
+:deep(.df-record-grid.three-row .df-grid.cell.artist) {
   grid-column: 3 / 5;
   grid-row:    calc(var(--row-base) + 1);
 }
@@ -386,43 +457,43 @@ function addRows(count: number) {
  * — silently growing the grid and overflowing it. Every three-row field needs an explicit,
  * record-relative slot for that reason, not just the ones that already had one.
  */
-:deep(.df-grid.body-grid.three-row .df-grid.cell.id) {
+:deep(.df-record-grid.three-row .df-grid.cell.id) {
   grid-column: 5;
   grid-row:    calc(var(--row-base) + 1);
 }
-:deep(.df-grid.body-grid.three-row .df-grid.cell.year) {
+:deep(.df-record-grid.three-row .df-grid.cell.year) {
   grid-column: 6;
   grid-row:    calc(var(--row-base) + 2);
 }
-:deep(.df-grid.body-grid.three-row .df-grid.cell.favorite) {
+:deep(.df-record-grid.three-row .df-grid.cell.favorite) {
   grid-column: 4;
   grid-row:    calc(var(--row-base) + 3);
 }
-:deep(.df-grid.body-grid.three-row .df-grid.cell.play_count) {
+:deep(.df-record-grid.three-row .df-grid.cell.play_count) {
   grid-column: 5;
   grid-row:    calc(var(--row-base) + 3);
 }
-:deep(.df-grid.body-grid.three-row .df-grid.cell.language) {
+:deep(.df-record-grid.three-row .df-grid.cell.language) {
   grid-column: 6;
   grid-row:    calc(var(--row-base) + 3);
 }
 
-:deep(.df-grid.cell.moods) {
+:deep(.df-record-grid.three-row .df-grid.cell.moods) {
   grid-column: 1 / 4;
   grid-row:    calc(var(--row-base) + 3);
 }
 
-:deep(.df-grid.cell.duration) {
+:deep(.df-record-grid.three-row .df-grid.cell.duration) {
   grid-column: 6;
   grid-row:    calc(var(--row-base) + 1);
 }
 
-:deep(.df-grid.cell.genres) {
+:deep(.df-record-grid.three-row .df-grid.cell.genres) {
   grid-column: 1 / 5;
   grid-row:    calc(var(--row-base) + 2);
 }
 
-:deep(.df-grid.cell.rating) {
+:deep(.df-record-grid.three-row .df-grid.cell.rating) {
   grid-column: 5;
   grid-row:    calc(var(--row-base) + 2);
 }
@@ -431,7 +502,7 @@ function addRows(count: number) {
   text-align: center;
 }
 
-:deep(.df-grid.body-grid.three-row .df-grid.cell.actions) {
+:deep(.df-record-grid.three-row .df-grid.cell.actions) {
   grid-column: 7;
   grid-row:    calc(var(--row-base) + 1) / calc(var(--row-base) + 4);
   display:     flex;

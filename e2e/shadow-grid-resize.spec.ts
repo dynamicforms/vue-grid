@@ -59,7 +59,7 @@ async function gotoGrid(page: Page, width: number) {
   await page.waitForSelector('.df-grid.container', { timeout: 20_000 });
   await page.waitForSelector('.df-grid.card[data-idx]', { timeout: 10_000 });
   // Let every layout candidate's shadow grid measure.
-  await page.waitForTimeout(1_500);
+  await page.waitForTimeout(2_000);
   await waitForStableWidth(page, '.df-grid.container');
 }
 

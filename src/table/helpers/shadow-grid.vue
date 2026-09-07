@@ -1,6 +1,6 @@
 <template>
   <div class="df-grid-shadow-clip" v-bind="wrapperAttrs">
-    <div ref="shadowGridRef" class="df-grid shadow-grid card body-grid" :class="attrs.class">
+    <div ref="shadowGridRef" class="df-grid shadow-grid card body-grid df-record-grid" :class="attrs.class">
       <grid-card
         v-for="item in idxAndItem()"
         :key="`${item[keyField]}`"

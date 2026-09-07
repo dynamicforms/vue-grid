@@ -18,6 +18,7 @@ vi.mock('@dynamicforms/vuetify-inputs', () => ({
 vi.mock('./helpers', () => ({
   GridCard: { name: 'GridCard', template: '<div class="grid-card"><slot /></div>' },
   useHeaderContent: () => ({ setHeaderContent: vi.fn() }),
+  headerRowBaseVars: (rowsPerRecord: number) => ({ '--row-base': '0', '--rows-per-record': `${rowsPerRecord}` }),
 }));
 
 vi.mock('./cell-renderers', () => ({

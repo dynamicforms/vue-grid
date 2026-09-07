@@ -14,14 +14,21 @@
         :item="headerItem"
         :columns="headerOptions"
         :renderers="DefaultRenderers"
-        :class="['df-grid', 'card', 'header', gridClass]"
+        :class="['df-grid', 'card', 'header', 'df-record-grid', gridClass]"
+        :style="headerRowBaseVars(rowsPerRecord)"
         data-pk="header"
         data-idx="header"
       />
     </slot>
 
     <!-- Filter row -->
-    <div v-if="showFilterRow" class="df-grid card filter-row" data-section="filter" :class="gridClass">
+    <div
+      v-if="showFilterRow"
+      class="df-grid card filter-row df-record-grid"
+      data-section="filter"
+      :class="gridClass"
+      :style="headerRowBaseVars(rowsPerRecord)"
+    >
       <div
         v-for="column in columns"
         :key="column.fieldName"
@@ -117,7 +124,7 @@ import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } f
 import { ColumnDefinition } from './columns';
 import { FilterState, getFilterConfig } from './columns-filtering';
 import { getSortConfig, type ColumnSortState, type SortState } from './columns-sorting';
-import { GridCard, useHeaderContent } from './helpers';
+import { GridCard, headerRowBaseVars, useHeaderContent } from './helpers';
 import type { SelectionMode } from './selection';
 import { translatableStrings } from './translations';
 
@@ -130,6 +137,7 @@ export interface HeaderProps {
   columns: ColumnDefinition<keyof RendererOptionsMap>[];
   gridId: symbol;
   gridClass: CssClasses;
+  rowsPerRecord?: number;
   sortState: SortState;
   showFilterRow?: boolean;
   showStatusBar?: boolean;
@@ -138,7 +146,12 @@ export interface HeaderProps {
   selectionKeys?: Set<any>;
 }
 
-const props = defineProps<HeaderProps>();
+const props = withDefaults(defineProps<HeaderProps>(), {
+  rowsPerRecord: 1,
+  filterState: undefined,
+  selectionMode: null,
+  selectionKeys: undefined,
+});
 const emit = defineEmits<{ 'cancel-selection': []; 'invert-selection': [] }>();
 
 const headerItem = computed(() => Object.fromEntries(props.columns.map((column) => [column.fieldName, column.label])));
