@@ -5,6 +5,41 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-09-07
+
+### Changed
+
+- Every row is now a direct item of one shared `display: grid` (`.df-grid.body-grid`) instead of
+  being its own independent grid, and column widths are resolved by the browser natively instead
+  of being measured on a hidden shadow-grid copy and broadcast via a CSS variable. Consuming CSS
+  that declared `.df-grid.card { display: grid; grid-template-columns: ...; }` must move that
+  declaration to `.df-grid.body-grid` instead — `.df-grid.card` is now the row-anchor: a styleable
+  but otherwise empty box, not a grid container. Multi-row card layouts (more than one row of
+  fields per record) must additionally declare `rows` on their `ResponsiveColumnDefinition` and
+  give every cell an explicit `grid-row: calc(var(--row-base) + N)` rather than an absolute row
+  number — plain CSS auto-placement has no notion of record boundaries once rows share a grid. See
+  [Card layout CSS](https://dynamicforms.github.io/vue-grid/reference/df-grid#card-layout-css) and
+  the [Cookbook](https://dynamicforms.github.io/vue-grid/guide/cookbook#a-responsive-multi-row-card-layout).
+- Row virtualization no longer depends on `@pdanpdan/virtual-scroll` (dropped as a peer
+  dependency); windowing is now a small internal composable with the same externally-visible
+  behaviour (`load`, `recentlyAdded`'s viewport signal, the scrollbar-width measurement).
+
+### Added
+
+- `estimatedRowHeight` prop: row height, in pixels, assumed for a not-yet-rendered record —
+  used to size the placeholder standing in for windowed-out rows. Default `30`; pick something
+  close to your actual row height, since the grid does not average measured heights to refine
+  this for you.
+- `minRenderedRows` prop: minimum number of records kept mounted on each side of the visible
+  range. Default `30`, replacing the removed `mainShadowCount`.
+- `rows` field on `ResponsiveColumnDefinition`: declares how many grid rows that layout's card
+  occupies per record (default `1`), needed for the relative `--row-base` cell placement above.
+
+### Removed
+
+- `mainShadowCount` prop — the primary shadow grid it configured no longer exists; column widths
+  are now resolved natively rather than measured on a hidden copy.
+
 ## [0.4.1] - 2026-09-06
 
 ### Added
