@@ -14,7 +14,14 @@
  *    withheld and retried on the next animation frame instead of handing listeners a value they
  *    cannot use.
  *
- * 3. **containerEl expose** — the exposed getter returns the root DOM element.
+ * 3. **containerEl expose** — the exposed getter returns the measured grid element (a `.df-grid
+ *    .shadow-grid` child of the component's root, not the root itself — the root only exists to
+ *    position and clip the grid, which sizes itself to its own natural content width).
+ *
+ * 4. **caller-supplied class routing** — a `class` passed on the `<shadow-grid>` tag (the
+ *    caller's layout class, e.g. `three-row`) lands on the measured grid rather than the
+ *    positioning wrapper, since only the former carries the `body-grid` class that layout-specific
+ *    CSS selectors key off. Other attrs (e.g. `style`) still fall through to the wrapper.
  *
  * GridCard is mocked because its own rendering is covered by use-formatted-data.spec.ts.
  * window.getComputedStyle is mocked because jsdom returns empty strings for layout properties.
@@ -236,11 +243,48 @@ describe('ShadowGrid', () => {
       expect(countAfter).toBeGreaterThan(countBefore);
     });
 
-    it('containerEl expose returns the root DOM element', async () => {
+    it('containerEl expose returns the measured grid element', async () => {
       const wrapper = mountShadowGrid();
       await nextTick();
       const el = (wrapper.vm as any).containerEl;
-      expect(el).toBe(wrapper.element);
+      expect(el).toBe(wrapper.element.querySelector('.df-grid.shadow-grid'));
+      expect(el).not.toBe(wrapper.element); // the root only positions/clips; this is its child
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe('caller-supplied class', () => {
+    it('lands on the measured grid, not the positioning wrapper', async () => {
+      const wrapper = mount(ShadowGrid, {
+        props: {
+          records: mockRecords,
+          columns: mockColumns,
+          renderers: mockRenderers,
+          count: 5,
+          offset: 0,
+          keyField: 'id',
+        },
+        attrs: { class: 'three-row' },
+      });
+      await nextTick();
+      expect(wrapper.element.classList.contains('three-row')).toBe(false);
+      expect(wrapper.element.querySelector('.df-grid.shadow-grid')!.classList.contains('three-row')).toBe(true);
+    });
+
+    it('other attrs (e.g. style) still land on the wrapper', async () => {
+      const wrapper = mount(ShadowGrid, {
+        props: {
+          records: mockRecords,
+          columns: mockColumns,
+          renderers: mockRenderers,
+          count: 5,
+          offset: 0,
+          keyField: 'id',
+        },
+        attrs: { style: 'right: auto' },
+      });
+      await nextTick();
+      expect(wrapper.element.getAttribute('style')).toContain('right: auto');
     });
   });
 });

@@ -359,10 +359,52 @@ function addRows(count: number) {
  * every record's third-row cell on the SAME physical row instead of each record getting its own
  * band. title/artist/duration need an explicit row here too (they didn't before) — plain CSS
  * auto-placement has no notion of "record boundaries" once rows share a grid.
+ *
+ * title/artist also need an explicit grid-column here, overriding the generic `span 2` rule
+ * above with a real starting line: `span 2` alone leaves the column auto-placed, and the
+ * auto-placement algorithm's cursor only ever advances (it's a single pass over the whole
+ * shared grid, not reset per record) — for a record whose row sits behind where the cursor has
+ * already advanced to, the browser cannot backfill columns 1-2 in that row and instead grows
+ * the grid with implicit extra columns to fit the item in.
  */
-:deep(.df-grid.body-grid.three-row .df-grid.cell.title),
+:deep(.df-grid.body-grid.three-row .df-grid.cell.title) {
+  grid-column: 1 / 3;
+  grid-row:    calc(var(--row-base) + 1);
+}
 :deep(.df-grid.body-grid.three-row .df-grid.cell.artist) {
-  grid-row: calc(var(--row-base) + 1);
+  grid-column: 3 / 5;
+  grid-row:    calc(var(--row-base) + 1);
+}
+
+/*
+ * id/year/favorite/play_count/language have no other position rule anywhere — before this
+ * migration they simply auto-placed into whatever cell was free within their own row's
+ * independent grid. With every record's cells on one shared grid, an unpositioned cell isn't
+ * safely contained to its own record any more: the browser's auto-placement algorithm hunts for
+ * the next free cell across the WHOLE grid, and if the rows near each record's own band are
+ * already full of explicitly-placed cells, it creates extra implicit columns to fit the item in
+ * — silently growing the grid and overflowing it. Every three-row field needs an explicit,
+ * record-relative slot for that reason, not just the ones that already had one.
+ */
+:deep(.df-grid.body-grid.three-row .df-grid.cell.id) {
+  grid-column: 5;
+  grid-row:    calc(var(--row-base) + 1);
+}
+:deep(.df-grid.body-grid.three-row .df-grid.cell.year) {
+  grid-column: 6;
+  grid-row:    calc(var(--row-base) + 2);
+}
+:deep(.df-grid.body-grid.three-row .df-grid.cell.favorite) {
+  grid-column: 4;
+  grid-row:    calc(var(--row-base) + 3);
+}
+:deep(.df-grid.body-grid.three-row .df-grid.cell.play_count) {
+  grid-column: 5;
+  grid-row:    calc(var(--row-base) + 3);
+}
+:deep(.df-grid.body-grid.three-row .df-grid.cell.language) {
+  grid-column: 6;
+  grid-row:    calc(var(--row-base) + 3);
 }
 
 :deep(.df-grid.cell.moods) {
