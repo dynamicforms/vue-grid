@@ -4,19 +4,18 @@
  * Tests the parts of df-grid.vue that are neither column measurement (covered by
  * df-grid-auto-sizing.spec.ts) nor a reactivity loop (df-grid-render-loop.spec.ts).
  *
+ *  - **visible range reporting** — `recentlyAdded` needs the range of records actually on screen
+ *    to decide which arc to flash. Rows aren't windowed in this stage of the single-shared-grid
+ *    migration (every record is mounted), so this is found by scanning row-anchor positions
+ *    against the body grid's own scroll position, rather than reading it off a windowing
+ *    library — see `updateVisibleRange` in df-grid.vue.
  *  - **teardown** — the resize observer is disconnected, so a detached grid stops reacting.
  *
- * Two categories this file used to cover are gone:
- *
- *  - **visible range reporting** (recentlyAdded's `setVisibleRange`, fed from the virtual
- *    scroller's `currentIndex`/`currentEndIndex`) has no signal to test against right now — rows
- *    are no longer windowed at all in this stage of the single-shared-grid migration (see the
- *    TODO in df-grid.vue, near `useHeaderContent`). This returns once the windowing stage
- *    restores a true-viewport signal.
- *  - **"learning that a layout needs more room"** (the `onUpdated` overflow-learning block that
- *    credited a responsive layout with extra width when a shadow-predicted track list turned out
- *    too narrow) is deleted, not just untested: with native column sizing a real row's own grid
- *    track *is* the measurement, so there is nothing left for it to overflow.
+ * One category this file used to cover is gone: **"learning that a layout needs more room"**
+ * (the `onUpdated` overflow-learning block that credited a responsive layout with extra width
+ * when a shadow-predicted track list turned out too narrow) is deleted, not just untested — with
+ * native column sizing a real row's own grid track *is* the measurement, so there is nothing
+ * left for it to overflow.
  */
 
 import { flushPromises, mount } from '@vue/test-utils';
@@ -73,6 +72,17 @@ vi.mock('./use-excessive-scroll', () => ({ useExcessiveScroll: () => ({ amount: 
 const records = Array.from({ length: 5 }, (_, i) => ({ id: i, name: `Row ${i}` }));
 const columns = [{ fieldName: 'name', label: 'Name' }];
 
+/** Minimal stand-in for the useRecentlyAdded API surface the grid actually touches. */
+function makeRecentlyAdded() {
+  return {
+    isAdding: ref(false),
+    isPendingAdd: vi.fn(() => false),
+    setVisibleRange: vi.fn(),
+    topArcFlashTick: ref(0),
+    bottomArcFlashTick: ref(0),
+  };
+}
+
 function mountGrid(props: Record<string, any> = {}) {
   return mount(DfGrid, {
     props: { columns, records, keyField: 'id', ...props },
@@ -108,6 +118,86 @@ describe('DfGrid — lifecycle', () => {
   });
 
   afterEach(() => vi.restoreAllMocks());
+
+  describe('visible range reporting', () => {
+    it('reports the range of row-anchors within the visible scroll viewport', async () => {
+      const recentlyAdded = makeRecentlyAdded();
+      const wrapper = mountGrid({ recentlyAdded });
+      await settle();
+
+      const bodyGrid = wrapper.element.querySelector('.body-grid') as HTMLElement;
+      Object.defineProperty(bodyGrid, 'clientHeight', { configurable: true, value: 40 });
+      Object.defineProperty(bodyGrid, 'scrollTop', { configurable: true, value: 20 });
+
+      // Five uniform 20px rows: anchor i spans [i*20, i*20+20).
+      const anchors = Array.from(wrapper.element.querySelectorAll('.df-grid.card[data-idx]')) as HTMLElement[];
+      anchors.forEach((anchor, i) => {
+        Object.defineProperty(anchor, 'offsetTop', { configurable: true, value: i * 20 });
+        Object.defineProperty(anchor, 'offsetHeight', { configurable: true, value: 20 });
+      });
+
+      bodyGrid.dispatchEvent(new Event('scroll'));
+      // updateVisibleRange is throttled 100ms; onMounted already spent the leading edge, so the
+      // trailing edge has to be waited out for real (settle()'s microtask flushes don't advance
+      // real timers).
+      await new Promise((resolve) => {
+        setTimeout(resolve, 120);
+      });
+      await settle();
+
+      // Viewport [20, 60): only rows 1 ([20,40)) and 2 ([40,60)) are inside it.
+      expect(recentlyAdded.setVisibleRange).toHaveBeenCalledWith({ start: 1, end: 3 });
+    });
+
+    it('says nothing when the consumer is not tracking recently-added records', async () => {
+      const wrapper = mountGrid();
+      await settle();
+
+      const bodyGrid = wrapper.element.querySelector('.body-grid') as HTMLElement;
+      expect(() => bodyGrid.dispatchEvent(new Event('scroll'))).not.toThrow();
+    });
+  });
+
+  describe('infinite-scroll load event', () => {
+    // JSDOM has no layout engine, so a freshly mounted body grid's scrollHeight/clientHeight/
+    // scrollTop all default to 0 — which trivially satisfies "near the end" and fires one `load`
+    // during onMounted's leading throttle edge, before a test gets a chance to set up scroll
+    // metrics. That is arguably correct behaviour for a real browser too (a first page that
+    // doesn't fill the viewport should ask for more), so tests compare the count of `load`
+    // emissions before/after the scroll under test rather than asserting total absence.
+    async function scrollNear(wrapper: ReturnType<typeof mountGrid>, distanceFromEnd: number) {
+      const bodyGrid = wrapper.element.querySelector('.body-grid') as HTMLElement;
+      Object.defineProperty(bodyGrid, 'scrollHeight', { configurable: true, value: 1000 });
+      Object.defineProperty(bodyGrid, 'clientHeight', { configurable: true, value: 400 });
+      Object.defineProperty(bodyGrid, 'scrollTop', { configurable: true, value: 1000 - 400 - distanceFromEnd });
+      bodyGrid.dispatchEvent(new Event('scroll'));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 120);
+      });
+      await settle();
+    }
+
+    it('emits load when scrolling within 200px of the end', async () => {
+      const wrapper = mountGrid();
+      await settle();
+      const before = wrapper.emitted('load')?.length ?? 0;
+
+      await scrollNear(wrapper, 100);
+
+      expect(wrapper.emitted('load')?.length ?? 0).toBeGreaterThan(before);
+      expect(wrapper.emitted('load')?.at(-1)).toEqual(['vertical']);
+    });
+
+    it('does not emit an additional load while already loading', async () => {
+      const wrapper = mountGrid({ loading: true });
+      await settle();
+      const before = wrapper.emitted('load')?.length ?? 0;
+
+      await scrollNear(wrapper, 100);
+
+      expect(wrapper.emitted('load')?.length ?? 0).toBe(before);
+    });
+  });
 
   describe('teardown', () => {
     it('stops observing the container', async () => {

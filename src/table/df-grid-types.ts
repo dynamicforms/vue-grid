@@ -148,10 +148,10 @@ export interface GridEmits extends SelectionEmits {
   filter: [data: GridFilterEvent];
 
   /**
-   * Fired when the user scrolls within `loadDistance` px (default 200) of the end of the list
-   * **and** `loading` is `false`. Use this to fetch and append the next page of records.
-   * Setting `:loading="true"` while fetching suppresses duplicate events until the fetch completes.
-   * Proxied directly from the underlying virtual-scroll `load` event.
+   * Fired when the user scrolls within 200px of the end of the list **and** `loading` is
+   * `false`. Use this to fetch and append the next page of records. Setting `:loading="true"`
+   * while fetching suppresses duplicate events until the fetch completes. `direction` is always
+   * `'vertical'` — the grid only scrolls vertically.
    */
   load: [direction: 'vertical' | 'horizontal'];
 

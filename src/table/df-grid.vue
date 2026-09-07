@@ -44,11 +44,21 @@
         <div style="display: contents; visibility: hidden" :style="headerRowBaseVars(uColumns.rowsPerRecord.value)">
           <component :is="() => headerContentVNodes" />
         </div>
+        <!--
+        data-pk/data-idx are duplicated on this wrapper AND on the row-anchor below: the anchor
+        carries them for the documented `.df-grid.card[data-pk="…"]` query pattern (a real box,
+        addressable by class), while the wrapper carries them so useGridMouseEvents can find the
+        row from a click on a cell — cells are this wrapper's children, not the anchor's (the
+        anchor is a sibling, not an ancestor, of the cells), so `.closest()` from a cell click can
+        only reach the row through an ancestor that actually carries the attribute.
+        -->
         <div
           v-for="(item, index) in sortedRecords"
           :key="item[keyField]"
           style="display: contents"
           :style="rowBaseVars(index, uColumns.rowsPerRecord.value)"
+          :data-pk="item[keyField]"
+          :data-idx="index"
         >
           <slot name="item" :item="item" :index="index" :active="true">
             <div
@@ -196,10 +206,39 @@ const headerContentVNodes = computed(() =>
   headerContentRef.value.map((c) => h(c.tag, { ...c.attrs, innerHTML: c.content })),
 );
 
-// TODO(windowing stage): `recentlyAdded`'s incoming-record flash-arc needs the true visible
-// range (excluding render buffers) once rows are windowed again — restore this wiring against
-// the new windowing composable's scroll-position tracking. Until then every row is mounted, so
-// there is no meaningful "visible range" to report.
+// Every row is currently mounted (windowing is a separate follow-up — see the migration notes
+// near `bodyGridRef`), so the true visible range has to be found by scanning the row-anchors'
+// own scroll position rather than reading it off a windowing library. This scan is cheap only
+// because nothing is virtualized yet; once windowing returns, replace it with a range the
+// windowing composable already tracks instead of re-deriving it from the DOM.
+// Fired when a scroll comes within this many px of the end of the list, matching the documented
+// `GridEmits.load` contract (previously the underlying virtual-scroll library's own default).
+const LOAD_DISTANCE = 200;
+
+const onBodyScrollSettle = throttle(() => {
+  const el = bodyGridRef.value;
+  if (!el) return;
+
+  if (props.recentlyAdded) {
+    const viewportTop = el.scrollTop;
+    const viewportBottom = viewportTop + el.clientHeight;
+    let start: number | null = null;
+    let end: number | null = null;
+    el.querySelectorAll<HTMLElement>('.df-grid.card[data-idx]').forEach((anchor) => {
+      const anchorTop = anchor.offsetTop;
+      const anchorBottom = anchorTop + anchor.offsetHeight;
+      if (anchorBottom <= viewportTop || anchorTop >= viewportBottom) return;
+      const idx = Number(anchor.dataset.idx);
+      if (start === null || idx < start) start = idx;
+      if (end === null || idx > end) end = idx;
+    });
+    if (start !== null && end !== null) props.recentlyAdded.setVisibleRange({ start, end: end + 1 });
+  }
+
+  if (!props.loading && el.scrollHeight - el.scrollTop - el.clientHeight <= LOAD_DISTANCE) {
+    emit('load', 'vertical');
+  }
+}, 100);
 
 const uSelection = useSelection(props, emit);
 const { processMouse } = useGridMouseEvents(
@@ -265,6 +304,8 @@ let resizeObserver: ResizeObserver | null = null;
 onMounted(() => {
   measureScrollbarWidth();
   syncHeaderColumns();
+  onBodyScrollSettle();
+  bodyGridRef.value?.addEventListener('scroll', onBodyScrollSettle, { passive: true });
   resizeObserver = new ResizeObserver((entries) => {
     entries.forEach((entry) => {
       const { width } = entry.contentRect;
@@ -282,11 +323,17 @@ onMounted(() => {
 });
 onUnmounted(() => {
   resizeObserver?.disconnect();
+  bodyGridRef.value?.removeEventListener('scroll', onBodyScrollSettle);
+  // Cancel pending trailing-edge invocations — without this, a throttle window open at unmount
+  // time fires later against a detached bodyGridRef for no purpose.
+  syncHeaderColumns.cancel();
+  onBodyScrollSettle.cancel();
 });
 onUpdated(() => {
   // Rows arriving or leaving can make the body scrollbar appear or disappear without the
   // container ever resizing, and can change the body grid's own native column widths.
   measureScrollbarWidth();
+  onBodyScrollSettle();
   syncHeaderColumns();
 });
 
