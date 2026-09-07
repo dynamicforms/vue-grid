@@ -163,22 +163,22 @@ function clear() {
   background-color: #60606040;
 }
 
-/* Single-line card: id | title | artist | year | rating */
-:deep(.df-grid.card) {
+/* Single-line row: id | title | artist | year | rating. Real rows are direct items of one
+   shared grid (`.body-grid`) instead of each being its own independent grid — `.df-grid.card`
+   is now just the row-anchor (zebra background, border), not a grid itself. */
+:deep(.df-grid.body-grid) {
   display: grid;
   grid-template-columns: minmax(2em, 4em) 1fr 1fr minmax(3em, 5em) minmax(3em, 5em);
   gap: .25em;
-  padding: 0.35em 0.5em;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
   font-size: 0.85rem;
+}
+
+:deep(.df-grid.card) {
+  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
 }
 
 :deep(.df-grid.card.header) {
   border-bottom: 1px solid rgba(128, 128, 128, 0.5);
-}
-
-:deep(.df-grid.dynamic-scroller-item) {
-  padding-bottom: .1px;
 }
 
 :deep(.df-grid.cell) {

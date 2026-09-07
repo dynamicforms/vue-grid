@@ -84,12 +84,17 @@ To define multiple layouts that activate at different container widths, pass an 
 ```typescript
 interface ResponsiveColumnDefinition {
   name?: string;     // optional name; defaults to cssClass value
-  cssClass: string;  // CSS class applied to each row card in this layout
+  cssClass: string;  // CSS class applied to the shared body grid in this layout
   columns: ColumnDefinitionsList;
+  rows?: number;     // grid rows this layout's cards occupy per record; default 1
 }
 
 type ResponsiveColumnDefinitions = ColumnDefinitionsList | ResponsiveColumnDefinition[];
 ```
+
+`rows` matters only for a layout that stacks more than one row of fields per record (a card layout, not a
+single-line one) — see [Card layout CSS](/reference/df-grid#card-layout-css) for how it plugs into `--row-base` in
+your own CSS.
 
 The grid decides whether the array is responsive by looking at its first element: an element carrying `name` or `cssClass` together with `columns` marks the whole array as a list of layouts. Every entry must end up with a non-empty name — `name`, or `cssClass` when `name` is omitted — otherwise the grid throws `column definition <idx> must have a name or cssClasses assigned and non-empty`.
 

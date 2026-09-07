@@ -84,14 +84,17 @@ const columns = [
 </script>
 
 <style scoped>
-:deep(.df-grid.card) {
+/* Real rows are direct items of one shared grid (`.body-grid`) instead of each being its own
+   independent grid; `.df-grid.card` is the row-anchor (zebra/border), not a grid itself. */
+:deep(.df-grid.body-grid) {
   display: grid;
   grid-template-columns: 2fr 1fr 7em 9em 7em 4em;
   gap: 0.25em;
-  padding: 0.4em 0.6em;
-  border-bottom: 1px solid #e0e0e0;
   font-size: 0.9rem;
   align-items: center;
+}
+:deep(.df-grid.card) {
+  border-bottom: 1px solid #e0e0e0;
 }
 :deep(.df-grid.header) {
   font-weight: bold;

@@ -196,6 +196,7 @@ const columnsResponsive: ResponsiveColumnDefinitions = [
   },
   {
     cssClass: 'three-row',
+    rows: 3,
     columns: [...filterColumns(columns, [0, 1, 2, 3]), threeRowActionsCol, ...filterColumns(columns, [5, 6, 7, 8, 9, 10, 11])],
   },
   { cssClass: 'single-column', columns },
@@ -281,49 +282,48 @@ function addRows(count: number) {
   outline: none;
 }
 
+/*
+ * Real rows are direct items of one shared grid (`.body-grid`) instead of each being its own
+ * independent grid — the per-layout `grid-template-columns` lives on the shared container now,
+ * not on each row. `.df-grid.card` is the row-anchor: an otherwise-empty box spanning the
+ * record's full column/row band, giving it something to carry zebra striping, border, and
+ * selection highlight, and something for click handling to `.closest()` onto.
+ */
+
 /* --- three-row: 7 columns (no selection) --- */
-:deep(.df-grid.card.three-row) {
+:deep(.df-grid.body-grid.three-row) {
   grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em) minmax(min-content, max-content);
 }
 
-
-/* --- base card layout --- */
-:deep(.df-grid.card) {
+/* --- base shared-grid layout --- */
+:deep(.df-grid.body-grid) {
   display:               grid;
   grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em) repeat(7, auto);
   gap:                   .25em;
-
-  padding:               0.5em;
-  border:                1px solid #808080ff;
-  border-radius:         6px;
-  font-size:             0.85rem;
-  /*
-   * won't work for item measurements, so see the next selector adding negligible padding to parent. That seems to
-   * finally take into account this margin
-   */
-  margin-bottom:         .5em;
+  font-size:              0.85rem;
 }
 
-:deep(.df-grid.dynamic-scroller-item) {
-  padding-bottom: .1px;
+:deep(.df-grid.card) {
+  border:        1px solid #808080ff;
+  border-radius: 6px;
 }
 
-:deep(.df-grid.card.single-column) {
+:deep(.df-grid.body-grid.single-column) {
   grid-template-columns: auto;
 }
 
-:deep(.df-grid.container .df-grid.card.single-column > *) {
+:deep(.df-grid.body-grid.single-column .df-grid.cell) {
   grid-column: 1 / 2 !important;
   grid-row:    auto !important;
   grid-area:   auto !important;
 }
 
 /* --- single-line: 13 columns; first column auto-sizes (0 when cell hidden, ~1.5em when visible) --- */
-:deep(.df-grid.card.single-line) {
+:deep(.df-grid.body-grid.single-line) {
   grid-template-columns: max-content repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
 }
 
-:deep(.df-grid.card.single-line > *) {
+:deep(.df-grid.body-grid.single-line .df-grid.cell) {
   grid-column: auto !important;
   grid-row:    auto !important;
   grid-area:   auto !important;
@@ -351,32 +351,46 @@ function addRows(count: number) {
   grid-column: span 2;
 }
 
+/*
+ * Three-row placement is relative to each record via --row-base (published per record on an
+ * ancestor `display:contents` wrapper, see use-row-placement.ts) rather than absolute row
+ * numbers: with every record's cells sharing one grid, an absolute `grid-row: 3` would put
+ * every record's third-row cell on the SAME physical row instead of each record getting its own
+ * band. title/artist/duration need an explicit row here too (they didn't before) — plain CSS
+ * auto-placement has no notion of "record boundaries" once rows share a grid.
+ */
+:deep(.df-grid.body-grid.three-row .df-grid.cell.title),
+:deep(.df-grid.body-grid.three-row .df-grid.cell.artist) {
+  grid-row: calc(var(--row-base) + 1);
+}
+
 :deep(.df-grid.cell.moods) {
   grid-column: 1 / 4;
-  grid-row:    3;
+  grid-row:    calc(var(--row-base) + 3);
 }
 
 :deep(.df-grid.cell.duration) {
   grid-column: 6;
+  grid-row:    calc(var(--row-base) + 1);
 }
 
 :deep(.df-grid.cell.genres) {
   grid-column: 1 / 5;
-  grid-row:    2;
+  grid-row:    calc(var(--row-base) + 2);
 }
 
 :deep(.df-grid.cell.rating) {
   grid-column: 5;
-  grid-row:    2;
+  grid-row:    calc(var(--row-base) + 2);
 }
 
 :deep(.df-grid.cell.favorite) {
   text-align: center;
 }
 
-:deep(.df-grid.card.three-row .df-grid.cell.actions) {
+:deep(.df-grid.body-grid.three-row .df-grid.cell.actions) {
   grid-column: 7;
-  grid-row:    1 / 4;
+  grid-row:    calc(var(--row-base) + 1) / calc(var(--row-base) + 4);
   display:     flex;
   align-items: center;
 }

@@ -24,7 +24,6 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `showStatusBar` | `boolean` | `false` |
 | `showSummaryBar` | `boolean` | `false` |
 | `loading` | `boolean` | `false` |
-| `mainShadowCount` | `number` | `500` |
 | `secondaryShadowCount` | `number` | `30` |
 | `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | zebra striping (`'even'`/`'odd'`) |
 | `selectionMode` | `SelectionMode` | `null` |
@@ -61,11 +60,9 @@ so a local filter that matches no rows leaves the bar hidden.
 `loading` — indicates that data is being fetched. When `true` the default summary bar shows a loading spinner; the
 no-data indicator is suppressed even when `records` is empty.
 
-`mainShadowCount` — number of rows rendered in the main shadow grid used for column width measurement. Rarely needs
+`secondaryShadowCount` — number of rows rendered in secondary shadow grids (one per responsive layout, used to
+pre-measure a layout's width before it becomes active so the resize handler can pick the right one). Rarely needs
 changing.
-
-`secondaryShadowCount` — number of rows rendered in secondary shadow grids (one per responsive layout). Rarely
-needs changing.
 
 `rowClass` — returns CSS classes applied to each data row card. Receives the row data object and its 0-based index.
 Return type matches Vue's `:class` binding — a string, an array, or an object. Overriding this prop replaces the
@@ -113,8 +110,7 @@ and the sort state the grid would apply. See [Sorting → User interaction model
 `filter` — fired when any filter value changes.
 
 `load` — fired when the user scrolls within 200 px of the end of the list and the grid is not in loading state. Use
-this to fetch and append the next page. Set `:loading="true"` while fetching to suppress duplicate events. Proxied
-from the underlying virtual-scroll `load` event.
+this to fetch and append the next page. Set `:loading="true"` while fetching to suppress duplicate events.
 
 `excessive-scroll` — fired when the user overscrolls past the `excessiveScrollThreshold`. Payload is the signed
 displacement in pixels: positive = past the bottom, negative = past the top. Re-fires only after 1 second has
@@ -235,7 +231,7 @@ The grid renders the following layers from top to bottom. Each section carries a
 ├─────────────────────────────────────┤  data-section="status-bar" (inside header, when visible)
 │           status bar                │
 ├─────────────────────────────────────┤  data-section="body"
-│           data rows                 │  virtual-scroll container
+│           data rows                 │  div.df-grid.body-grid (the shared grid)
 ├─────────────────────────────────────┤  data-section="summary-bar" (when visible)
 │           summary bar               │  div.df-summary-bar
 ├─────────────────────────────────────┤  data-section="footer"
@@ -268,21 +264,39 @@ Every row card carries two more attributes that identify the row it renders:
 | `data-pk` | The row's `keyField` value. On the header card it is the literal string `header`. |
 | `data-idx` | The row's 0-based position in the filtered and sorted list. On the header card it is the literal string `header`. |
 
-The grid's mouse event handler reads `data-idx` off the nearest `.df-grid.card` ancestor to work out which row was
-clicked. The same attributes let you address a row from CSS or find its element from your own code, for example
-`grid.querySelector('.df-grid.card[data-pk="42"]')`.
+The grid's mouse event handler reads `data-idx` off the nearest ancestor that carries it (the row's cells are
+children of a wrapper element, not of the row card itself — see below) to work out which row was clicked. The same
+attributes on the row card itself let you address a row from CSS or find its element from your own code, for
+example `grid.querySelector('.df-grid.card[data-pk="42"]')`.
 
 ## Card layout CSS
 
-The row card layout comes from your own stylesheet: make `.df-grid.card` a grid and give it a base track template. The grid measures the resulting column widths on a hidden shadow copy of the card, publishes them as the `--grid-template-columns` custom property on the grid container, and applies them to every row card with `grid-template-columns: var(--grid-template-columns) !important`.
+Every row is a direct item of one shared grid, `.df-grid.body-grid` (a sibling of the grid container's other
+children, carrying the active responsive layout's `cssClass`) — not its own independent grid the way it was before.
+Your stylesheet makes `.df-grid.body-grid` a grid and gives it a base track template; the grid reads the resulting
+natively-resolved column widths off it, publishes them as the `--grid-template-columns` custom property on the grid
+container, and applies them to the header (which sits outside the body grid and can't itself be a native item of
+it) with `grid-template-columns: var(--grid-template-columns) !important`.
 
 ```css
-.my-grid .df-grid.card {
+.my-grid .df-grid.body-grid {
   display: grid;
   grid-template-columns: 3.5em 1fr 1fr 3em;
   gap: 0.1em 0.5em;
 }
 ```
+
+`.df-grid.card` — the row-anchor — is what's left for you to style per row: it's an otherwise-empty box spanning
+the record's full column and row span, there for zebra striping, borders, and selection highlight, and for
+`data-pk`/`data-idx`. It carries no cell content itself, so padding on it does not inset anything; style `.df-grid
+.cell` for that.
+
+If a layout places more than one row per record (a card with several stacked rows of fields), declare how many via
+`rows` on that `ResponsiveColumnDefinition` (default `1`) — see [Column Definitions](./columns) — and give every
+cell an explicit `grid-row` relative to `calc(var(--row-base) + N)` rather than an absolute row number: with every
+record's cells on the same shared grid, `grid-row: 2` would put every record's second row on the very same physical
+row instead of each record getting its own band. `--row-base` (`recordIndex * rows`) is published per record
+automatically; you don't set it yourself.
 
 ### CSS custom properties
 
@@ -290,7 +304,8 @@ Both properties are set on the grid container (`.df-grid.container`) and can be 
 
 | Property | Value |
 |----------|-------|
-| `--grid-template-columns` | The measured track list, in pixels, that every row card applies with `grid-template-columns: var(--grid-template-columns) !important`. |
+| `--grid-template-columns` | The body grid's own natively-resolved track list, in pixels, copied onto the header with `grid-template-columns: var(--grid-template-columns) !important`. |
+| `--row-base` | Set per record (and on the hidden header clone that feeds column widths) on an ancestor of that record's cells; `recordIndex * rows`. Read it in your own `grid-row` rules for multi-row layouts — see above. |
 | `--df-grid-scrollbar-width` | The width, in pixels, that the body scroller actually reserves for its vertical scrollbar — measured as the scroller's `offsetWidth` minus its `clientWidth`, and re-measured on every container resize. It is `0` on platforms with overlay scrollbars. The header pads itself by this amount so its columns stay aligned with the body columns they label. |
 
 ## Row CSS classes
