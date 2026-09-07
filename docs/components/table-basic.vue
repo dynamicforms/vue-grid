@@ -15,6 +15,7 @@
       key-field="id"
       :show-filter-row="true"
       :show-status-bar="false"
+      :estimated-row-height="90"
       @click="(data) => console.log('click:', data)"
       @sort="(data) => console.log('sort:', data)"
     >
