@@ -45,9 +45,11 @@ interface GridMetrics {
   headerRow: { clientWidth: number; scrollWidth: number; right: number };
   headerContainerRight: number;
   bodyGrid: { clientWidth: number; scrollWidth: number; tracks: string };
-  bodyRowClientWidth: number;
+  bodyRowOuterWidth: number;
   headerTracks: string;
   activeLayout: string;
+  headerCellLefts: number[];
+  bodyCellLefts: number[];
 }
 
 async function readMetrics(page: Page): Promise<GridMetrics> {
@@ -56,11 +58,11 @@ async function readMetrics(page: Page): Promise<GridMetrics> {
     const headerContainer = document.querySelector('.df-grid.header-container') as HTMLElement;
     const headerRow = document.querySelector('.df-grid.card.header') as HTMLElement;
     const bodyGridEl = document.querySelector('.df-grid.body-grid') as HTMLElement;
-    // A mounted row-anchor, not the shared grid container itself: the anchor carries the same
-    // decorative border the header row does, so its clientWidth is directly comparable to the
-    // header's — the container has no border of its own, so comparing against it directly would
-    // be off by the border width for no meaningful reason.
-    const bodyRow = document.querySelector('.df-grid.card[data-idx]') as HTMLElement;
+    // A mounted row-anchor, not the shared grid container itself. Scoped to `.body-grid`
+    // specifically — the header row also carries `data-idx` (its value is the string "header"),
+    // and sits before the body in document order, so an unscoped `[data-idx]` query matches it
+    // instead.
+    const bodyRow = document.querySelector('.df-grid.body-grid .df-grid.card[data-idx]') as HTMLElement;
 
     const box = (el: HTMLElement) => {
       const r = el.getBoundingClientRect();
@@ -92,15 +94,72 @@ async function readMetrics(page: Page): Promise<GridMetrics> {
         scrollWidth: bodyGridEl.scrollWidth,
         tracks: getComputedStyle(bodyGridEl).gridTemplateColumns,
       },
-      bodyRowClientWidth: bodyRow.clientWidth,
+      // The row-anchor's own outer width, not its border-reduced clientWidth: the anchor spans
+      // the full row via `grid-column: 1 / -1`, so its offsetWidth is the row's full width, the
+      // same thing the header's clientWidth measures now that the header uses a box-model-free
+      // `outline` for its own border look instead of a `border` that would eat into it (see the
+      // comment on the header/filter `outline` CSS rule in table-basic.vue).
+      bodyRowOuterWidth: bodyRow.offsetWidth,
       headerTracks: getComputedStyle(headerRow).gridTemplateColumns,
       // The responsive layout in the demo is a CSS class the grid puts on the shared body grid.
       activeLayout: (bodyGridEl.className.match(/\b(single-line|three-row|single-column)\b/) ?? ['?'])[0],
+      // Per-field left edges, header vs. a real row's own wrapper — comparing these pairwise
+      // catches columns that drift out of alignment further right than a coarser clientWidth or
+      // aggregate-track-list comparison would (each is only ever off by its own field's rounding,
+      // not by every field before it accumulated).
+      headerCellLefts: Array.from(headerRow.querySelectorAll('.df-grid.cell')).map(
+        (c) => c.getBoundingClientRect().left,
+      ),
+      bodyCellLefts: Array.from((bodyRow.parentElement as HTMLElement).querySelectorAll('.df-grid.cell')).map(
+        (c) => c.getBoundingClientRect().left,
+      ),
     } as any;
   });
 }
 
+// `readMetrics` right after a resize can catch the header mid-sync: `syncHeaderColumns` is
+// throttled (100ms) independently of `waitForStableWidth`'s own settle window, which only tracks
+// the *container's* width, not whether the header has actually re-read the body's latest
+// `grid-template-columns` yet. Polling for the header's own first field to have caught up with
+// the body's is a direct, cause-agnostic proxy for "the sync throttle has actually fired" — far
+// cheaper than teaching every call site its own extra wait. It also requires the header and body
+// to report the *same active layout class* before trusting a field-position match: a resize can
+// still be mid-switch between two responsive layouts, and a header field that happens to land on
+// the same pixel a differently-named body field currently occupies would otherwise read as
+// "synced" by coincidence. Both conditions have to hold on two checks 100ms apart (bridging the
+// sync throttle's own window), not just once, so a match that is itself about to be superseded by
+// another in-flight switch doesn't pass prematurely.
+async function waitForHeaderBodySync(page: Page, timeoutMs = 3_000) {
+  const check = () => page.evaluate(() => {
+    const bodyGridEl = document.querySelector('.df-grid.body-grid');
+    const headerRow = document.querySelector('.df-grid.card.header');
+    const bodyRow = document.querySelector('.df-grid.body-grid .df-grid.card[data-idx]');
+    if (!bodyGridEl || !headerRow || !bodyRow) return false;
+    const layoutOf = (el: Element) => (el.className.match(/\b(single-line|three-row|single-column)\b/) ?? ['?'])[0];
+    if (layoutOf(bodyGridEl) !== layoutOf(headerRow)) return false;
+    const headerCell = headerRow.querySelector('.df-grid.cell');
+    const bodyCell = bodyRow.parentElement?.querySelector('.df-grid.cell');
+    if (!headerCell || !bodyCell) return false;
+    return Math.abs(headerCell.getBoundingClientRect().left - bodyCell.getBoundingClientRect().left) < 1;
+  });
+
+  const deadline = Date.now() + timeoutMs;
+  // eslint-disable-next-line no-await-in-loop -- each check must follow the previous one's wait
+  while (Date.now() < deadline) {
+    // eslint-disable-next-line no-await-in-loop
+    if (await check()) {
+      // eslint-disable-next-line no-await-in-loop
+      await page.waitForTimeout(100);
+      // eslint-disable-next-line no-await-in-loop
+      if (await check()) return;
+    }
+    // eslint-disable-next-line no-await-in-loop
+    await page.waitForTimeout(50);
+  }
+}
+
 async function expectGridConsistent(page: Page, label: string) {
+  await waitForHeaderBodySync(page);
   const m = await readMetrics(page);
 
   // The containing block for the (absolutely positioned) secondary shadow grids is the grid
@@ -133,7 +192,18 @@ async function expectGridConsistent(page: Page, label: string) {
     expect(v, `${label}: header/body track ${i} differs`).toBeCloseTo(bodyTrackValues[i], 1);
   });
   expect(m.headerRow.clientWidth, `${label}: header/body content widths differ`)
-    .toBeCloseTo(m.bodyRowClientWidth, 0);
+    .toBeCloseTo(m.bodyRowOuterWidth, 0);
+
+  // Per-field alignment: each header cell's left edge against the corresponding field's left
+  // edge in a real row. A regression that puts the header a few pixels off (its own border
+  // eating into the copied track list's assumed width, say) shows up here as every field being
+  // off by roughly the same amount, growing most visibly toward the last column — exactly the
+  // symptom a coarser aggregate-width comparison can miss if it happens to still fall inside a
+  // generous tolerance.
+  expect(m.headerCellLefts.length, `${label}: header/body field counts differ`).toBe(m.bodyCellLefts.length);
+  m.headerCellLefts.forEach((left, i) => {
+    expect(left, `${label}: field ${i}'s header/body left edges differ`).toBeCloseTo(m.bodyCellLefts[i], 0);
+  });
 
   return m;
 }
@@ -230,11 +300,37 @@ export function autoSizingSuite(mode: string, expectScrollbar: (width: number) =
   test(`[${mode}] entering selection mode keeps the columns consistent`, async ({ page }) => {
     await gotoGrid(page);
 
-    const firstCard = page.locator('.df-grid.card[data-idx]').first();
-    await firstCard.dispatchEvent('pointerdown');
-    await page.waitForTimeout(800);
-    await firstCard.dispatchEvent('pointerup');
-    await page.waitForTimeout(1_000);
+    // Scoped to `.body-grid` — an unscoped `[data-idx]` query matches the header row first (its
+    // own `data-idx` is the string "header"), and the `longpress` directive only ever listens for
+    // `mousedown`/`touchstart` (see `helpers/longpress.ts`), so it has to be `page.mouse`, not a
+    // dispatched `pointerdown`/`pointerup` pair that directive was never listening for in the
+    // first place — both real bugs this test had been silently not exercising at all.
+    const firstCard = page.locator('.df-grid.body-grid .df-grid.card[data-idx]').first();
+    await firstCard.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(200); // let the scroll itself settle before reading a box off it
+    const box = await firstCard.boundingBox();
+    if (!box) throw new Error('first mounted row-anchor has no box');
+
+    // Not asserted on the first attempt: on a busy machine a synthetic 1000ms-threshold hold can
+    // occasionally miss its window for reasons that have nothing to do with the grid (a paused
+    // event loop delays when the timer's callback actually runs, same as it would delay a real
+    // user's own hold), and re-pressing after that is indistinguishable from a real user trying
+    // again. The geometry check below is the point of this test; retrying the gesture just gets
+    // it into the state that check needs.
+    let isSelectionActive = false;
+    /* eslint-disable no-await-in-loop -- each retry must follow the previous attempt's result */
+    for (let attempt = 0; attempt < 8 && !isSelectionActive; attempt++) {
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.waitForTimeout(150);
+      await page.mouse.down();
+      await page.waitForTimeout(1_800); // longpress.ts's default threshold is 1000ms
+      await page.mouse.up();
+      await page.waitForTimeout(500);
+      isSelectionActive = await page.evaluate(() => !!document.querySelector('.df-grid.container.selection'));
+    }
+    /* eslint-enable no-await-in-loop */
+
+    expect(isSelectionActive, `${mode}: long-press did not activate selection mode after 8 attempts`).toBe(true);
 
     await expectGridConsistent(page, `${mode} selection`);
   });

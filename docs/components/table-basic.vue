@@ -15,7 +15,7 @@
       key-field="id"
       :show-filter-row="true"
       :show-status-bar="false"
-      :estimated-row-height="90"
+      :estimated-row-height="estimatedRowHeight"
       @click="(data) => console.log('click:', data)"
       @sort="(data) => console.log('sort:', data)"
     >
@@ -204,6 +204,19 @@ const columnsResponsive: ResponsiveColumnDefinitions = [
 ];
 
 const activeColumDef = ref('three-row');
+
+// `estimatedRowHeight` is a single value shared by every responsive layout, but the layouts
+// themselves have wildly different real row heights (single-line ~26px, three-row ~90px,
+// single-column ~340px, since it stacks all thirteen fields into one column). Windowing falls
+// back to this estimate for every not-yet-measured row, so a mismatched estimate makes it
+// misjudge how many records a given scrolled distance actually covers — on a fast scroll through
+// still-unmeasured rows this can land the mounted window far from the real viewport, showing
+// nothing but spacer until the layout's own measured heights catch up. Keeping one estimate per
+// layout, reactive to which one is active, keeps that misjudgement bounded to ordinary rounding
+// error instead.
+const estimatedRowHeightByLayout: Record<string, number> = { 'single-line': 26, 'three-row': 90, 'single-column': 340 };
+const estimatedRowHeight = computed(() => estimatedRowHeightByLayout[activeColumDef.value] ?? 90);
+
 const fullScreenClass = ref('');
 const fullScreenButtonText = computed(
   () => (fullScreenClass.value === '' ? 'Stretch grid to window' : "restore grid to original size"),
@@ -309,6 +322,21 @@ function addRows(count: number) {
   border-radius: 6px;
 }
 
+/*
+ * The header and filter row are, unlike a real row's anchor, themselves the grid container that
+ * receives the body grid's own copied `grid-template-columns` — a `border` (unlike an `outline`)
+ * is part of the box model, so it would shrink their own content box by 2px below what that
+ * copied, border-free pixel list assumes is available, overflowing the row by exactly the border
+ * width and drifting the header/body columns out of alignment further right, one border's worth
+ * at a time. `outline` draws the same visual line without taking part in the box model at all.
+ */
+:deep(.df-grid.card.header),
+:deep(.df-grid.card.filter-row) {
+  border:          none;
+  outline:         1px solid #808080ff;
+  outline-offset:  -1px;
+}
+
 :deep(.df-grid.body-grid.single-column) {
   grid-template-columns: auto;
 }
@@ -323,39 +351,45 @@ function addRows(count: number) {
  * the same explicit, record-relative placement the anchor gets. There is no name shared by every
  * field to select on (two columns here are both named `year`), so this keys off child position
  * instead: a record's cells are its row-anchor's next thirteen siblings, in column declaration
- * order, so under `.body-grid` (real rows) `:nth-child(2)` is the first field, `:nth-child(3)` the
- * second, and so on. The header and filter row have no row-anchor of their own — each is just the
- * thirteen cells directly — so the same field is one child position earlier there.
+ * order, so under a real record's own wrapper (`.df-anchored`) `:nth-child(2)` is the first field,
+ * `:nth-child(3)` the second, and so on. Three other places render this same field list with no
+ * row-anchor of their own — the header, the filter row, and the hidden clone `df-grid.vue` measures
+ * the body grid's own header-width contribution from — so the same field is one child position
+ * earlier there; each carries `df-unanchored` instead. The two markers key off the cell's own
+ * *immediate* wrapper rather than some ancestor further up (`.body-grid`, say) precisely because
+ * the hidden clone lives inside `.body-grid` too: keying off that ancestor would make both rule
+ * sets match its cells at once, with whichever pairing has one more class in its selector chain
+ * winning by specificity regardless of which one is actually correct for that wrapper.
  */
 :deep(.df-record-grid.single-column .df-grid.cell) {
   grid-column: 1 / 2 !important;
 }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(2)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(1))  { grid-row: calc(var(--row-base) + 1); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(3)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(2))  { grid-row: calc(var(--row-base) + 2); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(4)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(3))  { grid-row: calc(var(--row-base) + 3); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(5)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(4))  { grid-row: calc(var(--row-base) + 4); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(6)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(5))  { grid-row: calc(var(--row-base) + 5); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(7)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(6))  { grid-row: calc(var(--row-base) + 6); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(8)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(7))  { grid-row: calc(var(--row-base) + 7); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(9)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(8))  { grid-row: calc(var(--row-base) + 8); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(10)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(9))  { grid-row: calc(var(--row-base) + 9); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(11)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(10)) { grid-row: calc(var(--row-base) + 10); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(12)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(11)) { grid-row: calc(var(--row-base) + 11); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(13)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(12)) { grid-row: calc(var(--row-base) + 12); }
-:deep(.df-grid.body-grid.single-column .df-grid.cell:nth-child(14)),
-:deep(.df-record-grid.single-column:not(.body-grid) .df-grid.cell:nth-child(13)) { grid-row: calc(var(--row-base) + 13); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(2)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(1))  { grid-row: calc(var(--row-base) + 1); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(3)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(2))  { grid-row: calc(var(--row-base) + 2); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(4)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(3))  { grid-row: calc(var(--row-base) + 3); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(5)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(4))  { grid-row: calc(var(--row-base) + 4); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(6)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(5))  { grid-row: calc(var(--row-base) + 5); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(7)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(6))  { grid-row: calc(var(--row-base) + 6); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(8)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(7))  { grid-row: calc(var(--row-base) + 7); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(9)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(8))  { grid-row: calc(var(--row-base) + 8); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(10)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(9))  { grid-row: calc(var(--row-base) + 9); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(11)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(10)) { grid-row: calc(var(--row-base) + 10); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(12)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(11)) { grid-row: calc(var(--row-base) + 11); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(13)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(12)) { grid-row: calc(var(--row-base) + 12); }
+:deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(14)),
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(13)) { grid-row: calc(var(--row-base) + 13); }
 
 /* --- single-line: 13 columns; first column auto-sizes (0 when cell hidden, ~1.5em when visible) --- */
 :deep(.df-grid.body-grid.single-line) {
@@ -372,32 +406,32 @@ function addRows(count: number) {
 :deep(.df-record-grid.single-line .df-grid.cell) {
   grid-row: calc(var(--row-base) + 1) !important;
 }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(2)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(1))  { grid-column: 1; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(3)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(2))  { grid-column: 2; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(4)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(3))  { grid-column: 3; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(5)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(4))  { grid-column: 4; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(6)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(5))  { grid-column: 5; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(7)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(6))  { grid-column: 6; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(8)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(7))  { grid-column: 7; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(9)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(8))  { grid-column: 8; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(10)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(9))  { grid-column: 9; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(11)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(10)) { grid-column: 10; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(12)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(11)) { grid-column: 11; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(13)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(12)) { grid-column: 12; }
-:deep(.df-grid.body-grid.single-line .df-grid.cell:nth-child(14)),
-:deep(.df-record-grid.single-line:not(.body-grid) .df-grid.cell:nth-child(13)) { grid-column: 13; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(2)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(1))  { grid-column: 1; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(3)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(2))  { grid-column: 2; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(4)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(3))  { grid-column: 3; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(5)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(4))  { grid-column: 4; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(6)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(5))  { grid-column: 5; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(7)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(6))  { grid-column: 6; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(8)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(7))  { grid-column: 7; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(9)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(8))  { grid-column: 8; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(10)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(9))  { grid-column: 9; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(11)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(10)) { grid-column: 10; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(12)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(11)) { grid-column: 11; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(13)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(12)) { grid-column: 12; }
+:deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(14)),
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(13)) { grid-column: 13; }
 
 /* --- selection checkbox cell: hidden by default; shown when selection is active --- */
 :deep(.df-grid.cell._selection) {

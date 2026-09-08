@@ -14,7 +14,7 @@
         :item="headerItem"
         :columns="headerOptions"
         :renderers="DefaultRenderers"
-        :class="['df-grid', 'card', 'header', 'df-record-grid', gridClass]"
+        :class="['df-grid', 'card', 'header', 'df-record-grid', 'df-unanchored', gridClass]"
         :style="headerRowBaseVars(rowsPerRecord)"
         data-pk="header"
         data-idx="header"
@@ -24,7 +24,7 @@
     <!-- Filter row -->
     <div
       v-if="showFilterRow"
-      class="df-grid card filter-row df-record-grid"
+      class="df-grid card filter-row df-record-grid df-unanchored"
       data-section="filter"
       :class="gridClass"
       :style="headerRowBaseVars(rowsPerRecord)"

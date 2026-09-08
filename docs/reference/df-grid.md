@@ -287,9 +287,11 @@ example `grid.querySelector('.df-grid.card[data-pk="42"]')`.
 Every row is a direct item of one shared grid, `.df-grid.body-grid` (a sibling of the grid container's other
 children, carrying the active responsive layout's `cssClass`) — not its own independent grid the way it was before.
 Your stylesheet makes `.df-grid.body-grid` a grid and gives it a base track template; the grid reads the resulting
-natively-resolved column widths off it, publishes them as the `--grid-template-columns` custom property on the grid
-container, and applies them to the header (which sits outside the body grid and can't itself be a native item of
-it) with `grid-template-columns: var(--grid-template-columns) !important`.
+natively-resolved column widths and gap off it, publishes them as the `--grid-template-columns` and
+`--grid-column-gap` custom properties on the grid container, and applies both to the header and filter row (which
+sit outside the body grid and can't themselves be native items of it) with `grid-template-columns:
+var(--grid-template-columns) !important` and `column-gap: var(--grid-column-gap) !important`. You never need to
+repeat your `gap` declaration for them — and doing so would have no effect, since the copied value always wins.
 
 ```css
 .my-grid .df-grid.body-grid {
@@ -310,6 +312,18 @@ cell an explicit `grid-row` relative to `calc(var(--row-base) + N)` rather than 
 record's cells on the same shared grid, `grid-row: 2` would put every record's second row on the very same physical
 row instead of each record getting its own band. `--row-base` (`recordIndex * rows`) is published per record
 automatically; you don't set it yourself.
+
+Selecting a field by name (`.df-grid.cell.title`) works for placement rules as long as every field in that layout
+has a distinct name. If two columns share a field name (say, the same field rendered twice with different
+`transform`s), key your rule off the cell's position among its record's siblings instead: `.df-grid.card` (a real
+record's row-anchor) is always immediately followed by that record's cells, so `:nth-child(2)` is the first field,
+`:nth-child(3)` the second, and so on. The header, filter row, and the hidden clone that feeds the header's own
+column widths render the same field list with no row-anchor of their own, so the same field is one child position
+earlier there — each of those three carries a `df-unanchored` class for exactly that reason, so a rule can be
+written once as `.df-anchored .df-grid.cell:nth-child(N+1), .df-unanchored .df-grid.cell:nth-child(N)` rather than
+assuming any particular ancestor is or isn't `.df-grid.body-grid`. See the `single-column`/`single-line` layouts in
+the [Full-featured Demo](https://github.com/dynamicforms/vue-grid/blob/main/docs/components/table-basic.vue)'s
+source for a complete, worked example.
 
 ### CSS custom properties
 
