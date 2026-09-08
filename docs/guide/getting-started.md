@@ -56,7 +56,7 @@ const records = [
 </script>
 
 <style>
-.df-grid.body-grid {
+.df-record-grid {
   display:               grid;
   grid-template-columns: minmax(2em, 4em) 1fr 1fr;
   gap:                   0.25em;
@@ -66,16 +66,18 @@ const records = [
 
 ::: warning The `<style>` block above is required, not optional polish
 The template and script alone render every cell stacked on its own line, one per row of text, not a table — the
-grid has no fallback layout of its own. `.df-grid.body-grid` has to be `display: grid` with a track per column
+grid has no fallback layout of its own. `.df-record-grid` has to be `display: grid` with a track per column
 before anything lines up. See [Card layout CSS](#card-layout-css) below for why.
 :::
 
 ## Card layout CSS
 
-The grid's own layout comes from your own stylesheet, as set above — make `.df-grid.body-grid` a grid and give it a
-base track list, one track per column; the grid reads the actual (natively-resolved) widths and republishes them
-onto the header for you. Each cell carries its column's `fieldName` as a CSS class, so you can target individual
-columns by name once the base grid is in place:
+The grid's own layout comes from your own stylesheet, as set above — make `.df-record-grid` a grid and give it a
+base track list, one track per column; the grid reads the body's actual (natively-resolved) widths and republishes
+them onto the header for you. `.df-record-grid` is the marker every place that lays out a record's fields carries —
+the real scrolling body, the header, and the filter row alike — so this one declaration covers all three, instead
+of just the body. Each cell carries its column's `fieldName` as a CSS class, so you can target individual columns
+by name once the base grid is in place:
 
 ```css
 .df-grid.cell.id { text-align: right; }

@@ -1,6 +1,11 @@
 <template>
   <div class="df-grid-shadow-clip" v-bind="wrapperAttrs">
-    <div ref="shadowGridRef" class="df-grid shadow-grid card body-grid df-record-grid" :class="attrs.class">
+    <div
+      ref="shadowGridRef"
+      class="df-grid shadow-grid card body-grid df-record-grid"
+      :class="attrs.class"
+      :style="sizeStyle"
+    >
       <grid-card
         v-for="item in idxAndItem()"
         :key="`${item[keyField]}`"
@@ -26,6 +31,7 @@ import { ColumnDefinition } from '../columns';
 import GridCard from './grid-card.vue';
 import { useHeaderContent } from './header-content';
 import { ShadowGridMeasurements } from './shadow-grid-types';
+import { computeLineHeightPx, lineCountFromHeights, median } from './shadow-metrics';
 
 // The measured grid (the inner div, not the component root) carries a `body-grid` class
 // alongside the caller's own layout class (e.g. `three-row`, passed as `class` on the
@@ -49,19 +55,24 @@ export interface GridProps {
   offset: number;
   keyField: string;
   selectionActive?: boolean;
+  // 'max-content' (default) measures each field's natural, unwrapped width — today's behaviour.
+  // 'min-content' forces every field to wrap at every opportunity instead, which df-grid.vue uses
+  // to read how many lines each sampled row's content actually needs at that narrowest width.
+  sizeTo?: 'max-content' | 'min-content';
 }
 
-const props = defineProps<GridProps>();
+const props = withDefaults(defineProps<GridProps>(), { sizeTo: 'max-content' });
 // The following dereference is necessary because vue 3.4 SSR renderer messes up the v-memo generation
 const { keyField } = toRefs(props);
 const columnKey = computed(() => props.columns.map((c) => c.fieldName).join(','));
+const sizeStyle = computed(() => (props.sizeTo === 'min-content' ? { width: 'min-content' } : undefined));
 
 interface Emits {
   (e: 'onmeasure', value: ShadowGridMeasurements): any;
 }
 const emits = defineEmits<Emits>();
 const { headerContentVNodes } = useHeaderContent();
-const shadowGridRef = ref();
+const shadowGridRef = ref<HTMLElement | null>(null);
 
 const attrs = useAttrs();
 const wrapperAttrs = computed(() => omit(attrs, 'class'));
@@ -76,7 +87,7 @@ function checkShadowGridColumns(): Promise<void> {
 
   return new Promise((resolve) => {
     const attempt = () => {
-      const computedStyle = window.getComputedStyle(shadowGridRef.value);
+      const computedStyle = window.getComputedStyle(shadowGridRef.value!);
       const columnWidths = computedStyle.getPropertyValue('grid-template-columns');
 
       // `grid-template-columns` reads back as its initial value, "none", for the one frame
@@ -89,13 +100,55 @@ function checkShadowGridColumns(): Promise<void> {
         return;
       }
 
-      const totalWidth = Math.ceil(Number.parseFloat(computedStyle.getPropertyValue('width').replace('px', '')));
+      // Firefox has been observed under-reporting a min-content grid's own resolved `width` when
+      // it contains items with overlapping column spans (e.g. one field spanning tracks 1-4
+      // alongside others spanning subsets of the same tracks) — the grid's computed width comes
+      // back narrower than a child cell's own rendered width, i.e. content silently overflows the
+      // box rather than growing it, which a min-content box is defined never to allow. `scrollWidth`
+      // reflects the actual required width regardless of that mis-sizing, so it's used as a floor.
+      const styleWidth = Number.parseFloat(computedStyle.getPropertyValue('width').replace('px', ''));
+      const totalWidth = Math.ceil(Math.max(styleWidth, shadowGridRef.value!.scrollWidth));
+      const fieldGroups = groupCellsByField();
 
-      emits('onmeasure', { totalWidth, columnWidths });
+      if (props.sizeTo === 'min-content') {
+        const fieldCompactMetrics: Record<string, { minContentWidth: number; medianLines: number }> = {};
+        fieldGroups.forEach((cells, field) => {
+          const lineHeights = cells.map((cell) => computeLineHeightPx(cell));
+          const lineCounts = cells.map((cell, i) => lineCountFromHeights(cell.scrollHeight, lineHeights[i]));
+          fieldCompactMetrics[field] = {
+            minContentWidth: cells[0].getBoundingClientRect().width,
+            medianLines: median(lineCounts),
+          };
+        });
+        emits('onmeasure', { totalWidth, columnWidths, fieldCompactMetrics });
+      } else {
+        const fieldMaxWidths: Record<string, number> = {};
+        fieldGroups.forEach((cells, field) => {
+          fieldMaxWidths[field] = cells[0].getBoundingClientRect().width;
+        });
+        emits('onmeasure', { totalWidth, columnWidths, fieldMaxWidths });
+      }
       resolve();
     };
     attempt();
   });
+}
+
+// Every rendered cell carries its own field name as a CSS class (see use-formatted-data.ts) — a
+// direct classList match, rather than a dynamic `.field-name` selector, avoids needing to escape
+// field names that aren't valid bare CSS identifiers.
+function groupCellsByField(): Map<string, HTMLElement[]> {
+  const groups = new Map<string, HTMLElement[]>();
+  const fieldNames = props.columns.map((c) => c.fieldName);
+  const cells = shadowGridRef.value!.querySelectorAll<HTMLElement>('.df-grid.cell');
+  cells.forEach((cell) => {
+    const field = fieldNames.find((f) => cell.classList.contains(f));
+    if (!field) return;
+    const list = groups.get(field);
+    if (list) list.push(cell);
+    else groups.set(field, [cell]);
+  });
+  return groups;
 }
 
 function* idxAndItem() {

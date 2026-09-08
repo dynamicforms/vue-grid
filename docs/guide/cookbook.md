@@ -248,20 +248,21 @@ const columnsResponsive: ResponsiveColumnDefinitions = [
 ];
 ```
 
-Real rows are direct items of one shared grid — the track template goes on the grid *container*
-(`.df-grid.body-grid`, carrying the active layout's `cssClass`), not on `.df-grid.card`, which is
-just the row-anchor now (see [Card layout CSS](/reference/df-grid#card-layout-css)). Give `wide`
-one track per column, and pin `bio` to its own full-width row underneath the rest — relative to
-the record via `--row-base`, since every record's cells share the same grid and an absolute
+Real rows are direct items of one shared grid, and the header and filter row are laid out identically alongside it
+— style `.df-record-grid` (carrying the active layout's `cssClass`), not `.df-grid.body-grid`, so the track template
+and cell placement apply to all three instead of just the real scrolling body (see
+[Card layout CSS](/reference/df-grid#card-layout-css)). `.df-grid.card` is just the row-anchor, not something to
+place tracks or cells on. Give `wide` one track per column, and pin `bio` to its own full-width row underneath the
+rest — relative to the record via `--row-base`, since every record's cells share the same grid and an absolute
 `grid-row: 2` would put every record's second row on the same physical line:
 
 ```css
-.df-grid.body-grid.wide {
+.df-record-grid.wide {
   display: grid;
   grid-template-columns: 3em 1fr 1fr 6em;
   gap: 0.25em;
 }
-.df-grid.body-grid.wide .df-grid.cell.bio {
+.df-record-grid.wide .df-grid.cell.bio {
   grid-column: 1 / -1;
   grid-row: calc(var(--row-base) + 2);
 }
@@ -272,11 +273,11 @@ span and row have to be cancelled explicitly, since CSS class selectors are addi
 to the same cell elements when `narrow` is active:
 
 ```css
-.df-grid.body-grid.narrow {
+.df-record-grid.narrow {
   display: grid;
   grid-template-columns: auto;
 }
-.df-grid.body-grid.narrow .df-grid.cell {
+.df-record-grid.narrow .df-grid.cell {
   grid-column: 1 / 2 !important;
   grid-row: auto !important;
   grid-area: auto !important;

@@ -136,7 +136,7 @@ test.describe('scroll integrity', () => {
   for (const layout of ['three-row', 'single-column'] as const) {
     test(`sustained scrolling through ${layout} never leaves a mounted row visibly blank`, async ({ page }) => {
       // three-row is the demo's default at this width; single-column needs a narrow one.
-      await gotoGrid(page, layout === 'three-row' ? 1400 : 480);
+      await gotoGrid(page, layout === 'three-row' ? 1400 : 400);
       const activeLayout = await page.evaluate(
         () => (document.querySelector('.df-grid.body-grid')!.className.match(/single-line|three-row|single-column/) ?? [])[0],
       );

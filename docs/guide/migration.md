@@ -5,7 +5,7 @@
 Every row moved from being its own independent CSS grid to being a direct item of one shared
 grid. This changes what your row/card CSS has to target.
 
-### Move the grid declaration off `.df-grid.card`
+### Move the grid declaration off `.df-grid.card`, onto `.df-record-grid`
 
 Before, `.df-grid.card` was itself `display: grid`:
 
@@ -17,19 +17,30 @@ Before, `.df-grid.card` was itself `display: grid`:
 }
 ```
 
-Now the grid lives on `.df-grid.body-grid` — the shared container all rows are items of.
-`.df-grid.card` is the row-anchor: a styleable but otherwise-empty box (zebra background, border,
-selection highlight), not a grid container.
+Now the grid lives on `.df-record-grid` — the marker every place that lays out a record's fields
+carries: the real scrolling body, the header, and the filter row alike. `.df-grid.card` is the
+row-anchor: a styleable but otherwise-empty box (zebra background, border, selection highlight),
+not a grid container.
 
 ```css
-.my-grid .df-grid.body-grid {
+.my-grid .df-record-grid {
   display: grid;
   grid-template-columns: 3.5em 1fr 1fr 3em;
   gap: 0.1em 0.5em;
 }
 ```
 
-If your layout is responsive, target `.df-grid.body-grid.<layoutCssClass>` the same way you
+`.df-grid.body-grid` still exists — it's the real scrolling body specifically, not a synonym for
+`.df-record-grid` — but a rule written only against it, for something that should look the same
+everywhere (the track template, `gap`, `font-size`), is exactly how the header and filter row end
+up silently out of step with the body: they sit outside the body's own scroller and can never be
+native items of it, so they need the identical declaration on their own, separate boxes. Reach for
+`.df-grid.body-grid` only when a rule is meant for the real scrolling body and nowhere else — a
+responsive layout's own per-record cell-placement rules are the main example, since the header and
+filter row use a different, offset placement scheme (see
+[Card layout CSS](/reference/df-grid#card-layout-css) for the `df-anchored`/`df-unanchored` detail).
+
+If your layout is responsive, target `.df-record-grid.<layoutCssClass>` the same way you
 previously targeted `.df-grid.card.<layoutCssClass>`.
 
 ### Multi-row cards need `rows` and relative `grid-row` placement
@@ -61,9 +72,11 @@ now have to be explicit:
    .df-grid.cell.id     { grid-column: 1; grid-row: calc(var(--row-base) + 2); }
    ```
 
-`--row-base` (`recordIndex * rows`) is published automatically per record — you read it, you
-don't set it. See [Card layout CSS](/reference/df-grid#card-layout-css) and the
-[Cookbook](/guide/cookbook#a-responsive-multi-row-card-layout) for a full worked example.
+`--row-base` is published automatically per record — you read it, you don't set it. It advances by
+`rows` from one mounted record to the next; it is not the record's own index in your dataset (see
+[Card layout CSS](/reference/df-grid#card-layout-css) for why), so don't compute or compare it
+yourself. See the [Cookbook](/guide/cookbook#a-responsive-multi-row-card-layout) for a full worked
+example.
 
 ### `mainShadowCount` is gone
 
@@ -74,7 +87,7 @@ purpose.
 Two new props take its place for a related but different concern — how many rows stay mounted for
 smooth scrolling and for native column auto-sizing to have a representative sample:
 
-- `minRenderedRows` (default `30`) — records kept mounted on each side of the visible range.
+- `minRenderedRows` (default `100`) — records kept mounted on each side of the visible range.
 - `estimatedRowHeight` (default `30`) — assumed height for a not-yet-rendered record, sizing the
   placeholder standing in for windowed-out rows. Set this close to your actual row height; the
   grid does not average measured heights to refine it for you.

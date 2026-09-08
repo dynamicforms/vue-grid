@@ -60,14 +60,18 @@
         scrollHeight reflects the estimated true total height — everything downstream that reads
         scroll geometry (the load-threshold check, the scrollbar-width measurement) keeps working
         unmodified because the browser is doing real layout on a real box, not because any of it
-        knows about windowing.
+        knows about windowing. Deliberately a single grid row line regardless of how many records
+        it stands in for — its `min-height` carries their combined estimated height instead of a
+        `span` matching their count, which would need as many grid row lines as the full dataset
+        (`records.length * rowsPerRecord`) and run into Firefox's ~10,000-implicit-row ceiling on
+        any large enough dataset. See use-row-placement.ts.
         -->
         <div
           v-if="windowing.start.value > 0"
           class="df-grid-row-spacer"
           :style="{
             gridColumn: '1 / -1',
-            gridRow: `1 / span ${windowing.start.value * uColumns.rowsPerRecord.value}`,
+            gridRow: '1 / span 1',
             minHeight: `${windowing.topSpacerHeight.value}px`,
           }"
         />
@@ -80,11 +84,11 @@
         only reach the row through an ancestor that actually carries the attribute.
         -->
         <div
-          v-for="{ item, index } in mountedItems"
+          v-for="{ item, index, windowIndex } in mountedItems"
           :key="item[keyField]"
           class="df-anchored"
           style="display: contents"
-          :style="rowBaseVars(index, uColumns.rowsPerRecord.value)"
+          :style="rowBaseVars(windowIndex, uColumns.rowsPerRecord.value, topSpacerRowOffset)"
           :data-pk="item[keyField]"
           :data-idx="index"
         >
@@ -167,6 +171,11 @@
       we only render secondary shadows once (v-if="!shadowMeasurements[colsDef.name]") to get ballpark width figures.
       This will cause issues when switching among the dynamic layouts because the initial render might have been
       too narrow. This may be mitigated by increasing secondaryShadowCount
+
+      Two passes per layout: one at max-content (today's natural, unwrapped width) and one at
+      min-content (forces every field to wrap at every opportunity, so the median line count each
+      field's sampled rows actually need can be read off it). shadowMeasurements[colsDef.name] is
+      only finalized once both have reported — see onShadowMeasure.
       -->
       <shadow-grid
         v-if="!shadowMeasurements[colsDef.name]"
@@ -178,7 +187,20 @@
         :offset="secondaryShadowOffset"
         :class="colsDef.cssClass"
         :key-field="keyField"
-        @onmeasure="(event) => (shadowMeasurements[colsDef.name] = event.totalWidth)"
+        @onmeasure="(event) => onShadowMeasure(colsDef.name, 'maxContent', event)"
+      />
+      <shadow-grid
+        v-if="!shadowMeasurements[colsDef.name]"
+        style="right: auto"
+        size-to="min-content"
+        :records="sortedRecords"
+        :columns="colsDef.columnRenderOptsInternal.value"
+        :renderers="DefaultRenderers"
+        :count="secondaryShadowCount!"
+        :offset="secondaryShadowOffset"
+        :class="colsDef.cssClass"
+        :key-field="keyField"
+        @onmeasure="(event) => onShadowMeasure(colsDef.name, 'compact', event)"
       />
     </div>
   </div>
@@ -198,7 +220,15 @@ import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
 import type { GridEmits, GridProps } from './df-grid-types';
 import ExcessiveScroll from './excessive-scroll.vue';
-import { GridCard, headerRowBaseVars, rowBaseVars, ShadowGrid, useHeaderContent } from './helpers';
+import {
+  GridCard,
+  headerRowBaseVars,
+  rowBaseVars,
+  ShadowGrid,
+  ShadowGridMeasurements,
+  useHeaderContent,
+} from './helpers';
+import { computeLayoutTargetWidth } from './helpers/shadow-metrics';
 import IncomingArc from './incoming-arc.vue';
 import { useSelection } from './selection';
 import { translatableStrings } from './translations';
@@ -215,7 +245,7 @@ const props = withDefaults(defineProps<GridProps>(), {
   rowClass: (_item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
   selectionMode: null,
   estimatedRowHeight: 30,
-  minRenderedRows: 30,
+  minRenderedRows: 100,
 });
 const emit = defineEmits<GridEmits>();
 
@@ -238,7 +268,21 @@ const {
 } = useSorting(props, filterEmitWrapper, uColumns, filteredRecords);
 
 const headerRef = ref();
-const shadowMeasurements: Record<string, any> = {};
+const shadowMeasurements: Record<string, number> = {};
+const shadowRawMeasurements: Record<string, { maxContent?: ShadowGridMeasurements; compact?: ShadowGridMeasurements }> =
+  {};
+function onShadowMeasure(name: string, kind: 'maxContent' | 'compact', event: ShadowGridMeasurements) {
+  const raw = (shadowRawMeasurements[name] ??= {});
+  raw[kind] = event;
+  if (raw.maxContent && raw.compact) {
+    shadowMeasurements[name] = computeLayoutTargetWidth(
+      raw.maxContent.totalWidth,
+      raw.compact.totalWidth,
+      raw.maxContent.fieldMaxWidths ?? {},
+      raw.compact.fieldCompactMetrics ?? {},
+    );
+  }
+}
 const bodyGridRef = ref<HTMLElement | null>(null);
 const containerRef = ref<HTMLElement | null>(null);
 
@@ -258,12 +302,19 @@ const mountedItems = computed(() =>
   sortedRecords.value.slice(windowing.start.value, windowing.end.value).map((item, i) => ({
     item,
     index: windowing.start.value + i,
+    windowIndex: i,
   })),
 );
+// The top spacer, when rendered, occupies exactly one grid row line (its `min-height` — not its
+// row span — is what stands in for everything scrolled past above it), so every mounted record's
+// own row-base has to shift down by that one line too, or the first mounted record would overlap
+// it. Kept at 0 when there's nothing scrolled past yet, so a fully-mounted (unwindowed) dataset
+// places its first record at row-base 0 exactly as before.
+const topSpacerRowOffset = computed(() => (windowing.start.value > 0 ? 1 : 0));
 const bottomSpacerGridRow = computed(() => {
-  const startRow = windowing.end.value * uColumns.rowsPerRecord.value + 1;
-  const rowSpan = (sortedRecords.value.length - windowing.end.value) * uColumns.rowsPerRecord.value;
-  return `${startRow} / span ${rowSpan}`;
+  const visibleRows = (windowing.end.value - windowing.start.value) * uColumns.rowsPerRecord.value;
+  const startRow = topSpacerRowOffset.value + visibleRows + 1;
+  return `${startRow} / span 1`;
 });
 
 // A single shared ResizeObserver measures each mounted row-anchor's real height, feeding the

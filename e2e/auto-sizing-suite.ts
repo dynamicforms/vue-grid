@@ -283,7 +283,7 @@ export function autoSizingSuite(mode: string, expectScrollbar: (width: number) =
     await page.setViewportSize({ width: 900, height: 800 });
     await page.waitForTimeout(1_000);
 
-    await page.setViewportSize({ width: 480, height: 800 });
+    await page.setViewportSize({ width: 400, height: 800 });
     await page.waitForTimeout(1_500);
     await waitForStableWidth(page, '.df-grid.container');
     const narrow = await expectGridConsistent(page, `${mode} narrow`);
@@ -299,6 +299,13 @@ export function autoSizingSuite(mode: string, expectScrollbar: (width: number) =
 
   test(`[${mode}] entering selection mode keeps the columns consistent`, async ({ page }) => {
     await gotoGrid(page);
+    // This test exercises three-row's own long-press/selection handling specifically — the
+    // project's default viewport (1280x720) no longer lands there on its own once three-row's
+    // own minimum width grew wide enough to make single-column the better fit at that width, so
+    // the width needed to reach three-row is pinned explicitly rather than left to chance.
+    await page.setViewportSize({ width: 1600, height: 800 });
+    await page.waitForTimeout(1_500);
+    await waitForStableWidth(page, '.df-grid.container');
 
     // Scoped to `.body-grid` — an unscoped `[data-idx]` query matches the header row first (its
     // own `data-idx` is the string "header"), and the `longpress` directive only ever listens for

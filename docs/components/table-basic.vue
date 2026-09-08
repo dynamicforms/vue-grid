@@ -111,7 +111,7 @@ const columns = [
     filterable: { fieldType: 'number' }
   }),
   createColumn('duration', 'Duration', 'plain', { cssClass: 'text-right', filterable: { fieldType: 'date' } }), // TODO refactor to time
-  createColumn('genres', 'Genres', 'plain', { filterable: true }),
+  createColumn('genres', 'Genres', 'plain', { filterable: true, rendererOptions: { transform: (v: string[]) => v.join(', ') } }),
   createColumn('rating', 'Rating', 'int', { cssClass: 'text-right', filterable: { fieldType: 'number' } }),
   createColumn('favorite', 'Favorite', 'checkbox', {
     rendererOptions: {
@@ -129,7 +129,7 @@ const columns = [
     },
   }),
   createColumn('play_count', 'Play count', 'int', { cssClass: 'text-right', filterable: { fieldType: 'number' } }),
-  createColumn('moods', 'Moods', 'plain', { filterable: true }),
+  createColumn('moods', 'Moods', 'plain', { filterable: true, rendererOptions: { transform: (v: string[]) => v.join(', ') } }),
   createColumn('language', 'Languages', 'plain', { filterable: { choices: languagesMap } }),
   createColumn('actions', 'Delete', 'plain', {
     filterable: false,
@@ -304,9 +304,22 @@ function addRows(count: number) {
  * selection highlight, and something for click handling to `.closest()` onto.
  */
 
-/* --- three-row: 7 columns (no selection) --- */
+/*
+ * --- three-row: 7 columns (no selection) ---
+ * Tracks 2-4 host title/artist/genres/moods — the free-text fields with no natural upper bound
+ * on how long their content can be. `minmax(12em, 1fr)` lets each claim leftover space on a wide
+ * screen (no ceiling, no chosen number) while being free to shrink toward wrapping under
+ * pressure, instead of a bare `auto` track's max-content sizing, which never wraps at all and
+ * just keeps growing with whatever the longest sampled value happens to be. The `12em` floor is a
+ * demo-only, empirically-tuned choice (a lower value measured no effect on when the layout
+ * switches) — it belongs on these tracks, not as a `min-width` on the cells that span them: an
+ * item's own `min-width` has to fight the grid's track-sizing algorithm to expand the tracks it
+ * spans, and can lose that fight and simply overflow past them into a neighbouring column
+ * instead, whereas a track's own `minmax` floor is exactly what the sizing algorithm is already
+ * built to honour.
+ */
 :deep(.df-record-grid.three-row) {
-  grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em) minmax(min-content, max-content);
+  grid-template-columns: minmax(2em, 4em) repeat(3, minmax(12em, 1fr)) minmax(2em, 4em) minmax(2em, 8em) minmax(min-content, max-content);
 }
 
 /*

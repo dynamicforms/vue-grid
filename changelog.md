@@ -9,20 +9,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Every row is now a direct item of one shared `display: grid` (`.df-grid.body-grid`) instead of
-  being its own independent grid, and column widths are resolved by the browser natively instead
-  of being measured on a hidden shadow-grid copy and broadcast via a CSS variable. Consuming CSS
-  that declared `.df-grid.card { display: grid; grid-template-columns: ...; }` must move that
-  declaration to `.df-grid.body-grid` instead — `.df-grid.card` is now the row-anchor: a styleable
-  but otherwise empty box, not a grid container. Multi-row card layouts (more than one row of
-  fields per record) must additionally declare `rows` on their `ResponsiveColumnDefinition` and
-  give every cell an explicit `grid-row: calc(var(--row-base) + N)` rather than an absolute row
+- Every row is now a direct item of one shared `display: grid` instead of being its own
+  independent grid, and column widths are resolved by the browser natively instead of being
+  measured on a hidden shadow-grid copy and broadcast via a CSS variable. Consuming CSS that
+  declared `.df-grid.card { display: grid; grid-template-columns: ...; }` must move that
+  declaration to `.df-record-grid` instead — the marker every place that lays out a record's
+  fields carries (the real scrolling body, the header, and the filter row alike), so one
+  declaration covers all three instead of just the body. `.df-grid.card` is now the row-anchor: a
+  styleable but otherwise empty box, not a grid container. Multi-row card layouts (more than one
+  row of fields per record) must additionally declare `rows` on their `ResponsiveColumnDefinition`
+  and give every cell an explicit `grid-row: calc(var(--row-base) + N)` rather than an absolute row
   number — plain CSS auto-placement has no notion of record boundaries once rows share a grid. See
   [Card layout CSS](https://dynamicforms.github.io/vue-grid/reference/df-grid#card-layout-css) and
   the [Cookbook](https://dynamicforms.github.io/vue-grid/guide/cookbook#a-responsive-multi-row-card-layout).
 - Row virtualization no longer depends on `@pdanpdan/virtual-scroll` (dropped as a peer
   dependency); windowing is now a small internal composable with the same externally-visible
   behaviour (`load`, `recentlyAdded`'s viewport signal, the scrollbar-width measurement).
+
+### Fixed
+
+- The secondary shadow grids used to pick which responsive layout is active could report a
+  layout's required width as far wider than it actually needs, whenever that layout's columns
+  have no fixed upper bound (e.g. free-text fields laid out with `auto` or `fr` tracks): the
+  measurement was always taken at each field's natural, single-line width, so one long sampled
+  value could make an otherwise-comfortable layout look too wide to pick, falling back to a
+  narrower one than necessary. Each candidate is now also measured with every field forced to wrap
+  at every opportunity, and the median number of lines the sample actually wraps into — not the
+  worst case — shrinks the reported width back down for fields whose typical content wraps
+  comfortably, so a rare long outlier no longer forces the whole layout to look wider than it
+  needs to be. No API changed; layouts using unbounded `auto`/`fr` tracks for free-text columns
+  are simply picked more accurately.
+- A record's `--row-base` and the windowing spacers' `grid-row` were computed from the record's
+  absolute index in the full dataset (`recordIndex * rows`), so the number of CSS grid row lines
+  actually referenced grew with the dataset's total size rather than with how many rows were
+  mounted. Firefox stops generating further implicit grid row tracks past roughly 10,000 of them,
+  silently collapsing every row beyond that onto the same line — on a large enough dataset (around
+  3,300 records for a three-row layout, fewer for a layout with more rows per record), every row
+  scrolled past that point rendered on top of the last working one. `--row-base` is now computed
+  from a record's position within the currently-mounted window instead, which keeps the grid lines
+  actually used bounded by `minRenderedRows` regardless of the dataset's total size. Chromium was
+  not observed to have this limit, so this was invisible there.
 
 ### Added
 
@@ -31,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   close to your actual row height, since the grid does not average measured heights to refine
   this for you.
 - `minRenderedRows` prop: minimum number of records kept mounted on each side of the visible
-  range. Default `30`, replacing the removed `mainShadowCount`.
+  range. Default `100`, replacing the removed `mainShadowCount`.
 - `rows` field on `ResponsiveColumnDefinition`: declares how many grid rows that layout's card
   occupies per record (default `1`), needed for the relative `--row-base` cell placement above.
 

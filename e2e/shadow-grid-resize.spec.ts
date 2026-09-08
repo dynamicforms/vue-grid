@@ -107,7 +107,7 @@ test.describe('shadow-grid — container resize', () => {
     await gotoGrid(page, 1600);
     const countBefore = await shadowGridCount(page);
 
-    await page.setViewportSize({ width: 480, height: 800 });
+    await page.setViewportSize({ width: 400, height: 800 });
     await page.waitForTimeout(1_500);
     await waitForStableWidth(page, '.df-grid.container');
 

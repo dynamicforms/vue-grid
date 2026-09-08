@@ -47,7 +47,7 @@ export interface GridProps extends SelectionProps {
    * Minimum number of records rendered outside the strictly visible range, on each side (i.e. a
    * buffer above and below the viewport) — smooths scrolling, and keeps enough real rows mounted
    * for the shared grid's native column auto-sizing to have a representative sample.
-   * @default 30
+   * @default 100
    */
   minRenderedRows?: number;
 

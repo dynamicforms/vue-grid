@@ -17,6 +17,10 @@
  *  - a container resize re-measures the (still-real) secondary shadow grids and selects the
  *    widest responsive layout that still fits — this mechanism is unchanged by the single-grid
  *    migration, only the primary/per-row measurement was removed;
+ *  - each layout's reported width is adjusted by per-field savings computed from a second,
+ *    min-content shadow pass (see shadow-metrics.spec.ts for the underlying math) before the
+ *    picker ever sees it, so a field whose typical content wraps comfortably doesn't force a
+ *    layout to look wider than it needs to be;
  *  - the width the body scroller reserves for its vertical scrollbar is measured (not assumed)
  *    and published as `--df-grid-scrollbar-width`, which is what keeps the header — which sits
  *    outside the scroller — aligned with the body columns.
@@ -32,12 +36,22 @@ import { defineComponent, h, nextTick, ref } from 'vue';
 
 import DfGrid from './df-grid.vue';
 
-const { scrollerBox, resizeCallback, measuredColumnWidths } = vi.hoisted(() => ({
+const { scrollerBox, resizeCallback, measuredColumnWidths, fieldMetricsOverride } = vi.hoisted(() => ({
   // What the mocked body scroller reports: a border box wider than its content box means the
   // scrollbar takes up space, an equal one means it does not (overlay scrollbars).
   scrollerBox: { offsetWidth: 615, clientWidth: 600 },
   resizeCallback: { fn: null as ResizeObserverCallback | null },
   measuredColumnWidths: { value: '200px 100px' },
+  // Lets one test drive the mocked shadow grids' per-field measurements, to check that a
+  // layout's field-level savings actually reach the width-based layout picker. Left null the
+  // rest of the time, in which case both passes report empty field metrics and the picker sees
+  // exactly the widths it always has.
+  fieldMetricsOverride: {
+    current: null as null | {
+      fieldMaxWidths: Record<string, number>;
+      fieldCompactMetrics: Record<string, { minContentWidth: number; medianLines: number }>;
+    },
+  },
 }));
 
 vi.mock('vue-cached-icon', () => ({ CachedIcon: { name: 'CachedIcon', template: '<i/>' } }));
@@ -55,10 +69,11 @@ vi.mock('./helpers', async (importOriginal) => {
       template: '<div class="grid-card"/>',
     },
 
-    // Stands in for the secondary (per-layout) shadow grids: reports a total width of 100px per
-    // column, so that a layout with more columns needs a wider container — which is what drives
-    // the layout-selection tests below. No longer used for the body's own column widths — those
-    // come from `window.getComputedStyle` on the body grid element directly (mocked below).
+    // Stands in for the secondary (per-layout) shadow grids. Each layout now gets two of these —
+    // one measuring at max-content (unwrapped), one at min-content (fully wrapped) — so a layout
+    // with more columns needs a wider container at either pass, which is what drives the
+    // layout-selection tests below. No longer used for the body's own column widths — those come
+    // from `window.getComputedStyle` on the body grid element directly (mocked below).
     ShadowGrid: defineComponent({
       name: 'ShadowGrid',
       props: {
@@ -68,10 +83,18 @@ vi.mock('./helpers', async (importOriginal) => {
         count: { type: Number, default: 0 },
         offset: { type: Number, default: 0 },
         keyField: { type: String, default: '' },
+        sizeTo: { type: String, default: 'max-content' },
       },
       emits: ['onmeasure'],
       setup(props, { expose, emit }) {
-        const payload = () => ({ totalWidth: props.columns.length * 100, columnWidths: '' });
+        const payload = () => {
+          const compact = props.sizeTo === 'min-content';
+          const totalWidth = props.columns.length * (compact ? 20 : 100);
+          const columnWidths = '';
+          return compact
+            ? { totalWidth, columnWidths, fieldCompactMetrics: fieldMetricsOverride.current?.fieldCompactMetrics ?? {} }
+            : { totalWidth, columnWidths, fieldMaxWidths: fieldMetricsOverride.current?.fieldMaxWidths ?? {} };
+        };
         expose({ reMeasure: () => emit('onmeasure', payload()) });
         return () => {
           nextTick(() => emit('onmeasure', payload()));
@@ -159,6 +182,7 @@ describe('DfGrid — column auto-sizing', () => {
     scrollerBox.clientWidth = 600;
     measuredColumnWidths.value = '200px 100px';
     resizeCallback.fn = null;
+    fieldMetricsOverride.current = null;
 
     const getPropertyValue = (prop: string) =>
       prop === 'grid-template-columns' ? measuredColumnWidths.value : '600px';
@@ -267,6 +291,22 @@ describe('DfGrid — column auto-sizing', () => {
       await resizeContainer(wrapper, 300);
 
       expect(wrapper.emitted('update:activeColumns')).toBeUndefined();
+    });
+
+    it("picks a layout the field-savings-adjusted width fits, that the raw max-content width wouldn't", async () => {
+      // 'wide' raw max-content total is 400 (4 columns * 100). A field reporting a large
+      // min-content/median-lines saving should let it fit into a container that couldn't have
+      // held the unadjusted 400.
+      fieldMetricsOverride.current = {
+        fieldMaxWidths: { name: 100 },
+        fieldCompactMetrics: { name: { minContentWidth: 20, medianLines: 1 } },
+      };
+      const wrapper = mountGrid({ activeColumns: 'narrow' });
+      await settle();
+
+      await resizeContainer(wrapper, 350); // narrower than wide's raw 400, wider than its adjusted total
+
+      expect(wrapper.emitted('update:activeColumns')?.at(-1)).toEqual(['wide']);
     });
   });
 

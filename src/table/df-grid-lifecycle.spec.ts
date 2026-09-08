@@ -199,6 +199,48 @@ describe('DfGrid — lifecycle', () => {
     });
   });
 
+  describe('windowed row placement', () => {
+    // Firefox stops generating further implicit CSS grid row tracks past roughly 10,000 of
+    // them, silently collapsing every row beyond that onto the same line — a record's `--row-base`
+    // and the spacers' `grid-row` are keyed off its position within the mounted window, not its
+    // absolute index in the full dataset, specifically so the grid line numbers actually used stay
+    // bounded by the window size regardless of how large the dataset or how deep the scroll
+    // position is. See use-row-placement.ts.
+    it('keeps --row-base and the spacer grid-row small however deep into a huge dataset the window is', async () => {
+      const bigRecords = Array.from({ length: 10_000 }, (_, i) => ({ id: i, name: `Row ${i}` }));
+      const wrapper = mountGrid({ records: bigRecords });
+      await settle();
+
+      const bodyGrid = wrapper.element.querySelector('.body-grid') as HTMLElement;
+      // estimatedRowHeight defaults to 30 and nothing has been measured yet, so recompute()'s own
+      // scan uses that uniformly — this scrollTop lands the mounted window around record 5000.
+      Object.defineProperty(bodyGrid, 'scrollHeight', { configurable: true, value: 10_000 * 30 });
+      Object.defineProperty(bodyGrid, 'clientHeight', { configurable: true, value: 100 });
+      Object.defineProperty(bodyGrid, 'scrollTop', { configurable: true, value: 5_000 * 30 });
+      bodyGrid.dispatchEvent(new Event('scroll'));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 120);
+      });
+      await settle();
+
+      // A generous bound: comfortably above what any reasonable minRenderedRows buffer needs,
+      // comfortably below the ~5,000 a window-position-agnostic (absolute record index) formula
+      // would have produced for a window sitting this deep into a 10,000-record dataset.
+      const maxSaneRowLine = 1_000;
+
+      const anchors = Array.from(wrapper.element.querySelectorAll('.df-anchored')) as HTMLElement[];
+      expect(anchors.length).toBeGreaterThan(0);
+      const rowBases = anchors.map((el) => Number(el.style.getPropertyValue('--row-base')));
+      expect(Math.max(...rowBases)).toBeLessThan(maxSaneRowLine);
+
+      const spacers = Array.from(wrapper.element.querySelectorAll('.df-grid-row-spacer')) as HTMLElement[];
+      expect(spacers.length).toBe(2); // window sits well clear of both ends of the dataset
+      spacers.forEach((el) => {
+        expect(Number.parseInt(el.style.gridRow, 10)).toBeLessThan(maxSaneRowLine);
+      });
+    });
+  });
+
   describe('teardown', () => {
     it('stops observing the container', async () => {
       const wrapper = mountGrid();

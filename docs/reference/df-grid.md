@@ -26,7 +26,7 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `loading` | `boolean` | `false` |
 | `secondaryShadowCount` | `number` | `30` |
 | `estimatedRowHeight` | `number` | `30` |
-| `minRenderedRows` | `number` | `30` |
+| `minRenderedRows` | `number` | `100` |
 | `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | zebra striping (`'even'`/`'odd'`) |
 | `selectionMode` | `SelectionMode` | `null` |
 | `selectionKeys` | `Set<any>` | — |
@@ -169,12 +169,12 @@ Access these through a template ref on `<df-grid>`.
 
 | Method | Returns | Description |
 |--------|---------|-------------|
-| `reMeasure()` | `Promise<void>` | Re-measures column widths off the shadow grid and copies them onto the container. |
+| `reMeasure()` | `Promise<void>` | Re-reads the body grid's own natively-resolved column widths and republishes them onto the header. |
 
-`reMeasure()` — forces the same column-width measurement a container resize triggers automatically,
-for layout changes the grid has no way to detect on its own — for example a column's rendered
-content changing width without the container itself resizing. The returned promise resolves once
-the new widths have actually reached the container, not merely once they were measured.
+`reMeasure()` — forces the same header re-sync a container resize triggers automatically, for
+layout changes the grid has no way to detect on its own — for example a column's rendered content
+changing width without the container itself resizing. The returned promise resolves once the new
+widths have actually reached the header, not merely once they were read.
 
 ```vue
 <script setup lang="ts">
@@ -322,8 +322,11 @@ If a layout places more than one row per record (a card with several stacked row
 `rows` on that `ResponsiveColumnDefinition` (default `1`) — see [Column Definitions](./columns) — and give every
 cell an explicit `grid-row` relative to `calc(var(--row-base) + N)` rather than an absolute row number: with every
 record's cells on the same shared grid, `grid-row: 2` would put every record's second row on the very same physical
-row instead of each record getting its own band. `--row-base` (`recordIndex * rows`) is published per record
-automatically; you don't set it yourself.
+row instead of each record getting its own band. `--row-base` is published per record automatically; you don't set
+it yourself, and it isn't the record's own index in your dataset — it advances by `rows` from one *mounted* record
+to the next, so the grid lines a large dataset actually uses stay bounded by how many rows are mounted at once
+rather than growing with the dataset's total size (Firefox stops generating further implicit grid row tracks past
+roughly 10,000 of them, silently collapsing anything past that onto the same line).
 
 Selecting a field by name (`.df-grid.cell.title`) works for placement rules as long as every field in that layout
 has a distinct name. If two columns share a field name (say, the same field rendered twice with different
@@ -339,13 +342,13 @@ source for a complete, worked example.
 
 ### CSS custom properties
 
-Both properties are set on the grid container (`.df-grid.container`) and can be read from your own rules.
+Read from your own rules; only `--row-base` isn't set on the grid container itself (see below).
 
 | Property | Value |
 |----------|-------|
-| `--grid-template-columns` | The body grid's own natively-resolved track list, in pixels, copied onto the header with `grid-template-columns: var(--grid-template-columns) !important`. |
-| `--row-base` | Set per record (and on the hidden header clone that feeds column widths) on an ancestor of that record's cells; `recordIndex * rows`. Read it in your own `grid-row` rules for multi-row layouts — see above. |
-| `--df-grid-scrollbar-width` | The width, in pixels, that the body scroller actually reserves for its vertical scrollbar — measured as the scroller's `offsetWidth` minus its `clientWidth`, and re-measured on every container resize. It is `0` on platforms with overlay scrollbars. The header pads itself by this amount so its columns stay aligned with the body columns they label. |
+| `--grid-template-columns` | Set on `.df-grid.container`. The body grid's own natively-resolved track list, in pixels, copied onto the header with `grid-template-columns: var(--grid-template-columns) !important`. |
+| `--row-base` | Set per record (and on the hidden header clone that feeds column widths) on an ancestor of that record's cells, not on the container. Advances by `rows` from one mounted record to the next — not the record's own dataset index, see above. Read it in your own `grid-row` rules for multi-row layouts. |
+| `--df-grid-scrollbar-width` | Set on `.df-grid.container`. The width, in pixels, that the body scroller actually reserves for its vertical scrollbar — measured as the scroller's `offsetWidth` minus its `clientWidth`, and re-measured on every container resize. It is `0` on platforms with overlay scrollbars. The header pads itself by this amount so its columns stay aligned with the body columns they label. |
 
 ## Row CSS classes
 
