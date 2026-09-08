@@ -16,7 +16,7 @@ hero:
       link: /guide/changelog
 features:
   - title: Virtual Scrolling
-    details: Handles large datasets efficiently using @pdanpdan/virtual-scroll — only visible rows are rendered
+    details: Handles large datasets efficiently — only rows within (and a small buffer around) the visible viewport are mounted
   - title: Responsive Layouts
     details: Define multiple column layouts; the grid automatically activates the best fit based on container width
   - title: Sorting & Filtering
@@ -31,7 +31,7 @@ A (not so) simple, (but hopefully) fast Vue 3 grid component with virtual scroll
 
 ## Introduction
 
-`@dynamicforms/vue-grid` provides a single `<DfGrid>` component that renders large tabular datasets efficiently. Column widths are measured automatically via shadow grids, responsive layouts switch based on container width, and sorting and filtering work out of the box — locally or delegated to a backend.
+`@dynamicforms/vue-grid` provides a single `<DfGrid>` component that renders large tabular datasets efficiently. Real rows share one CSS grid, so the browser resolves column widths natively from actual content; responsive layouts switch based on container width, and sorting and filtering work out of the box — locally or delegated to a backend.
 
 ## Next steps
 
