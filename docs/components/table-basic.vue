@@ -305,12 +305,21 @@ function addRows(count: number) {
  */
 
 /* --- three-row: 7 columns (no selection) --- */
-:deep(.df-grid.body-grid.three-row) {
+:deep(.df-record-grid.three-row) {
   grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em) minmax(min-content, max-content);
 }
 
-/* --- base shared-grid layout --- */
-:deep(.df-grid.body-grid) {
+/*
+ * Base shared-grid layout — `display`, `gap`, `font-size` and the fallback `grid-template-columns`
+ * belong here, on `.df-record-grid`, not on `.df-grid.body-grid`: `.df-record-grid` is the marker
+ * every place that lays out a record's fields carries — the real body grid, the header, and the
+ * filter row — so one declaration is naturally enough for all three. Only the resolved pixel track
+ * list actually needs the header/filter's own JS-driven `!important` override on top of this
+ * (it depends on the body's real, measured content — no static CSS value could substitute for
+ * that); a static per-layout choice like `gap` never needed a JS copy step in the first place,
+ * that was solving a problem this selector already solves on its own.
+ */
+:deep(.df-record-grid) {
   display:               grid;
   grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em) repeat(7, auto);
   gap:                   .25em;
@@ -337,7 +346,7 @@ function addRows(count: number) {
   outline-offset:  -1px;
 }
 
-:deep(.df-grid.body-grid.single-column) {
+:deep(.df-record-grid.single-column) {
   grid-template-columns: auto;
 }
 
@@ -392,7 +401,7 @@ function addRows(count: number) {
 :deep(.df-unanchored.single-column .df-grid.cell:nth-child(13)) { grid-row: calc(var(--row-base) + 13); }
 
 /* --- single-line: 13 columns; first column auto-sizes (0 when cell hidden, ~1.5em when visible) --- */
-:deep(.df-grid.body-grid.single-line) {
+:deep(.df-record-grid.single-line) {
   grid-template-columns: max-content repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
 }
 

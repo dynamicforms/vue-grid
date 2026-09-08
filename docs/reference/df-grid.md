@@ -284,22 +284,34 @@ example `grid.querySelector('.df-grid.card[data-pk="42"]')`.
 
 ## Card layout CSS
 
-Every row is a direct item of one shared grid, `.df-grid.body-grid` (a sibling of the grid container's other
-children, carrying the active responsive layout's `cssClass`) — not its own independent grid the way it was before.
-Your stylesheet makes `.df-grid.body-grid` a grid and gives it a base track template; the grid reads the resulting
-natively-resolved column widths and gap off it, publishes them as the `--grid-template-columns` and
-`--grid-column-gap` custom properties on the grid container, and applies both to the header and filter row (which
-sit outside the body grid and can't themselves be native items of it) with `grid-template-columns:
-var(--grid-template-columns) !important` and `column-gap: var(--grid-column-gap) !important`. You never need to
-repeat your `gap` declaration for them — and doing so would have no effect, since the copied value always wins.
+Every row is a direct item of one shared grid, `.df-grid.body-grid` — not its own independent grid the way it was
+before. The header and filter row, though, sit outside the body scroller and can never themselves be native items of
+it, so they need to keep being their own little grid, laid out identically. Rather than write your grid CSS three
+times (or, worse, only once and have the other two silently drift), style `.df-record-grid` instead of
+`.df-grid.body-grid` — every one of the three carries it, so one declaration covers all three:
 
 ```css
-.my-grid .df-grid.body-grid {
+.my-grid .df-record-grid {
   display: grid;
   grid-template-columns: 3.5em 1fr 1fr 3em;
   gap: 0.1em 0.5em;
 }
 ```
+
+Column widths are the one exception you don't (and can't) set this way: unlike `gap` or `font-size`, they aren't a
+static choice you make once — they depend on the body grid's real content, resolved natively by the browser. The
+grid reads that resolution off the body grid, publishes it as the `--grid-template-columns` custom property on the
+grid container, and applies it to the header and filter row with `grid-template-columns:
+var(--grid-template-columns) !important`, overriding whatever static fallback your `.df-record-grid` rule gave them.
+Everything else you put on `.df-record-grid` — `gap`, `font-size`, whatever else — applies to all three as-is,
+with no copying involved.
+
+Reach for `.df-grid.body-grid` specifically only when you want a rule to apply to the real scrolling body and
+nowhere else (the responsive layout's own per-record cell-placement rules below are the main example, since the
+header and filter row use a different placement scheme entirely — see the `df-anchored`/`df-unanchored` paragraph
+further down). For anything that should look the same in all three, `.df-record-grid` is almost always what you
+want, and `.df-grid.body-grid` is not a safe substitute for it — writing a rule only against `.df-grid.body-grid` is
+exactly how the header/filter row end up silently out of step with the body.
 
 `.df-grid.card` — the row-anchor — is what's left for you to style per row: it's an otherwise-empty box spanning
 the record's full column and row span, there for zebra striping, borders, and selection highlight, and for

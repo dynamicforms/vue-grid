@@ -4,7 +4,7 @@
     v-longpress="($event) => processMouse('longpress', $event)"
     class="df-grid container d-flex flex-column"
     :class="{ selection: isSelectionActive, exclusion: uSelection.selectionMode.value === 'exclusion' }"
-    :style="[`--${templateColumns}`, `--${templateColumnGap}`, { '--df-grid-scrollbar-width': `${scrollbarWidth}px` }]"
+    :style="[`--${templateColumns}`, { '--df-grid-scrollbar-width': `${scrollbarWidth}px` }]"
     @mousedown="
       ($event) => {
         if ($event.shiftKey && !props.recentlyAdded?.isAdding.value) $event.preventDefault();
@@ -222,7 +222,6 @@ const emit = defineEmits<GridEmits>();
 const gridId = Symbol('df-grid');
 const secondaryShadowOffset = ref(0);
 const templateColumns = ref('');
-const templateColumnGap = ref('');
 
 const uColumns = useColumns(props, gridId);
 
@@ -348,29 +347,21 @@ watch(isSelectionActive, async () => {
 // so it can't participate in the body grid's own native column auto-sizing. Its columns are kept
 // aligned by reading the body grid's own computed `grid-template-columns` (now resolved natively,
 // from real row content — no shadow grid involved) and broadcasting it onto the header via a CSS
-// variable, exactly the width the body actually settled on. The column gap has to travel the same
-// way: it is consumer CSS, declared on whatever selector the consumer's own stylesheet happens to
-// key its `.df-grid.body-grid` rule off, which has no reason to also match the header/filter row
-// (their own marker class is `df-record-grid`, not `body-grid` — see the shared-grid CSS
-// migration guide). Assuming the header will separately pick up the same gap the consumer meant
-// for the body is exactly the kind of assumption that quietly drifts every column's alignment
-// further right toward the end of the row; reading it from the body and copying it, the same way
-// the column widths themselves are copied, does not depend on the consumer's selector choices.
+// variable, exactly the width the body actually settled on. Nothing else needs this treatment:
+// gap, font-size and the rest are static design choices a consumer makes once, not data read off
+// real content, so a shared selector (`.df-record-grid`, carried by the body grid, the header and
+// the filter row alike — see the shared-grid CSS migration guide) already applies them uniformly
+// without any JS involved. Column widths are the one property that can't be written as a plain
+// CSS value in the first place, because there is no static value to write — only the body grid's
+// own native resolution produces one.
 function readBodyColumns(): string | null {
   if (!bodyGridRef.value) return null;
   const columnWidths = window.getComputedStyle(bodyGridRef.value).getPropertyValue('grid-template-columns');
   return columnWidths && columnWidths !== 'none' ? columnWidths : null;
 }
-function readBodyColumnGap(): string | null {
-  if (!bodyGridRef.value) return null;
-  const gap = window.getComputedStyle(bodyGridRef.value).getPropertyValue('column-gap');
-  return gap || null;
-}
 const syncHeaderColumns = throttle(() => {
   const columnWidths = readBodyColumns();
-  const columnGap = readBodyColumnGap();
   if (columnWidths) templateColumns.value = `grid-template-columns: ${columnWidths}`;
-  if (columnGap) templateColumnGap.value = `grid-column-gap: ${columnGap}`;
 }, 100);
 
 const vsCompatRef = computed(() => ({ $el: bodyGridRef.value }));
@@ -539,24 +530,19 @@ defineExpose({
 .df-grid.container .df-grid.card.header,
 .df-grid.container .df-grid.card.filter-row {
   /*
-   * The header and filter row are structurally separate boxes (outside the body scroller, each
-   * other's siblings rather than body-grid items) so neither can be a native item of the body
-   * grid — unlike a real row's cells, their own `display: grid` has to be declared here rather
-   * than coming from whatever consumer CSS happens to style `.df-grid.body-grid`. Their columns
-   * are kept aligned with the body's own natively-sized columns by copying the body's resolved
-   * pixel widths here — and the gap between them has to travel the same way, for the same reason:
-   * a consumer's own `gap` declaration is written against whatever selector matches their real
-   * body grid, which has no particular reason to also match the header/filter row (their own
-   * marker class is `df-record-grid`, not `body-grid`). A missing or mismatched gap does not
-   * overflow anything the way a missing column width would, so it fails silently — each column
-   * past the first just lands a little further right than the one below it, worst at the last
-   * column, easy to miss until someone is looking directly at the alignment.
+   * `display: grid` here is a defensive baseline, not the only place it's declared — consumer CSS
+   * targeting `.df-record-grid` (carried by the body grid, the header and the filter row alike)
+   * is expected to set it too, along with every other structural property (gap, font-size, the
+   * layout's own base track list) that has one correct value shared by all three and no reason to
+   * involve JS. Column widths are the sole exception: unlike gap or font-size they are not a
+   * static design choice a consumer can just declare, only the body grid's own native resolution
+   * of real content produces a value — so that, and only that, still has to be measured off the
+   * body grid and copied across as a resolved pixel list, `!important` so it wins regardless of
+   * what static fallback `.df-record-grid` gave the header before this ran.
    */
   display: grid;
   /*noinspection CssUnresolvedCustomProperty*/
   grid-template-columns: var(--grid-template-columns) !important;
-  /*noinspection CssUnresolvedCustomProperty*/
-  column-gap: var(--grid-column-gap) !important;
 }
 .df-grid.container .body-grid .df-grid.card {
   /*
