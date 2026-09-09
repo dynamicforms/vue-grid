@@ -60,6 +60,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (still filling its grid area via `inset: 0`), removing it from auto-placement bookkeeping
   entirely; the clone gets its own permanently-reserved rows instead of sharing one with a real
   record, collapsed to zero height/padding/border so the reservation stays invisible.
+- The row-anchor (`.df-grid.card`) intercepted clicks meant for cell content underneath it: being
+  `position: absolute`, it is a stacking-context participant painted above its static in-flow
+  siblings by default, and nothing pulled it back behind them. The body grid now sets `isolation:
+  isolate` and the row-anchor `z-index: -1`, scoped to that grid's own children so it doesn't
+  affect stacking decisions further up the page.
+- `windowing.recompute()` could mount the wrong end of the dataset on first render: called before
+  the body grid has a real measured height, it read that as "scrolled past every record" and
+  clamped the window to the last `buffer` records instead of the first ones a fresh mount actually
+  needs, visible as the grid appearing to load already scrolled to the bottom until the user
+  scrolled or resized. It now mounts a `buffer`-sized window from the current scroll position
+  (usually still `0` this early) instead.
+- The header/filter row's cached height (`min-height`, used so it isn't left at `auto` and
+  resized by every scroll-driven reflow) could lock in a value taller than the header actually
+  needs and never correct itself: nothing re-measured it once the body grid's real column widths
+  arrived later, and a measurement taken while a filter-row input was still mid-layout could read
+  too tall in the first place. It now re-measures when column widths change and retries across a
+  few animation frames until two consecutive readings agree.
 
 ### Added
 

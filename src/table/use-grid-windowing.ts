@@ -53,6 +53,21 @@ export function useGridWindowing(options: GridWindowingOptions) {
       return;
     }
 
+    if (el.clientHeight <= 0) {
+      // Called before the container has a real measured height (e.g. the first recompute() at
+      // mount, ahead of layout settling) — there is no meaningful viewport to intersect records
+      // against. Treating this the same as "nothing intersects" below would clamp to the end of
+      // the dataset, mounting the wrong window until the next real recompute() (onUpdated fires
+      // on the very next render) corrects it. Assume instead that the current scrollTop (usually
+      // still 0, this early) is roughly where the real viewport will start, and mount a
+      // buffer-sized window from there — an approximation using the estimated row height, since
+      // no per-record height has been measured yet either.
+      const approxStart = Math.floor(el.scrollTop / (options.estimatedRowHeight.value || 1));
+      start.value = Math.max(0, Math.min(approxStart, records.length));
+      end.value = Math.min(records.length, start.value + options.buffer);
+      return;
+    }
+
     const viewTop = el.scrollTop;
     const viewBottom = viewTop + el.clientHeight;
 

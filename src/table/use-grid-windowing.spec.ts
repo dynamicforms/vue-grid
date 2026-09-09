@@ -127,6 +127,60 @@ describe('useGridWindowing', () => {
     expect(w.totalHeight.value).toBe(100 + 30 * 4);
   });
 
+  it('mounts a buffer-sized window from the current scroll position when not yet laid out', () => {
+    const records = ref(makeRecords(10_000));
+    const el = ref(makeEl(0, 0)); // clientHeight === 0: called before the container's first layout
+    const w = useGridWindowing({
+      records: computed(() => records.value),
+      keyField: 'id',
+      estimatedRowHeight: computed(() => 30),
+      bodyEl: el,
+      buffer: 100,
+    });
+
+    w.recompute();
+
+    // Must not be treated as "nothing intersects the viewport" (below) — that would clamp the
+    // window to the end of a 10 000-row list instead of a plausible guess near where scrollTop
+    // (0, here) actually is.
+    expect(w.start.value).toBe(0);
+    expect(w.end.value).toBe(100);
+  });
+
+  it('bases the not-yet-laid-out fallback window on a non-zero scrollTop too', () => {
+    const records = ref(makeRecords(10_000));
+    const el = ref(makeEl(3000, 0)); // scrolled to row 100 (3000 / 30), but still unlaid-out
+    const w = useGridWindowing({
+      records: computed(() => records.value),
+      keyField: 'id',
+      estimatedRowHeight: computed(() => 30),
+      bodyEl: el,
+      buffer: 10,
+    });
+
+    w.recompute();
+
+    expect(w.start.value).toBe(100);
+    expect(w.end.value).toBe(110);
+  });
+
+  it('clamps to the end of the dataset when scrolled past a shrinking record list', () => {
+    const records = ref(makeRecords(10));
+    const el = ref(makeEl(3000, 100)); // scrolled well past 10 rows at the estimated height
+    const w = useGridWindowing({
+      records: computed(() => records.value),
+      keyField: 'id',
+      estimatedRowHeight: computed(() => 30),
+      bodyEl: el,
+      buffer: 2,
+    });
+
+    w.recompute();
+
+    expect(w.start.value).toBe(8); // 10 - 2
+    expect(w.end.value).toBe(10);
+  });
+
   it('does not re-record an unchanged or invalid measurement', () => {
     const records = ref(makeRecords(3));
     const el = ref(makeEl(0, 400));

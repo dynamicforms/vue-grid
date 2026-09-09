@@ -417,10 +417,20 @@ function readBodyColumns(): string | null {
   const columnWidths = window.getComputedStyle(bodyGridRef.value).getPropertyValue('grid-template-columns');
   return columnWidths && columnWidths !== 'none' ? columnWidths : null;
 }
-const syncHeaderColumns = throttle(() => {
+function syncHeaderColumnsAttempt() {
   const columnWidths = readBodyColumns();
-  if (columnWidths) templateColumns.value = `grid-template-columns: ${columnWidths}`;
-}, 100);
+  if (columnWidths) {
+    templateColumns.value = `grid-template-columns: ${columnWidths}`;
+  } else if (bodyGridRef.value) {
+    // readBodyColumns() reads back empty/"none" for the one frame between the body grid existing
+    // in the DOM and its own grid-defining stylesheet rule taking effect (the same race
+    // checkShadowGridColumns() in shadow-grid.vue retries around) — retrying on the next frame
+    // catches it as soon as it resolves, rather than leaving templateColumns, and every consumer
+    // depending on it (the header's own remeasure among them), stuck at a stale value.
+    requestAnimationFrame(syncHeaderColumnsAttempt);
+  }
+}
+const syncHeaderColumns = throttle(syncHeaderColumnsAttempt, 100);
 
 const vsCompatRef = computed(() => ({ $el: bodyGridRef.value }));
 const { amount: excessiveScrollAmount } = useExcessiveScroll(
@@ -549,8 +559,11 @@ defineExpose({
   height: 100%;
   overflow-y: scroll;
   /* Containing block for the row-anchor's `position: absolute`, keeping its grid-area based
-     sizing resolved against this grid specifically rather than a further-up positioned ancestor. */
+     sizing resolved against this grid specifically rather than a further-up positioned ancestor.
+     `isolation: isolate` scopes its own negative `z-index` (see that rule) to comparing against
+     this grid's own children only, not bleeding into stacking decisions further up the page. */
   position: relative;
+  isolation: isolate;
   /*
    * Windowing changes the top/bottom spacers' height as rows scroll in and out and get their
    * real height measured — exactly the kind of content-size change CSS scroll anchoring exists
@@ -623,10 +636,14 @@ defineExpose({
    * columns instead of the intended track list. `inset: 0` (not `align-self`/`justify-self`, which
    * do not apply to absolutely positioned boxes) is what makes it fill that area regardless of
    * whatever `align-items`/`justify-items` a consumer sets on `.df-record-grid` to center cell
-   * content.
+   * content. Being absolutely positioned also makes this a stacking-context participant in its
+   * own right, painted (and hit-tested) *above* its static in-flow siblings — the cells — by
+   * default; without the negative `z-index` below, this otherwise-empty box would sit on top of
+   * real cell content and intercept clicks meant for it (a button rendered inside a cell, say).
    */
   position: absolute;
   inset: 0;
+  z-index: -1;
   grid-column: 1 / -1;
   grid-row: calc(var(--row-base) + 1) / span var(--rows-per-record);
 }

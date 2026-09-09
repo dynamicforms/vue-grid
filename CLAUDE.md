@@ -99,7 +99,38 @@ The row-anchor (`.df-grid.card`, spanning `1 / -1` in its row) is `position: abs
 identical reason: as a normal-flow item it would occupy every column of its row for auto-placement
 purposes, leaving no free cell for auto-placed cells to land in at all. Being absolutely positioned
 removes it from that bookkeeping entirely while `inset: 0` (not `align-self`/`justify-self`, which
-do not apply to absolutely positioned boxes) still fills its grid area exactly as before.
+do not apply to absolutely positioned boxes) still fills its grid area exactly as before. Being
+absolutely positioned also makes it a stacking-context participant painted above its static in-flow
+siblings (the cells) by default; `.df-grid-body .body-grid` sets `position: relative; isolation:
+isolate` and the row-anchor rule itself sets `z-index: -1` so it paints behind them instead of
+intercepting clicks meant for cell content.
+
+`windowing.recompute()` (`use-grid-windowing.ts`) can run before the body grid has a real measured
+height (`el.clientHeight <= 0`) — the very first call, ahead of the browser's first layout pass, is
+the common case. Its fallback for "nothing intersects the current viewport" clamps to the end of
+the dataset, which is correct once there's a genuine viewport to have scrolled past but wrong for
+this one: it would mount the last `buffer` records instead of the first ones a fresh mount actually
+needs. So `clientHeight <= 0` is handled separately — the window mounted is a `buffer`-sized range
+starting at the current `scrollTop` (usually still 0 this early), an approximation using
+`estimatedRowHeight` since no row has been measured yet either.
+
+Column widths reach `df-grid-header.vue`'s header/filter row via `--grid-template-columns`
+(inherited from the container), invisible to Vue's own reactivity — so `calcHeaderHeight()`
+(which caches the header's natural content height into `min-height`, since it can't be left at
+`auto` without letting scroll-driven reflows resize it every frame) has no dependency-based reason
+to re-run once those widths change after its first measurement. `templateColumns` is passed down as
+a prop for exactly that: `df-grid-header.vue` doesn't use its *value* (the widths still arrive via
+the CSS variable), only watches it as a change signal to know when to remeasure. A single
+measurement can itself still read a too-tall value if a filter-row input (a Vuetify component) is
+mid-layout at that exact synchronous point — `calcHeaderHeight()` retries once per animation frame
+until two consecutive readings agree, bounded so a genuinely still-changing layout can't retry
+forever. Those retries update the DOM's own `min-height` directly on every attempt but only commit
+to the reactive `headerHeight` (which the template's own `:style` binding also reads) once
+settled — otherwise every intermediate write would trigger `onUpdated()` again and start a new,
+concurrent settle chain on top of the one already running. `setHeaderContent()` (feeding the shadow
+grid's own measurement) is not covered by that same guard: it still runs on every `calcHeaderHeight()`
+call regardless of an in-flight settle, since holding it back would leave that unrelated consumer
+looking at stale header content for the whole settle window.
 
 ## The Playwright tests run, but not for coverage
 
