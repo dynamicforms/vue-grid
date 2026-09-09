@@ -1,96 +1,114 @@
 /**
  * @file df-grid-auto-sizing.spec.ts
  *
- * Tests the auto-sizing wiring in df-grid.vue: the grid never lets the browser resolve column
- * widths on the real rows. It renders a hidden shadow grid, reads the pixel track list the
- * browser resolved there, and copies it onto every row through `--grid-template-columns`.
+ * Tests the column-width wiring in df-grid.vue. Real rows are direct items of one shared
+ * `display:grid`, so the browser resolves their column widths natively — there is nothing to
+ * copy onto them. What still needs copying is the header's widths, since the header is a
+ * structurally separate box that can't itself be a native item of the body grid:
+ * `syncHeaderColumns` reads the body grid's own resolved `grid-template-columns` and publishes
+ * it via `--grid-template-columns`, which the header consumes.
  *
  * What is covered here
  * --------------------
- *  - the measured track list reaches the container, and stale widths are dropped when the
- *    active layout changes;
- *  - the exposed `reMeasure()` forces the same re-measurement without needing a resize, and its
- *    returned promise resolves only once the new widths have actually landed on the container;
- *  - a container resize re-measures the shadow and selects the widest layout that still fits;
+ *  - the body's resolved track list reaches the header via the container's CSS variable, and
+ *    stale widths are dropped when the active layout changes;
+ *  - the exposed `reMeasure()` forces the same re-sync without needing a resize, and its
+ *    returned promise resolves only once the new widths have actually landed;
+ *  - a container resize re-measures the (still-real) secondary shadow grids and selects the
+ *    widest responsive layout that still fits — this mechanism is unchanged by the single-grid
+ *    migration, only the primary/per-row measurement was removed;
+ *  - each layout's reported width is adjusted by per-field savings computed from a second,
+ *    min-content shadow pass (see shadow-metrics.spec.ts for the underlying math) before the
+ *    picker ever sees it, so a field whose typical content wraps comfortably doesn't force a
+ *    layout to look wider than it needs to be;
  *  - the width the body scroller reserves for its vertical scrollbar is measured (not assumed)
  *    and published as `--df-grid-scrollbar-width`, which is what keeps the header — which sits
  *    outside the scroller — aligned with the body columns.
  *
  * What is NOT covered here, and cannot be: whether the resulting layout is geometrically
  * correct. JSDOM has no layout engine, so every width in this file is one the mocks made up.
- * The geometry lives in e2e/auto-sizing-suite.ts, which measures a real browser.
+ * The geometry lives in the e2e suite, which measures a real browser.
  */
 
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { defineComponent, getCurrentInstance, h, nextTick, onMounted, ref } from 'vue';
+import { defineComponent, h, nextTick, ref } from 'vue';
 
 import DfGrid from './df-grid.vue';
 
-const { scrollerBox, resizeCallback, measuredColumnWidths } = vi.hoisted(() => ({
+const { scrollerBox, resizeCallback, measuredColumnWidths, fieldMetricsOverride, measuredRowGap } = vi.hoisted(() => ({
   // What the mocked body scroller reports: a border box wider than its content box means the
   // scrollbar takes up space, an equal one means it does not (overlay scrollbars).
   scrollerBox: { offsetWidth: 615, clientWidth: 600 },
   resizeCallback: { fn: null as ResizeObserverCallback | null },
   measuredColumnWidths: { value: '200px 100px' },
-}));
-
-vi.mock('@pdanpdan/virtual-scroll', () => ({
-  VirtualScroll: defineComponent({
-    name: 'MockVirtualScroll',
-    props: { items: { type: Array, default: () => [] }, loading: Boolean },
-    setup(props, { slots }) {
-      onMounted(() => {
-        const el = getCurrentInstance()!.proxy!.$el as HTMLElement;
-        Object.defineProperty(el, 'offsetWidth', { configurable: true, get: () => scrollerBox.offsetWidth });
-        Object.defineProperty(el, 'clientWidth', { configurable: true, get: () => scrollerBox.clientWidth });
-      });
-      return () =>
-        h('div', { class: 'virtual-scroll' }, [
-          ...(props.items as unknown[]).map((item, i) => h('div', { key: i }, slots.item?.({ item, index: i }))),
-        ]);
+  // What getComputedStyle(bodyGrid).rowGap reports — the reserved-block gap compensation reads
+  // this directly (not via getPropertyValue), unlike every other measurement in this file.
+  measuredRowGap: { value: '0px' },
+  // Lets one test drive the mocked shadow grids' per-field measurements, to check that a
+  // layout's field-level savings actually reach the width-based layout picker. Left null the
+  // rest of the time, in which case both passes report empty field metrics and the picker sees
+  // exactly the widths it always has.
+  fieldMetricsOverride: {
+    current: null as null | {
+      fieldMaxWidths: Record<string, number>;
+      fieldCompactMetrics: Record<string, { minContentWidth: number; medianLines: number }>;
     },
-  }),
+  },
 }));
 
 vi.mock('vue-cached-icon', () => ({ CachedIcon: { name: 'CachedIcon', template: '<i/>' } }));
 vi.mock('./df-grid-header.vue', () => ({ default: { name: 'DfGridHeader', template: '<div/>' } }));
 vi.mock('./excessive-scroll.vue', () => ({ default: { name: 'ExcessiveScroll', template: '<div/>' } }));
 
-vi.mock('./helpers', () => ({
-  GridCard: { name: 'GridCard', template: '<div class="grid-card"/>' },
-
-  // Stands in for the real shadow grid: reports a track list for the main shadow, and for the
-  // per-layout secondary shadows a total width of 100px per column, so that a layout with more
-  // columns needs a wider container - which is what drives the layout selection under test.
-  ShadowGrid: defineComponent({
-    name: 'ShadowGrid',
-    props: {
-      records: { type: Array, default: () => [] },
-      columns: { type: Array, default: () => [] },
-      renderers: { type: Object, default: () => ({}) },
-      count: { type: Number, default: 0 },
-      offset: { type: Number, default: 0 },
-      keyField: { type: String, default: '' },
-      selectionActive: { type: Boolean, default: false },
+vi.mock('./helpers', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./helpers')>();
+  return {
+    rowBaseVars: actual.rowBaseVars,
+    headerRowBaseVars: actual.headerRowBaseVars,
+    GridCard: {
+      name: 'GridCard',
+      props: ['item', 'columns', 'renderers', 'noWrapperItem'],
+      template: '<div class="grid-card"/>',
     },
-    emits: ['onmeasure'],
-    setup(props, { expose, emit }) {
-      const payload = () => ({
-        totalWidth: props.columns.length * 100,
-        columnWidths: measuredColumnWidths.value,
-      });
-      expose({ containerEl: document.createElement('div'), reMeasure: () => emit('onmeasure', payload()) });
-      return () => {
-        nextTick(() => emit('onmeasure', payload()));
-        return h('div', { class: 'shadow-grid' });
-      };
-    },
-  }),
 
-  ShadowGridMeasurements: {},
-  useHeaderContent: () => ({ provideHeaderContent: vi.fn() }),
-}));
+    // Stands in for the secondary (per-layout) shadow grids. Each layout now gets two of these —
+    // one measuring at max-content (unwrapped), one at min-content (fully wrapped) — so a layout
+    // with more columns needs a wider container at either pass, which is what drives the
+    // layout-selection tests below. No longer used for the body's own column widths — those come
+    // from `window.getComputedStyle` on the body grid element directly (mocked below).
+    ShadowGrid: defineComponent({
+      name: 'ShadowGrid',
+      props: {
+        records: { type: Array, default: () => [] },
+        columns: { type: Array, default: () => [] },
+        renderers: { type: Object, default: () => ({}) },
+        count: { type: Number, default: 0 },
+        offset: { type: Number, default: 0 },
+        keyField: { type: String, default: '' },
+        sizeTo: { type: String, default: 'max-content' },
+      },
+      emits: ['onmeasure'],
+      setup(props, { expose, emit }) {
+        const payload = () => {
+          const compact = props.sizeTo === 'min-content';
+          const totalWidth = props.columns.length * (compact ? 20 : 100);
+          const columnWidths = '';
+          return compact
+            ? { totalWidth, columnWidths, fieldCompactMetrics: fieldMetricsOverride.current?.fieldCompactMetrics ?? {} }
+            : { totalWidth, columnWidths, fieldMaxWidths: fieldMetricsOverride.current?.fieldMaxWidths ?? {} };
+        };
+        expose({ reMeasure: () => emit('onmeasure', payload()) });
+        return () => {
+          nextTick(() => emit('onmeasure', payload()));
+          return h('div', { class: 'shadow-grid' });
+        };
+      },
+    }),
+
+    useHeaderContent: () => ({ provideHeaderContent: () => ref([]) }),
+  };
+});
 
 vi.mock('./cell-renderers', () => ({
   DefaultRenderers: {},
@@ -153,36 +171,70 @@ const containerStyle = (wrapper: ReturnType<typeof mountGrid>) => wrapper.attrib
 // Tests
 // ---------------------------------------------------------------------------
 
+// The body grid's element is a plain div, not a mocked component instance — there's no
+// `onMounted` hook to hang a per-element `offsetWidth`/`clientWidth` override on. Patch the
+// prototype instead, conditioned on the `.body-grid` class, so the scrollbar-measurement code
+// (`el.offsetWidth - el.clientWidth`) sees the mocked scroller box for that one element and 0
+// for everything else.
+let offsetWidthDescriptor: PropertyDescriptor | undefined;
+let clientWidthDescriptor: PropertyDescriptor | undefined;
+
 describe('DfGrid — column auto-sizing', () => {
   beforeEach(() => {
     scrollerBox.offsetWidth = 615;
     scrollerBox.clientWidth = 600;
     measuredColumnWidths.value = '200px 100px';
     resizeCallback.fn = null;
+    fieldMetricsOverride.current = null;
 
+    measuredRowGap.value = '0px';
     const getPropertyValue = (prop: string) =>
       prop === 'grid-template-columns' ? measuredColumnWidths.value : '600px';
-    vi.spyOn(window, 'getComputedStyle').mockReturnValue({ getPropertyValue } as CSSStyleDeclaration);
+    vi.spyOn(window, 'getComputedStyle').mockImplementation(
+      () => ({ getPropertyValue, rowGap: measuredRowGap.value }) as unknown as CSSStyleDeclaration,
+    );
+
+    offsetWidthDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
+    clientWidthDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.classList.contains('body-grid') ? scrollerBox.offsetWidth : 0;
+      },
+    });
+    Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.classList.contains('body-grid') ? scrollerBox.clientWidth : 0;
+      },
+    });
 
     // vitest 4 requires a real function here since the mock is invoked with `new`
-    // eslint-disable-next-line prefer-arrow-callback, func-names
+
+    // df-grid.vue now creates two ResizeObservers on mount (the container's, then a shared one
+    // for row-anchor height measurement) — capture only the first (the container's), which is
+    // the one `resizeContainer()` below needs to drive.
     globalThis.ResizeObserver = vi.fn().mockImplementation(function (cb: ResizeObserverCallback) {
-      resizeCallback.fn = cb;
-      return { observe: vi.fn(), disconnect: vi.fn() };
+      if (!resizeCallback.fn) resizeCallback.fn = cb;
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
     });
   });
 
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    vi.restoreAllMocks();
+    if (offsetWidthDescriptor) Object.defineProperty(HTMLElement.prototype, 'offsetWidth', offsetWidthDescriptor);
+    if (clientWidthDescriptor) Object.defineProperty(HTMLElement.prototype, 'clientWidth', clientWidthDescriptor);
+  });
 
   describe('measured track list', () => {
-    it('copies the track list the shadow grid measured onto the container', async () => {
+    it("copies the body grid's natively-resolved track list onto the header", async () => {
       const wrapper = mountGrid();
       await settle();
 
       expect(containerStyle(wrapper)).toContain('--grid-template-columns: 200px 100px');
     });
 
-    it('picks up a new measurement when the shadow grid re-measures', async () => {
+    it('picks up a new measurement when the body grid re-settles', async () => {
       const wrapper = mountGrid({ activeColumns: 'wide' });
       await settle();
 
@@ -246,6 +298,22 @@ describe('DfGrid — column auto-sizing', () => {
 
       expect(wrapper.emitted('update:activeColumns')).toBeUndefined();
     });
+
+    it("picks a layout the field-savings-adjusted width fits, that the raw max-content width wouldn't", async () => {
+      // 'wide' raw max-content total is 400 (4 columns * 100). A field reporting a large
+      // min-content/median-lines saving should let it fit into a container that couldn't have
+      // held the unadjusted 400.
+      fieldMetricsOverride.current = {
+        fieldMaxWidths: { name: 100 },
+        fieldCompactMetrics: { name: { minContentWidth: 20, medianLines: 1 } },
+      };
+      const wrapper = mountGrid({ activeColumns: 'narrow' });
+      await settle();
+
+      await resizeContainer(wrapper, 350); // narrower than wide's raw 400, wider than its adjusted total
+
+      expect(wrapper.emitted('update:activeColumns')?.at(-1)).toEqual(['wide']);
+    });
   });
 
   describe('scrollbar reservation', () => {
@@ -274,6 +342,59 @@ describe('DfGrid — column auto-sizing', () => {
       await resizeContainer(wrapper, 600);
 
       expect(containerStyle(wrapper)).toContain('--df-grid-scrollbar-width: 15px');
+    });
+  });
+
+  describe('reserved-block gap compensation', () => {
+    const bodyGridStyle = (wrapper: ReturnType<typeof mountGrid>) =>
+      wrapper.find('.body-grid').attributes('style') ?? '';
+
+    it('shifts the scrollport up by rowsPerRecord × row-gap and grows it by the same amount', async () => {
+      measuredRowGap.value = '10px';
+      const wrapper = mountGrid();
+      await settle();
+
+      // Default rowsPerRecord is 1 — one gap between the reserved row and the first real one.
+      expect(bodyGridStyle(wrapper)).toContain('margin-top: -10px');
+      expect(bodyGridStyle(wrapper)).toContain('height: calc(100% + 10px)');
+    });
+
+    it('scales with rowsPerRecord for a multi-row-per-record layout', async () => {
+      measuredRowGap.value = '10px';
+      const wrapper = mountGrid({
+        columns: [{ ...responsiveColumns[0], rows: 3 }],
+        activeColumns: 'wide',
+      });
+      await settle();
+
+      expect(bodyGridStyle(wrapper)).toContain('margin-top: -30px');
+      expect(bodyGridStyle(wrapper)).toContain('height: calc(100% + 30px)');
+    });
+
+    it('applies no compensation when the consumer sets no gap', async () => {
+      measuredRowGap.value = '0px';
+      const wrapper = mountGrid();
+      await settle();
+
+      expect(bodyGridStyle(wrapper)).not.toContain('margin-top');
+    });
+
+    it('re-measures when the active layout (and so rowsPerRecord) changes', async () => {
+      measuredRowGap.value = '10px';
+      const wrapper = mountGrid({
+        columns: [
+          { ...responsiveColumns[0], rows: 3 },
+          { ...responsiveColumns[1], rows: 1 },
+        ],
+        activeColumns: 'wide',
+      });
+      await settle();
+      expect(bodyGridStyle(wrapper)).toContain('margin-top: -30px');
+
+      await wrapper.setProps({ activeColumns: 'narrow' });
+      await settle();
+
+      expect(bodyGridStyle(wrapper)).toContain('margin-top: -10px');
     });
   });
 });

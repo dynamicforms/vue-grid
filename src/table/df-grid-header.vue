@@ -14,14 +14,21 @@
         :item="headerItem"
         :columns="headerOptions"
         :renderers="DefaultRenderers"
-        :class="['df-grid', 'card', 'header', gridClass]"
+        :class="['df-grid', 'card', 'header', 'df-record-grid', 'df-unanchored', gridClass]"
+        :style="headerRowBaseVars(rowsPerRecord)"
         data-pk="header"
         data-idx="header"
       />
     </slot>
 
     <!-- Filter row -->
-    <div v-if="showFilterRow" class="df-grid card filter-row" data-section="filter" :class="gridClass">
+    <div
+      v-if="showFilterRow"
+      class="df-grid card filter-row df-record-grid df-unanchored"
+      data-section="filter"
+      :class="gridClass"
+      :style="headerRowBaseVars(rowsPerRecord)"
+    >
       <div
         v-for="column in columns"
         :key="column.fieldName"
@@ -109,7 +116,7 @@
 <script setup lang="ts">
 import { interpolate } from '@dynamicforms/translatable';
 import { DfCheckbox, DfDateTime, DfInput, DfSelect, FieldDensity } from '@dynamicforms/vuetify-inputs';
-import { computed, onMounted, onUpdated, ref } from 'vue';
+import { computed, onMounted, onUpdated, ref, watch } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
 
 import { DefaultRenderers, gridColumnCreate, RendererOptionsMap } from './cell-renderers';
@@ -117,7 +124,7 @@ import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } f
 import { ColumnDefinition } from './columns';
 import { FilterState, getFilterConfig } from './columns-filtering';
 import { getSortConfig, type ColumnSortState, type SortState } from './columns-sorting';
-import { GridCard, useHeaderContent } from './helpers';
+import { GridCard, headerRowBaseVars, useHeaderContent } from './helpers';
 import type { SelectionMode } from './selection';
 import { translatableStrings } from './translations';
 
@@ -130,15 +137,33 @@ export interface HeaderProps {
   columns: ColumnDefinition<keyof RendererOptionsMap>[];
   gridId: symbol;
   gridClass: CssClasses;
+  rowsPerRecord?: number;
   sortState: SortState;
   showFilterRow?: boolean;
   showStatusBar?: boolean;
   filterState?: FilterState;
   selectionMode?: SelectionMode;
   selectionKeys?: Set<any>;
+  /**
+   * The body grid's own resolved `grid-template-columns`, forwarded from df-grid.vue purely as a
+   * change signal — the actual column widths reach this component's cells via the
+   * `--grid-template-columns` CSS custom property (inherited from the container), not this prop's
+   * value. Watched below so `calcHeaderHeight()` re-measures once the body grid publishes its
+   * real column widths: that CSS var change alone is invisible to Vue's reactivity, so without
+   * this prop nothing would re-trigger a remeasure if the first one landed before the widths were
+   * ready, leaving `headerHeight` stuck at whatever (possibly inflated, wrongly-wrapped) value it
+   * measured then.
+   */
+  templateColumns?: string;
 }
 
-const props = defineProps<HeaderProps>();
+const props = withDefaults(defineProps<HeaderProps>(), {
+  rowsPerRecord: 1,
+  filterState: undefined,
+  selectionMode: null,
+  selectionKeys: undefined,
+  templateColumns: undefined,
+});
 const emit = defineEmits<{ 'cancel-selection': []; 'invert-selection': [] }>();
 
 const headerItem = computed(() => Object.fromEntries(props.columns.map((column) => [column.fieldName, column.label])));
@@ -201,20 +226,58 @@ const activeFiltersText = computed(() =>
   interpolate(translatableStrings.ActiveFilters, { count: activeFilterCount.value }),
 );
 
-function calcHeaderHeight() {
-  if (headerRef.value) {
-    setHeaderContent(Array.from(headerRef.value.children[0].children));
-    // headerRef.value.children[0].innerHTML;
-    headerRef.value.style.minHeight = 'auto';
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    headerRef.value.offsetHeight; // force recalc layout (desktop browsers don't need this)
-    headerHeight.value = headerRef.value.scrollHeight;
-    headerRef.value.style.minHeight = `${headerHeight.value}px`;
+// A settle chain (below) writes headerHeight.value on every attempt, which re-renders the
+// component (it drives the template's own `minHeight` binding) and fires onUpdated() again —
+// without a guard, that re-entrant call would start its OWN settle chain on top of the one
+// already running, doubling on every attempt. `isSettling` makes an onUpdated() firing caused by
+// our own retries a no-op instead, bounding total work to the one chain already in flight.
+let isSettling = false;
+
+function measureHeaderHeightOnce(): number | null {
+  if (!headerRef.value) return null;
+  headerRef.value.style.minHeight = 'auto';
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  headerRef.value.offsetHeight; // force recalc layout (desktop browsers don't need this)
+  const measured = headerRef.value.scrollHeight;
+  headerHeight.value = measured;
+  headerRef.value.style.minHeight = `${measured}px`;
+  return measured;
+}
+
+// The filter row's own inputs (Vuetify components) can still be mid-layout at the exact
+// synchronous point calcHeaderHeight() runs at, even after the forced reflow above — a reading
+// taken then is typically too tall, and nothing else re-measures afterwards, so it would
+// otherwise stay locked into `min-height` indefinitely. Retries once per frame until two
+// consecutive readings agree, bounded so a genuinely still-changing layout (rather than a
+// transient one) can't spin this forever.
+function settleHeaderHeight(previous: number | null, attemptsLeft: number) {
+  const measured = measureHeaderHeightOnce();
+  if (measured !== null && measured !== previous && attemptsLeft > 0) {
+    requestAnimationFrame(() => settleHeaderHeight(measured, attemptsLeft - 1));
+    return;
   }
+  isSettling = false;
+}
+
+function calcHeaderHeight() {
+  if (!headerRef.value) return;
+  // Always relays the current header content, even while a settle chain (below) is already in
+  // flight — this is a different consumer (the shadow grid's own layout measurement) than the
+  // height settling below, and skipping it here would leave that consumer looking at stale
+  // content for the whole settle window instead of just deferring the height remeasure.
+  setHeaderContent(Array.from(headerRef.value.children[0].children));
+  if (isSettling) return;
+  isSettling = true;
+  const measured = measureHeaderHeightOnce();
+  requestAnimationFrame(() => settleHeaderHeight(measured, 10));
 }
 
 onUpdated(() => calcHeaderHeight());
 onMounted(() => calcHeaderHeight());
+watch(
+  () => props.templateColumns,
+  () => calcHeaderHeight(),
+);
 
 defineExpose({ headerItem, headerOptions, headerHeight });
 </script>

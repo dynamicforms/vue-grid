@@ -49,8 +49,7 @@ import type { SelectionMode } from './selection';
 // vi.hoisted — must exist before vi.mock() factories run
 // ===========================================================================
 
-const { shadowContainerEl, lastSeenColumns } = vi.hoisted(() => ({
-  shadowContainerEl: document.createElement('div'),
+const { lastSeenColumns } = vi.hoisted(() => ({
   // Tracks the most-recent `columns` prop reference received by any GridCard render.
   lastSeenColumns: { value: null as unknown[] | null },
 }));
@@ -59,70 +58,60 @@ const { shadowContainerEl, lastSeenColumns } = vi.hoisted(() => ({
 // Module mocks
 // ===========================================================================
 
-vi.mock('@pdanpdan/virtual-scroll', () => ({
-  VirtualScroll: defineComponent({
-    name: 'MockVirtualScroll',
-    props: { items: { type: Array, default: () => [] }, loading: Boolean },
-    setup(props, { slots }) {
-      return () =>
-        h('div', { class: 'virtual-scroll', 'data-section': 'body' }, [
-          slots.header?.(),
-          ...(props.items as unknown[]).map((item, i) =>
-            h('div', { class: 'virtual-scroll-item', key: i }, slots.item?.({ item, index: i, active: true })),
-          ),
-          slots.footer?.(),
-        ]);
-    },
-  }),
-}));
-
 vi.mock('vue-cached-icon', () => ({ CachedIcon: { name: 'CachedIcon', template: '<i/>' } }));
 
 vi.mock('./df-grid-header.vue', () => ({ default: { name: 'DfGridHeader', template: '<div/>' } }));
 
 vi.mock('./excessive-scroll.vue', () => ({ default: { name: 'ExcessiveScroll', template: '<div/>' } }));
 
-vi.mock('./helpers', () => ({
-  // GridCard that records the most-recent `columns` prop reference.
-  // By comparing the reference before and after a selectionMode change we can tell
-  // whether `columnRendererOptionsInternal` returned a new (re-computed) array.
-  GridCard: defineComponent({
-    name: 'GridCard',
-    // `class`, `data-pk` and `data-idx` are deliberately not declared: they are fallthrough
-    // attrs on the real component too, and only `columns` is ever read here.
-    props: {
-      item: { type: Object, default: () => ({}) },
-      columns: { type: Array, default: () => [] },
-      renderers: { type: Object, default: () => ({}) },
-    },
-    setup(props) {
-      return () => {
-        lastSeenColumns.value = props.columns as unknown[];
-        return h('div', { class: 'grid-card' });
-      };
-    },
-  }),
+vi.mock('./helpers', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./helpers')>();
+  return {
+    // rowBaseVars/headerRowBaseVars are plain pure functions — real implementation is fine here.
+    rowBaseVars: actual.rowBaseVars,
+    headerRowBaseVars: actual.headerRowBaseVars,
 
-  ShadowGrid: defineComponent({
-    name: 'ShadowGrid',
-    props: {
-      records: { type: Array, default: () => [] },
-      columns: { type: Array, default: () => [] },
-      renderers: { type: Object, default: () => ({}) },
-      count: { type: Number, default: 0 },
-      offset: { type: Number, default: 0 },
-      keyField: { type: String, default: '' },
-      selectionActive: { type: Boolean, default: false },
-    },
-    setup(_, { expose }) {
-      expose({ containerEl: shadowContainerEl, reMeasure: vi.fn() });
-      return () => h('div', { class: 'shadow-grid' });
-    },
-  }),
+    // GridCard that records the most-recent `columns` prop reference.
+    // By comparing the reference before and after a selectionMode change we can tell
+    // whether `columnRendererOptionsInternal` returned a new (re-computed) array.
+    GridCard: defineComponent({
+      name: 'GridCard',
+      // `class`, `data-pk` and `data-idx` are deliberately not declared: they are fallthrough
+      // attrs on the real component too, and only `columns` is ever read here.
+      props: {
+        item: { type: Object, default: () => ({}) },
+        columns: { type: Array, default: () => [] },
+        renderers: { type: Object, default: () => ({}) },
+        noWrapperItem: { type: Boolean, default: false },
+      },
+      setup(props) {
+        return () => {
+          lastSeenColumns.value = props.columns as unknown[];
+          return h('div', { class: 'grid-card' });
+        };
+      },
+    }),
 
-  ShadowGridMeasurements: {},
-  useHeaderContent: () => ({ provideHeaderContent: vi.fn() }),
-}));
+    ShadowGrid: defineComponent({
+      name: 'ShadowGrid',
+      props: {
+        records: { type: Array, default: () => [] },
+        columns: { type: Array, default: () => [] },
+        renderers: { type: Object, default: () => ({}) },
+        count: { type: Number, default: 0 },
+        offset: { type: Number, default: 0 },
+        keyField: { type: String, default: '' },
+        selectionActive: { type: Boolean, default: false },
+      },
+      setup(_, { expose }) {
+        expose({ reMeasure: vi.fn() });
+        return () => h('div', { class: 'shadow-grid' });
+      },
+    }),
+
+    useHeaderContent: () => ({ provideHeaderContent: () => ref([]) }),
+  };
+});
 
 vi.mock('./cell-renderers', () => ({
   DefaultRenderers: {},
@@ -184,9 +173,9 @@ describe('DfGrid — selection mode switch performance', () => {
     } as CSSStyleDeclaration);
 
     // vitest 4 requires a real function here since the mock is invoked with `new`
-    // eslint-disable-next-line prefer-arrow-callback, func-names
+
     globalThis.ResizeObserver = vi.fn().mockImplementation(function () {
-      return { observe: vi.fn(), disconnect: vi.fn() };
+      return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
     });
 
     globalThis.requestAnimationFrame = vi.fn();

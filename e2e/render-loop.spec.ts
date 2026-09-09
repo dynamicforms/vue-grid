@@ -4,28 +4,32 @@
  * Playwright browser test: detect an infinite reactivity loop in DfGrid that causes
  * constant CPU usage even when the grid is idle (no user interaction).
  *
- * === Suspected loop (with @pdanpdan/virtual-scroll) ===
+ * === Suspected loop (shared body grid + windowing) ===
  *
- *   1. @pdanpdan/virtual-scroll `itemResizeObserver` fires when a rendered item resizes.
- *   2. `updateItemSizes` → `scrollDetails` changes → `visibleRangeChange` emitted.
- *   3. `updateRenderedRows` (250 ms throttle) → `mainShadowOffset` changes.
- *   4. shadow-grid re-renders (new `:offset` prop).
- *   5. `idxAndItem()` → `nextTick(checkShadowGridColumns)` → `onmeasure` emitted.
- *   6. `doShadowMeasure` (100 ms throttle) → `templateColumns` changes.
- *   7. Container CSS var `--grid-template-columns` changes → grid-card widths change.
- *   8. Width change → `itemResizeObserver` fires → goto 2.
+ *   1. A mounted row-anchor's ResizeObserver fires when its real height differs from the
+ *      estimate — `windowing.setMeasured()`.
+ *   2. `onBodyScrollSettle` (100 ms throttle) re-derives the mounted window (`windowing.recompute`)
+ *      and re-reads the body grid's own `grid-template-columns` (`syncHeaderColumns`).
+ *   3. `syncHeaderColumns` sets `templateColumns` → the container's `--grid-template-columns`
+ *      CSS var changes.
+ *   4. If that var change somehow altered a row-anchor's rendered height → its ResizeObserver
+ *      fires again → goto 1.
+ *
+ * Step 4 shouldn't actually happen (a CSS custom property change on the container doesn't
+ * change what a row-anchor's own content needs), which is exactly what these tests verify —
+ * the loop's closing edge should not exist in practice.
  *
  * === How we measure ===
  *
  * We instrument the live page with MutationObserver to count:
  *
  *   a) Style attribute changes on `.df-grid.container`
- *      Each change = one `doShadowMeasure` call changed `templateColumns`.
+ *      Each change = one `syncHeaderColumns` call changed `templateColumns`.
  *      Indicator: how often the CSS column layout is recomputed.
  *
- *   b) Subtree mutations inside `.df-grid.shadow-grid`
- *      Each batch = shadow-grid re-rendered with new `offset` prop.
- *      Indicator: how often `mainShadowOffset` changed.
+ *   b) Child-list mutations inside `.df-grid.body-grid`
+ *      Each batch = the windowed row range changed (rows mounted/unmounted).
+ *      Indicator: how often `onBodyScrollSettle`'s recompute actually moved the window.
  *
  * We wait 3 s after initial render (to let startup noise settle) then observe for
  * a further 3 s. A healthy system produces ≤ 3 events in that window.
@@ -105,23 +109,22 @@ test.describe('DfGrid — idle render-loop detection', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // [LOOP-2] Shadow-grid should not keep re-rendering at idle
+  // [LOOP-2] The shared body grid should not keep mounting/unmounting rows at idle
   //
-  // Each mutation batch inside the shadow-grid means the shadow-grid component
-  // re-rendered — its `:offset` prop changed (= `mainShadowOffset` changed) or
-  // its `:columns` prop changed. At idle, once the initial measurement round
-  // completes, neither should change.
+  // Each childList mutation batch on `.df-grid.body-grid` means `onBodyScrollSettle`'s
+  // `windowing.recompute()` actually moved the mounted range. At idle (no scroll, no resize),
+  // once the initial window has settled it should not keep changing.
   // ---------------------------------------------------------------------------
-  test('[LOOP-2] shadow-grid stops re-rendering after initial render', async ({ page }) => {
+  test('[LOOP-2] body grid stops mounting/unmounting rows after initial render', async ({ page }) => {
     await page.waitForTimeout(SETTLE_MS);
 
-    const shadowMutationBatches = await page.evaluate(({ observeMs }) => new Promise<number>((resolve) => {
-      const shadow = document.querySelector('.df-grid.shadow-grid') as HTMLElement | null;
-      if (!shadow) { resolve(-1); return; }
+    const bodyGridMutationBatches = await page.evaluate(({ observeMs }) => new Promise<number>((resolve) => {
+      const bodyGrid = document.querySelector('.df-grid.body-grid') as HTMLElement | null;
+      if (!bodyGrid) { resolve(-1); return; }
 
       let batches = 0;
       const observer = new MutationObserver(() => { batches++; });
-      observer.observe(shadow, { childList: true, subtree: true, attributes: true });
+      observer.observe(bodyGrid, { childList: true });
 
       setTimeout(() => {
         observer.disconnect();
@@ -129,8 +132,8 @@ test.describe('DfGrid — idle render-loop detection', () => {
       }, observeMs);
     }), { observeMs: OBSERVE_MS });
 
-    console.log(`[LOOP-2] shadow-grid mutation batches in ${OBSERVE_MS} ms idle window: ${shadowMutationBatches}`);
-    expect(shadowMutationBatches, `shadow-grid mutated ${shadowMutationBatches}× in ${OBSERVE_MS} ms at idle`).toBeLessThanOrEqual(IDLE_THRESHOLD);
+    console.log(`[LOOP-2] body grid mutation batches in ${OBSERVE_MS} ms idle window: ${bodyGridMutationBatches}`);
+    expect(bodyGridMutationBatches, `body grid mutated ${bodyGridMutationBatches}× in ${OBSERVE_MS} ms at idle`).toBeLessThanOrEqual(IDLE_THRESHOLD);
   });
 
   // ---------------------------------------------------------------------------
@@ -174,7 +177,7 @@ test.describe('DfGrid — idle render-loop detection', () => {
 
     // Long-press on a row to activate selection mode (simulates what the user does).
     // VitePress docs table-basic.vue uses longpress to enter selection mode.
-    const firstCard = page.locator('.df-grid.card').first();
+    const firstCard = page.locator('.df-grid.card[data-idx]').first();
     await firstCard.dispatchEvent('pointerdown');
     await page.waitForTimeout(800); // longpress duration
     await firstCard.dispatchEvent('pointerup');
@@ -287,49 +290,45 @@ test.describe('DfGrid — idle render-loop detection', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // [LOOP-7] Shadow-grid cards are NOT recreated on selection mode toggle
+  // [LOOP-7] Mounted rows are NOT recreated on selection mode toggle
   //
-  // Before the fix, shadow-grid used :key="`${item[keyField]}${selectionActive}`".
-  // When selectionActive changed, ALL shadow-grid GridCards were destroyed and
-  // recreated (O(mainShadowCount) = up to 500 DOM operations).
-  //
-  // After the fix, :key="`${item[keyField]}`" — keys are stable across selection
-  // mode changes, so v-memo prevents any re-render.  We verify this by counting
-  // child-removal mutations in the shadow-grid during a selection toggle.
+  // Each record's per-row `display:contents` wrapper is keyed on `item[keyField]` alone —
+  // stable across a selectionMode change, since selection state is expressed purely through the
+  // row-anchor's `:class` (selected/unselected), not through the wrapper's key. A regression here
+  // (e.g. keying on `${item[keyField]}${selectionActive}`) would destroy and recreate every
+  // mounted row — O(minRenderedRows) DOM operations — on every toggle. Verified by counting
+  // child-removal mutations on `.df-grid.body-grid` during a selection toggle.
   // ---------------------------------------------------------------------------
-  test('[LOOP-7] shadow-grid cards not recreated on selection mode toggle', async ({ page }) => {
+  test('[LOOP-7] mounted rows not recreated on selection mode toggle', async ({ page }) => {
     await page.waitForTimeout(SETTLE_MS);
 
-    // Set up mutation counter for shadow-grid child additions/removals.
     await page.evaluate(() => {
-      (window as any).__shadowCardRemovals = 0;
-      const shadow = document.querySelector('.df-grid.shadow-grid');
-      if (!shadow) return;
+      (window as any).__rowRemovals = 0;
+      const bodyGrid = document.querySelector('.df-grid.body-grid');
+      if (!bodyGrid) return;
       const obs = new MutationObserver((records) => {
         for (const r of records) {
-          (window as any).__shadowCardRemovals += r.removedNodes.length;
+          (window as any).__rowRemovals += r.removedNodes.length;
         }
       });
-      obs.observe(shadow, { childList: true });
-      (window as any).__shadowCardObserver = obs;
+      obs.observe(bodyGrid, { childList: true });
+      (window as any).__rowObserver = obs;
     });
 
     // Trigger selection mode via long-press (same mechanism as [LOOP-4]).
-    const firstCard = page.locator('.df-grid.card').first();
+    const firstCard = page.locator('.df-grid.card[data-idx]').first();
     await firstCard.dispatchEvent('pointerdown');
     await page.waitForTimeout(800);
     await firstCard.dispatchEvent('pointerup');
     await page.waitForTimeout(500);
 
     const removals = await page.evaluate(() => {
-      (window as any).__shadowCardObserver?.disconnect();
-      return (window as any).__shadowCardRemovals as number;
+      (window as any).__rowObserver?.disconnect();
+      return (window as any).__rowRemovals as number;
     });
 
-    console.log(`[LOOP-7] shadow-grid card removals on selection toggle: ${removals}`);
-    // With the fixed :key, 0 cards should be removed.
-    // Before the fix this count equalled mainShadowCount (up to 500).
-    expect(removals, `${removals} shadow-grid cards were destroyed on selection toggle`).toBe(0);
+    console.log(`[LOOP-7] row wrapper removals on selection toggle: ${removals}`);
+    expect(removals, `${removals} row wrappers were destroyed on selection toggle`).toBe(0);
   });
 
   // ---------------------------------------------------------------------------

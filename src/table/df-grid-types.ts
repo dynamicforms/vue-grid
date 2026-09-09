@@ -26,20 +26,30 @@ export interface GridProps extends SelectionProps {
   keyField: string;
 
   /**
-   * Number of rows rendered in the main shadow grid for column width measurement. The primary shadow grid is
-   * responsible for real-time column width measuring so that all cells are rendered within correct boundaries and
-   * available space is optimised for the content
-   * @default 500
-   */
-  mainShadowCount?: number;
-
-  /**
    * Number of rows rendered in secondary shadow grids (one per responsive layout).
    * The secondary shadow grids are used for measuring required widths for responsive layouts. The measurements will be
    * used for determining when a different layout should be used because the browser window had resized
    * @default 30
    */
   secondaryShadowCount?: number;
+
+  /**
+   * Row height, in pixels, assumed for a record that hasn't been rendered (and therefore
+   * measured) yet — used to size the placeholder that stands in for windowed-out rows above and
+   * below the visible range. Once a row does render, its real measured height is used instead.
+   * Pick something close to your actual row height to keep the scrollbar and scroll position
+   * stable; the grid does not average measured heights to refine this for you.
+   * @default 30
+   */
+  estimatedRowHeight?: number;
+
+  /**
+   * Minimum number of records rendered outside the strictly visible range, on each side (i.e. a
+   * buffer above and below the viewport) — smooths scrolling, and keeps enough real rows mounted
+   * for the shared grid's native column auto-sizing to have a representative sample.
+   * @default 100
+   */
+  minRenderedRows?: number;
 
   /** External sort state. Use with `v-model:sortState` for controlled sorting. When omitted the grid sorts locally. */
   sortState?: SortState;
@@ -156,10 +166,10 @@ export interface GridEmits extends SelectionEmits {
   filter: [data: GridFilterEvent];
 
   /**
-   * Fired when the user scrolls within `loadDistance` px (default 200) of the end of the list
-   * **and** `loading` is `false`. Use this to fetch and append the next page of records.
-   * Setting `:loading="true"` while fetching suppresses duplicate events until the fetch completes.
-   * Proxied directly from the underlying virtual-scroll `load` event.
+   * Fired when the user scrolls within 200px of the end of the list **and** `loading` is
+   * `false`. Use this to fetch and append the next page of records. Setting `:loading="true"`
+   * while fetching suppresses duplicate events until the fetch completes. `direction` is always
+   * `'vertical'` — the grid only scrolls vertically.
    */
   load: [direction: 'vertical' | 'horizontal'];
 

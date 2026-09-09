@@ -18,6 +18,7 @@ vi.mock('@dynamicforms/vuetify-inputs', () => ({
 vi.mock('./helpers', () => ({
   GridCard: { name: 'GridCard', template: '<div class="grid-card"><slot /></div>' },
   useHeaderContent: () => ({ setHeaderContent: vi.fn() }),
+  headerRowBaseVars: (rowsPerRecord: number) => ({ '--row-base': '0', '--rows-per-record': `${rowsPerRecord}` }),
 }));
 
 vi.mock('./cell-renderers', () => ({
@@ -647,6 +648,117 @@ describe('DfGridHeader.vue', () => {
 
       const titleCell = wrapper.find('.filter-cell.title');
       expect(titleCell.classes()).toContain('text-left');
+    });
+  });
+
+  describe('header height measurement', () => {
+    let pendingFrames: FrameRequestCallback[];
+
+    beforeEach(() => {
+      pendingFrames = [];
+      vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+        pendingFrames.push(cb);
+        return pendingFrames.length;
+      });
+    });
+
+    afterEach(() => vi.unstubAllGlobals());
+
+    function stubScrollHeight(el: HTMLElement, values: number[]) {
+      let call = 0;
+      Object.defineProperty(el, 'scrollHeight', {
+        configurable: true,
+        get: () => values[Math.min(call++, values.length - 1)],
+      });
+    }
+
+    // Drains the settle chain onMounted() already started (against jsdom's default scrollHeight
+    // of 0) before a test sets up its own scenario — settleHeaderHeight()'s in-flight chain must
+    // finish and release `isSettling` first, or the test's own calcHeaderHeight() call is a no-op.
+    function drainPendingFrames(max = 20) {
+      let iterations = 0;
+      while (pendingFrames.length > 0 && iterations < max) {
+        pendingFrames.shift()!(0);
+        iterations += 1;
+      }
+      return iterations;
+    }
+
+    it('retries on the next frame until two consecutive readings agree', async () => {
+      const wrapper = mount(DfGridHeader, {
+        props: {
+          columns: mockColumns,
+          gridId,
+          gridClass: 'test-class',
+          sortState,
+          showFilterRow: false,
+          templateColumns: 'grid-template-columns: 100px',
+        },
+      });
+
+      // First reading (998) catches a filter input still mid-layout; readings then shrink and
+      // settle at 774 — settleHeaderHeight() should stop retrying once a reading repeats and land
+      // on that settled value, not the first (inflated) one.
+      stubScrollHeight(wrapper.element as HTMLElement, [998, 900, 850, 774, 774, 774, 774, 774]);
+      drainPendingFrames();
+      await wrapper.setProps({ templateColumns: 'grid-template-columns: 200px' });
+      await nextTick();
+
+      drainPendingFrames();
+
+      expect((wrapper.element as HTMLElement).style.minHeight).toBe('774px');
+      expect(pendingFrames.length).toBe(0);
+    });
+
+    it('re-measures when templateColumns changes, not just on mount', async () => {
+      const wrapper = mount(DfGridHeader, {
+        props: {
+          columns: mockColumns,
+          gridId,
+          gridClass: 'test-class',
+          sortState,
+          showFilterRow: false,
+          templateColumns: 'grid-template-columns: 100px',
+        },
+      });
+
+      stubScrollHeight(wrapper.element as HTMLElement, [500]);
+      drainPendingFrames();
+      await wrapper.setProps({ templateColumns: 'grid-template-columns: 200px' });
+      await nextTick();
+      drainPendingFrames();
+
+      expect((wrapper.element as HTMLElement).style.minHeight).toBe('500px');
+    });
+
+    it('gives up after a bounded number of attempts instead of retrying forever', async () => {
+      const wrapper = mount(DfGridHeader, {
+        props: {
+          columns: mockColumns,
+          gridId,
+          gridClass: 'test-class',
+          sortState,
+          showFilterRow: false,
+          templateColumns: 'grid-template-columns: 100px',
+        },
+      });
+
+      drainPendingFrames();
+
+      // Every reading differs from the last — a genuinely unstable measurement, not a settling one.
+      stubScrollHeight(
+        wrapper.element as HTMLElement,
+        Array.from({ length: 30 }, (_, i) => 100 + i),
+      );
+      await wrapper.setProps({ templateColumns: 'grid-template-columns: 200px' });
+      await nextTick();
+
+      const iterations = drainPendingFrames(50);
+
+      // Bounded by settleHeaderHeight()'s own attempt limit, not the length of the never-repeating
+      // sequence above (which would retry indefinitely without a bound).
+      expect(iterations).toBeLessThan(30);
+      expect(pendingFrames.length).toBe(0);
     });
   });
 });

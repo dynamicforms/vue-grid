@@ -166,6 +166,49 @@ describe('df-grid-mouse-events.ts', () => {
         document.body.removeChild(card);
       });
 
+      it('resolves the row from a cell that is a sibling, not a descendant, of the row-anchor', () => {
+        // The real DOM shape df-grid.vue renders: the row-anchor (`.df-grid.card`) and the cells
+        // are both children of a `display:contents` wrapper, not ancestor/descendant of each
+        // other. Only the wrapper carries `data-idx`/`data-pk` for this reason — this test locks
+        // in that a click starting in a cell still resolves the correct row through it.
+        const { processMouse } = useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockDisplayedRecords,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+        );
+
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('data-idx', '1');
+        wrapper.setAttribute('data-pk', '2');
+        const anchor = document.createElement('div');
+        anchor.className = 'df-grid card';
+        const cell = document.createElement('div');
+        cell.className = 'df-grid cell title';
+        wrapper.appendChild(anchor); // sibling of cell, NOT its ancestor
+        wrapper.appendChild(cell);
+        document.body.appendChild(wrapper);
+
+        const mouseEvent = new MouseEvent('click', { bubbles: true, cancelable: true });
+        Object.defineProperty(mouseEvent, 'target', { value: cell, writable: false });
+
+        processMouse('click', mouseEvent);
+
+        expect(mockEmit).toHaveBeenCalledWith(
+          'click',
+          expect.objectContaining({
+            rowId: 1,
+            key: 2,
+            rowData: mockRecords[1],
+            columnName: 'title',
+          } as Partial<GridClickEvent>),
+        );
+
+        document.body.removeChild(wrapper);
+      });
+
       it('should handle click on row without valid index', () => {
         const { processMouse } = useGridMouseEvents(
           mockEmit,

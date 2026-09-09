@@ -5,6 +5,112 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-09-07
+
+### Changed
+
+- Every row is now a direct item of one shared `display: grid` instead of being its own
+  independent grid, and column widths are resolved by the browser natively instead of being
+  measured on a hidden shadow-grid copy and broadcast via a CSS variable. Consuming CSS that
+  declared `.df-grid.card { display: grid; grid-template-columns: ...; }` must move that
+  declaration to `.df-record-grid` instead — the marker every place that lays out a record's
+  fields carries (the real scrolling body, the header, and the filter row alike), so one
+  declaration covers all three instead of just the body. `.df-grid.card` is now the row-anchor: a
+  styleable but otherwise empty box, not a grid container. Every layout, including a plain single
+  row per record, must now give each cell an explicit `grid-row: calc(var(--row-base) + N)` rather
+  than an absolute row number or none at all — plain CSS auto-placement has no notion of record
+  boundaries once rows share a grid, so an unplaced cell's `grid-row: auto` keeps advancing across
+  the whole grid instead of restarting per record. A layout with more than one row of fields per
+  record must additionally declare `rows` on its `ResponsiveColumnDefinition`. See
+  [Card layout CSS](https://dynamicforms.github.io/vue-grid/reference/df-grid#card-layout-css) and
+  the [Cookbook](https://dynamicforms.github.io/vue-grid/guide/cookbook#a-responsive-multi-row-card-layout).
+- Row virtualization no longer depends on `@pdanpdan/virtual-scroll` (dropped as a peer
+  dependency); windowing is now a small internal composable with the same externally-visible
+  behaviour (`load`, `recentlyAdded`'s viewport signal, the scrollbar-width measurement).
+
+### Fixed
+
+- The secondary shadow grids used to pick which responsive layout is active could report a
+  layout's required width as far wider than it actually needs, whenever that layout's columns
+  have no fixed upper bound (e.g. free-text fields laid out with `auto` or `fr` tracks): the
+  measurement was always taken at each field's natural, single-line width, so one long sampled
+  value could make an otherwise-comfortable layout look too wide to pick, falling back to a
+  narrower one than necessary. Each candidate is now also measured with every field forced to wrap
+  at every opportunity, and the median number of lines the sample actually wraps into — not the
+  worst case — shrinks the reported width back down for fields whose typical content wraps
+  comfortably, so a rare long outlier no longer forces the whole layout to look wider than it
+  needs to be. No API changed; layouts using unbounded `auto`/`fr` tracks for free-text columns
+  are simply picked more accurately.
+- A record's `--row-base` and the windowing spacers' `grid-row` were computed from the record's
+  absolute index in the full dataset (`recordIndex * rows`), so the number of CSS grid row lines
+  actually referenced grew with the dataset's total size rather than with how many rows were
+  mounted. Firefox stops generating further implicit grid row tracks past roughly 10,000 of them,
+  silently collapsing every row beyond that onto the same line — on a large enough dataset (around
+  3,300 records for a three-row layout, fewer for a layout with more rows per record), every row
+  scrolled past that point rendered on top of the last working one. `--row-base` is now computed
+  from a record's position within the currently-mounted window instead, which keeps the grid lines
+  actually used bounded by `minRenderedRows` regardless of the dataset's total size. Chromium was
+  not observed to have this limit, so this was invisible there.
+- A single-row layout that relies on plain CSS column auto-placement (no explicit `grid-column` on
+  any cell) had every cell overflow into newly-created implicit columns instead of the declared
+  track list: the row-anchor (`.df-grid.card`, spanning the full row for zebra/border/selection
+  styling) occupied every column of its row for auto-placement purposes, leaving no free cell for
+  a real cell to land in, and the hidden header-measurement clone competed with whichever record
+  was first in the mounted window for the same reason. The row-anchor is now `position: absolute`
+  (still filling its grid area via `inset: 0`), removing it from auto-placement bookkeeping
+  entirely; the clone gets its own permanently-reserved rows instead of sharing one with a real
+  record, collapsed to zero height/padding/border so the reservation stays invisible.
+- The row-anchor (`.df-grid.card`) intercepted clicks meant for cell content underneath it: being
+  `position: absolute`, it is a stacking-context participant painted above its static in-flow
+  siblings by default, and nothing pulled it back behind them. The body grid now sets `isolation:
+  isolate` and the row-anchor `z-index: -1`, scoped to that grid's own children so it doesn't
+  affect stacking decisions further up the page.
+- `windowing.recompute()` could mount the wrong end of the dataset on first render: called before
+  the body grid has a real measured height, it read that as "scrolled past every record" and
+  clamped the window to the last `buffer` records instead of the first ones a fresh mount actually
+  needs, visible as the grid appearing to load already scrolled to the bottom until the user
+  scrolled or resized. It now mounts a `buffer`-sized window from the current scroll position
+  (usually still `0` this early) instead.
+- The header/filter row's cached height (`min-height`, used so it isn't left at `auto` and
+  resized by every scroll-driven reflow) could lock in a value taller than the header actually
+  needs and never correct itself: nothing re-measured it once the body grid's real column widths
+  arrived later, and a measurement taken while a filter-row input was still mid-layout could read
+  too tall in the first place. It now re-measures when column widths change and retries across a
+  few animation frames until two consecutive readings agree.
+- The hidden header-measurement clone's reserved rows showed as a visible blank gap above the
+  first real row, growing with how many rows a layout stacks per record (barely noticeable for a
+  single-row layout, over a centimetre for one stacking many fields into a single column): the
+  clone's own height collapses to zero, but the consumer's own `row-gap` still applied between
+  each reserved track and before the first real row. The body scroller is now shifted up and
+  grown by that same measured amount, clipping the reservation away without losing any scrollable
+  height at the bottom.
+- The summary bar (loading, no-data, or a consumer's own `showSummaryBar` content) could render
+  entirely outside the visible, clipped area: `.df-grid-body`'s scroller was `height: 100%`,
+  claiming the whole of `.df-grid-body`'s own box in plain block flow and leaving the summary bar
+  — its sibling — no room to render in, invisible in every state that shows it rather than just a
+  layout tight on space. `.df-grid-body` is now a flex column so the two share its height
+  properly, the scroller shrinking to make room instead of always claiming all of it. With no
+  records at all, the bar also now renders where a row would — right below the header — instead
+  of at the bottom of the empty scroller with nothing visually anchoring it there; loading a
+  further page of an already-populated grid keeps its default position at the bottom, where the
+  new rows are about to arrive.
+
+### Added
+
+- `estimatedRowHeight` prop: row height, in pixels, assumed for a not-yet-rendered record —
+  used to size the placeholder standing in for windowed-out rows. Default `30`; pick something
+  close to your actual row height, since the grid does not average measured heights to refine
+  this for you.
+- `minRenderedRows` prop: minimum number of records kept mounted on each side of the visible
+  range. Default `100`, replacing the removed `mainShadowCount`.
+- `rows` field on `ResponsiveColumnDefinition`: declares how many grid rows that layout's card
+  occupies per record (default `1`), needed for the relative `--row-base` cell placement above.
+
+### Removed
+
+- `mainShadowCount` prop — the primary shadow grid it configured no longer exists; column widths
+  are now resolved natively rather than measured on a hidden copy.
+
 ## [0.4.1] - 2026-09-06
 
 ### Added

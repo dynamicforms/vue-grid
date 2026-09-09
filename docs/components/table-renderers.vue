@@ -84,14 +84,22 @@ const columns = [
 </script>
 
 <style scoped>
-:deep(.df-grid.card) {
+/* `.df-record-grid` is the marker the body, header, and filter row all carry, so one
+   declaration covers all three. */
+:deep(.df-record-grid) {
   display: grid;
   grid-template-columns: 2fr 1fr 7em 9em 7em 4em;
   gap: 0.25em;
-  padding: 0.4em 0.6em;
-  border-bottom: 1px solid #e0e0e0;
   font-size: 0.9rem;
   align-items: center;
+}
+/* One row per record: with every record's cells sharing one grid, plain auto-placement has no
+   notion of record boundaries — every cell needs this same explicit row. */
+:deep(.df-grid.cell) {
+  grid-row: calc(var(--row-base) + 1);
+}
+:deep(.df-grid.card) {
+  border-bottom: 1px solid #e0e0e0;
 }
 :deep(.df-grid.header) {
   font-weight: bold;

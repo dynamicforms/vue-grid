@@ -19,9 +19,10 @@ than the one before, down to a floor of 0.15 × `incomingArcMaxOpacity`.
 
 ## Row animation
 
-Apply a CSS animation to `.df-grid.card.state-adding`. The example below scales the card open and
-follows with a brightness wink — neither a transform nor a filter changes the element's layout box,
-so the virtual scroll's pre-measured item sizes stay valid:
+Apply a CSS animation to `.df-grid.card.state-adding` — the row-anchor element, not a wrapper
+around the cells (see [Card layout CSS](/reference/df-grid#card-layout-css)). The example below
+scales the card open and follows with a brightness wink; neither a transform nor a filter changes
+the element's layout box, so it doesn't perturb the row's own height.
 
 ```css
 @keyframes df-row-scale-in {

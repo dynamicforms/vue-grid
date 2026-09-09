@@ -46,7 +46,11 @@ export function useGridMouseEvents(
     if (section === 'toolbar' || section === 'filter' || section === 'status-bar' || section === 'footer') return;
 
     const column = target.closest('.df-grid.cell');
-    const row = target?.closest('.df-grid.card');
+    // Not `.closest('.df-grid.card')`: a row's cells are children of its `display:contents`
+    // wrapper, not of its (sibling) row-anchor, so a click starting in a cell can only reach the
+    // row through an ancestor that carries `data-idx` — the wrapper does (as does the header's
+    // own card, which is a genuine ancestor of its cells).
+    const row = target?.closest('[data-idx]');
     const columnClasses = [...(column?.classList ?? [])].filter(
       (c: any) => !['df-grid', 'cell', 'df-header-cell'].includes(c),
     );

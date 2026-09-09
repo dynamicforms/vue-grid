@@ -91,23 +91,30 @@ onUnmounted(() => { if (autoTimer !== null) clearTimeout(autoTimer); });
 // having to manually scroll — the arc only fires when new records are outside
 // the visible viewport, so we start with the grid scrolled ~40 % down.
 onMounted(() => {
-  const scrollEl = demoRef.value?.querySelector<HTMLElement>('.cards-grid');
+  const scrollEl = demoRef.value?.querySelector<HTMLElement>('.body-grid');
   if (scrollEl) scrollEl.scrollTop = 350;
 });
 
+// A responsive single-entry definition (rather than a flat column list) so `rows` can declare
+// the 2-row-per-record card layout below — a flat column list always implies 1 row per record.
 const columns = [
-  createColumn('id',     'Id',     'int',   { cssClass: 'text-right' }),
-  createColumn('title',  'Title',  'plain'),
-  createColumn('artist', 'Artist', 'plain'),
-  createColumn('year',   'Year',   'int',   { cssClass: 'text-right' }),
-  createColumn('rating', 'Rating', 'int',   { cssClass: 'text-right' }),
+  {
+    cssClass: 'incoming-card',
+    rows: 2,
+    columns: [
+      createColumn('id',     'Id',     'int',   { cssClass: 'text-right' }),
+      createColumn('title',  'Title',  'plain'),
+      createColumn('artist', 'Artist', 'plain'),
+      createColumn('year',   'Year',   'int',   { cssClass: 'text-right' }),
+      createColumn('rating', 'Rating', 'int',   { cssClass: 'text-right' }),
+    ],
+  },
 ];
 </script>
 
 <style>
-/* scaleY reveal + brightness wink.
-   background-color cannot animate on GPU-composited layers (broken by will-change:transform
-   on the virtual-scroll parent). filter:brightness() IS GPU-compositable and always works. */
+/* scaleY reveal + brightness wink. filter:brightness() is GPU-compositable and animates
+   smoothly regardless of what else is going on in the row's own layout. */
 @keyframes df-row-scale-in {
   from { transform: scaleY(0); opacity: 0.3; }
   to   { transform: scaleY(1); opacity: 1;   }
@@ -128,30 +135,31 @@ const columns = [
 .incoming-demo-grid {
   height: 30em;
 }
-.incoming-demo-grid .df-grid.card {
+/* `.df-record-grid` is the marker the body, header, and filter row all carry, so one
+   declaration covers all three.
+ * 4 columns:  [narrow id/blank]  [wide title/year]  [wide artist/blank]  [narrow rating]
+ * Row 1: title spans cols 1-3, artist spans cols 3-5 (i.e. 1-2 and 3-4 in a 4-col grid)
+ * Row 2: id · year · (gap) · rating
+ */
+.incoming-demo-grid .df-record-grid {
   display: grid;
-  /*
-   * 4 columns:  [narrow id/blank]  [wide title/year]  [wide artist/blank]  [narrow rating]
-   * Row 1: title spans cols 1-3, artist spans cols 3-5 (i.e. 1-2 and 3-4 in a 4-col grid)
-   * Row 2: id · year · (gap) · rating
-   */
   grid-template-columns: 3.5em 1fr 1fr 3em;
   gap: 0.1em 0.5em;
-  padding: 0.35em 0.6em;
+}
+.incoming-demo-grid .df-grid.card {
   border: 1px solid #80808050;
   border-radius: 4px;
-  margin-bottom: 0.3em;
 }
-.incoming-demo-grid .df-grid.dynamic-scroller-item { padding-bottom: 0.1px; }
 
-/* Row 1 — :not(.shadow-grid) excludes shadow-grid cells so shadow can auto-place and measure correctly */
-.incoming-demo-grid .df-grid.card:not(.shadow-grid) .df-grid.cell.title  { grid-column: 1 / 3; grid-row: 1; }
-.incoming-demo-grid .df-grid.card:not(.shadow-grid) .df-grid.cell.artist { grid-column: 3 / 5; grid-row: 1; }
+/* Placement is relative to each record via --row-base (see use-row-placement.ts): with every
+   record's cells sharing one grid, an absolute `grid-row: 1` would put every record's first-row
+   cell on the SAME physical row instead of each record getting its own 2-row band. */
+.incoming-demo-grid .df-grid.cell.title  { grid-column: 1 / 3; grid-row: calc(var(--row-base) + 1); }
+.incoming-demo-grid .df-grid.cell.artist { grid-column: 3 / 5; grid-row: calc(var(--row-base) + 1); }
 
-/* Row 2 */
-.incoming-demo-grid .df-grid.card:not(.shadow-grid) .df-grid.cell.id     { grid-column: 1; grid-row: 2; font-size: 0.75em; opacity: 0.6; }
-.incoming-demo-grid .df-grid.card:not(.shadow-grid) .df-grid.cell.year   { grid-column: 2; grid-row: 2; }
-.incoming-demo-grid .df-grid.card:not(.shadow-grid) .df-grid.cell.rating { grid-column: 4; grid-row: 2; }
+.incoming-demo-grid .df-grid.cell.id     { grid-column: 1; grid-row: calc(var(--row-base) + 2); font-size: 0.75em; opacity: 0.6; }
+.incoming-demo-grid .df-grid.cell.year   { grid-column: 2; grid-row: calc(var(--row-base) + 2); }
+.incoming-demo-grid .df-grid.cell.rating { grid-column: 4; grid-row: calc(var(--row-base) + 2); }
 
 /* Zebra & header */
 .incoming-demo-grid .df-grid.card.even { background-color: #b0b0b020; }
