@@ -103,15 +103,23 @@ function randomDelay() {
   return 800 + Math.random() * 800;
 }
 
+// Guards against out-of-order responses: a filter/sort change started while the previous one is
+// still pending must win once both eventually resolve, not whichever's randomDelay() happens to
+// be shorter. Every load bumps this and captures its own value; a response only applies if it's
+// still the latest by the time its delay elapses, so an in-flight request never has to be
+// blocked (and its own trigger silently dropped) just to keep this simple.
+let loadToken = 0;
+
 // Load first page — resets everything. Called on initial load, sort, filter, or reload.
 function initialLoad() {
-  if (loading.value) return;
+  const token = ++loadToken;
   loading.value = true;
   records.value = [];
   serverResult = applyFiltersAndSort(sortState.value, currentFilters.value);
   total.value = serverResult.length;
 
   setTimeout(() => {
+    if (token !== loadToken) return;
     records.value = serverResult.slice(0, PAGE_SIZE);
     loading.value = false;
   }, randomDelay());
@@ -120,10 +128,12 @@ function initialLoad() {
 // Append next page — called by @load when user scrolls near the end.
 function loadNextPage() {
   if (loading.value || records.value.length >= total.value) return;
+  const token = ++loadToken;
   loading.value = true;
 
   const from = records.value.length;
   setTimeout(() => {
+    if (token !== loadToken) return;
     records.value = [...records.value, ...serverResult.slice(from, from + PAGE_SIZE)];
     loading.value = false;
   }, randomDelay());
@@ -140,6 +150,8 @@ function onFilter({ filterValues }: GridFilterEvent) {
 }
 
 function clear() {
+  loadToken++; // invalidate any in-flight request so it can't repopulate records after this
+  loading.value = false;
   records.value = [];
   total.value = 0;
   serverResult = [];
@@ -164,10 +176,20 @@ function clear() {
 }
 
 /* Single-line row: id | title | artist | year | rating. `.df-record-grid` is the marker the
-   body, header, and filter row all carry, so one declaration covers all three. */
+   body, header, and filter row all carry, so one declaration covers all three.
+
+   `grid-auto-rows: min-content` matters because the cells below are `overflow: hidden` (for the
+   ellipsis truncation) — a grid item with non-visible overflow gets an *automatic minimum size*
+   of 0 for the default `auto` row-sizing function, instead of its content size, which once the
+   body grid's own `overflow-y: scroll` gives it a definite height smaller than every row's true
+   height combined, lets rows compress toward 0 rather than the grid scrolling as expected —
+   every row in the shared grid overlapping the next instead of each keeping its own height.
+   `min-content` is an explicit (non-`auto`) row-sizing function, so it isn't subject to that
+   automatic-minimum-size reduction and rows keep their real height regardless of overflow. */
 :deep(.df-record-grid) {
   display: grid;
   grid-template-columns: minmax(2em, 4em) 1fr 1fr minmax(3em, 5em) minmax(3em, 5em);
+  grid-auto-rows: min-content;
   gap: .25em;
   font-size: 0.85rem;
 }

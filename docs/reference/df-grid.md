@@ -298,6 +298,14 @@ times (or, worse, only once and have the other two silently drift), style `.df-r
 }
 ```
 
+If any cell in your layout truncates its own content with `overflow: hidden` (a single-line cell using `white-space:
+nowrap; text-overflow: ellipsis`, say), also set `grid-auto-rows: min-content` here. A grid item with non-visible
+overflow gets an *automatic minimum size* of 0 for the default `auto` row-sizing function instead of its real
+content size — harmless on its own, but once there are enough rows for the body grid's own scrolling to give it a
+definite height smaller than every row's true height combined, every row in the shared grid can compress toward
+that 0 rather than the grid scrolling as expected, each row overlapping the next instead of keeping its own height.
+`min-content` is an explicit (non-`auto`) row-sizing function, so it isn't subject to that reduction.
+
 Column widths are the one exception you don't (and can't) set this way: unlike `gap` or `font-size`, they aren't a
 static choice you make once — they depend on the body grid's real content, resolved natively by the browser. The
 grid reads that resolution off the body grid, publishes it as the `--grid-template-columns` custom property on the

@@ -84,6 +84,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   each reserved track and before the first real row. The body scroller is now shifted up and
   grown by that same measured amount, clipping the reservation away without losing any scrollable
   height at the bottom.
+- The summary bar (loading, no-data, or a consumer's own `showSummaryBar` content) could render
+  entirely outside the visible, clipped area: `.df-grid-body`'s scroller was `height: 100%`,
+  claiming the whole of `.df-grid-body`'s own box in plain block flow and leaving the summary bar
+  — its sibling — no room to render in, invisible in every state that shows it rather than just a
+  layout tight on space. `.df-grid-body` is now a flex column so the two share its height
+  properly, the scroller shrinking to make room instead of always claiming all of it.
 
 ### Added
 

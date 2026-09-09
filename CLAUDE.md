@@ -137,6 +137,16 @@ grid's own measurement) is not covered by that same guard: it still runs on ever
 call regardless of an in-flight settle, since holding it back would leave that unrelated consumer
 looking at stale header content for the whole settle window.
 
+## The summary bar shares `.df-grid-body` with the scroller, not the space after it
+
+`.df-grid-body` is a flex column (`display: flex; flex-direction: column`), and `.body-grid` inside
+it is `flex: 1 1 auto; min-height: 0` rather than a bare `height: 100%` — both needed so
+`.df-summary-bar` (loading, no-data, or a consumer's own `showSummaryBar` content), the scroller's
+sibling, gets its own real share of `.df-grid-body`'s height. A bare `height: 100%` on the scroller
+leaves it consuming the entirety of `.df-grid-body`'s box in plain block flow, pushing the summary
+bar past the clipped (`overflow: hidden`) bottom edge — invisible in every state that shows it, not
+just a layout that happens to be short on room.
+
 ## The Playwright tests run, but not for coverage
 
 CI runs them in their own job (`.github/workflows/ci.yml`, the `e2e` job): Playwright installs

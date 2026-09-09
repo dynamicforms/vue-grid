@@ -576,11 +576,23 @@ defineExpose({
 }
 .df-grid-body {
   position: relative;
+  display: flex;
+  flex-direction: column;
   flex: 1 1 0%;
   min-height: 0;
   overflow: hidden;
 }
 .df-grid-body .body-grid {
+  /*
+   * `flex: 1 1 auto` (not `height: 100%` alone) so the summary bar below — a flex sibling, not an
+   * absolutely-positioned overlay — gets its own real share of `.df-grid-body`'s height instead
+   * of this grid claiming all of it and pushing the summary bar past the clipped (`overflow:
+   * hidden`) bottom edge, invisible in every state (loading, no-data, or a consumer's own
+   * populated `showSummaryBar` content) that shows it. `height: 100%` is kept as the flex-basis
+   * (via `auto`) for exactly the same sizing this had before a summary bar needed the room.
+   */
+  flex: 1 1 auto;
+  min-height: 0;
   height: 100%;
   overflow-y: scroll;
   /* Containing block for the row-anchor's `position: absolute`, keeping its grid-area based
