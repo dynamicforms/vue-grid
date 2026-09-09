@@ -71,7 +71,7 @@
           class="df-grid-row-spacer"
           :style="{
             gridColumn: '1 / -1',
-            gridRow: '1 / span 1',
+            gridRow: topSpacerGridRow,
             minHeight: `${windowing.topSpacerHeight.value}px`,
           }"
         />
@@ -305,12 +305,19 @@ const mountedItems = computed(() =>
     windowIndex: i,
   })),
 );
-// The top spacer, when rendered, occupies exactly one grid row line (its `min-height` — not its
-// row span — is what stands in for everything scrolled past above it), so every mounted record's
-// own row-base has to shift down by that one line too, or the first mounted record would overlap
-// it. Kept at 0 when there's nothing scrolled past yet, so a fully-mounted (unwindowed) dataset
-// places its first record at row-base 0 exactly as before.
-const topSpacerRowOffset = computed(() => (windowing.start.value > 0 ? 1 : 0));
+// Rows 1..rowsPerRecord are permanently reserved for the hidden header-measurement clone below
+// (always at row-base 0, regardless of scroll position) — otherwise it would share a row with
+// whichever record is first in the mounted window, and a layout that places cells via column
+// auto-placement (rather than giving every cell its own explicit grid-column) would have the
+// clone's cells and that record's cells compete for the same auto-placed columns, pushing one of
+// the two into newly-created implicit columns instead of the intended track list.
+//
+// The top spacer, when rendered, additionally occupies exactly one grid row line of its own past
+// that reservation (its `min-height` — not its row span — is what stands in for everything
+// scrolled past above it), so every mounted record's own row-base has to shift down by that one
+// line too, or the first mounted record would overlap it.
+const topSpacerRowOffset = computed(() => uColumns.rowsPerRecord.value + (windowing.start.value > 0 ? 1 : 0));
+const topSpacerGridRow = computed(() => `${uColumns.rowsPerRecord.value + 1} / span 1`);
 const bottomSpacerGridRow = computed(() => {
   const visibleRows = (windowing.end.value - windowing.start.value) * uColumns.rowsPerRecord.value;
   const startRow = topSpacerRowOffset.value + visibleRows + 1;
@@ -541,6 +548,9 @@ defineExpose({
 .df-grid-body .body-grid {
   height: 100%;
   overflow-y: scroll;
+  /* Containing block for the row-anchor's `position: absolute`, keeping its grid-area based
+     sizing resolved against this grid specifically rather than a further-up positioned ancestor. */
+  position: relative;
   /*
    * Windowing changes the top/bottom spacers' height as rows scroll in and out and get their
    * real height measured — exactly the kind of content-size change CSS scroll anchoring exists
@@ -602,14 +612,39 @@ defineExpose({
    * onto, now that a record's cells are direct items of the shared body grid rather than being
    * wrapped in their own per-row grid. `--row-base`/`--rows-per-record` are published per record
    * (see use-row-placement.ts) on an ancestor `display:contents` wrapper and inherited here.
+   *
+   * `position: absolute` (with `inset: 0` to fill the resulting grid area, and the grid itself as
+   * containing block via its own `position: relative`) keeps this element out of the grid's
+   * normal-flow auto-placement bookkeeping entirely, spanning `1 / -1` still by grid line. A
+   * normal-flow item with that same full-row span would otherwise occupy every column of its row
+   * for placement purposes, leaving no free cell for a consumer's own cells to auto-place their
+   * `grid-column` into — a layout that relies on column auto-placement (rather than declaring
+   * `grid-column` on every cell itself) would have every cell overflow into newly-created implicit
+   * columns instead of the intended track list. `inset: 0` (not `align-self`/`justify-self`, which
+   * do not apply to absolutely positioned boxes) is what makes it fill that area regardless of
+   * whatever `align-items`/`justify-items` a consumer sets on `.df-record-grid` to center cell
+   * content.
    */
+  position: absolute;
+  inset: 0;
   grid-column: 1 / -1;
   grid-row: calc(var(--row-base) + 1) / span var(--rows-per-record);
-  /* Fills its row/column band regardless of `align-items`/`justify-items` a consumer sets on
-     `.df-record-grid` to center cell content — those would otherwise shrink this empty box to
-     its own zero intrinsic size, breaking the background/border/selection styling it exists for. */
-  align-self: stretch;
-  justify-self: stretch;
+}
+.df-grid.container .body-grid .df-unanchored .df-grid.cell {
+  /*
+   * The hidden header-measurement clone's own cells (see the `df-unanchored` wrapper above) sit
+   * in rows permanently reserved for them (see `topSpacerRowOffset` in the script block), so a
+   * real record's cells sharing a row-base with them never happens. Those reserved rows would
+   * otherwise get real height from this content, even though it never paints (`visibility:
+   * hidden` on the wrapper) — collapsing every box-model contributor to 0 keeps the reservation
+   * from opening a visible gap above the first real row, while still leaving each cell's own
+   * *width* (an entirely separate axis, unaffected by collapsing height) contributing to column
+   * sizing exactly as before.
+   */
+  height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: hidden;
 }
 .df-grid-row-spacer {
   /*

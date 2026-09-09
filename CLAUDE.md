@@ -84,6 +84,23 @@ Each windowing spacer (standing in for the un-mounted records above/below the wi
 one grid row line, not one per record it stands in for — its `min-height` carries the estimated
 pixel height instead.
 
+Rows 1..`rowsPerRecord` are permanently reserved for the hidden header-measurement clone (`.df-unanchored`
+inside the body grid, always `--row-base: 0`), and real records start after that reservation — not
+because the clone and a real record sharing a row-base would misplace anything (both would still
+resolve to correct, if overlapping, grid lines), but because a layout that places cells via column
+auto-placement (no explicit `grid-column` on any cell — a plain single row per record is exactly
+this) would have the clone's cells and that record's cells compete for the same auto-placed
+columns, pushing one set into newly-created implicit columns instead of the intended track list.
+The clone's own box-model contribution (height, padding, border) is force-collapsed to 0 so this
+reservation doesn't open a visible gap above the first real row — its *width* still contributes to
+column sizing normally, since that is an entirely separate axis.
+
+The row-anchor (`.df-grid.card`, spanning `1 / -1` in its row) is `position: absolute` for the
+identical reason: as a normal-flow item it would occupy every column of its row for auto-placement
+purposes, leaving no free cell for auto-placed cells to land in at all. Being absolutely positioned
+removes it from that bookkeeping entirely while `inset: 0` (not `align-self`/`justify-self`, which
+do not apply to absolutely positioned boxes) still fills its grid area exactly as before.
+
 ## The Playwright tests run, but not for coverage
 
 CI runs them in their own job (`.github/workflows/ci.yml`, the `e2e` job): Playwright installs

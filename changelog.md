@@ -51,6 +51,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from a record's position within the currently-mounted window instead, which keeps the grid lines
   actually used bounded by `minRenderedRows` regardless of the dataset's total size. Chromium was
   not observed to have this limit, so this was invisible there.
+- A single-row layout that relies on plain CSS column auto-placement (no explicit `grid-column` on
+  any cell) had every cell overflow into newly-created implicit columns instead of the declared
+  track list: the row-anchor (`.df-grid.card`, spanning the full row for zebra/border/selection
+  styling) occupied every column of its row for auto-placement purposes, leaving no free cell for
+  a real cell to land in, and the hidden header-measurement clone competed with whichever record
+  was first in the mounted window for the same reason. The row-anchor is now `position: absolute`
+  (still filling its grid area via `inset: 0`), removing it from auto-placement bookkeeping
+  entirely; the clone gets its own permanently-reserved rows instead of sharing one with a real
+  record, collapsed to zero height/padding/border so the reservation stays invisible.
 
 ### Added
 
