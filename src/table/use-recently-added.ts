@@ -21,6 +21,13 @@ export interface UseRecentlyAdded {
   triggerBottomArc(): void;
   /** Increments each time a flash should trigger on the top arc (newly added pks above viewport). */
   topArcFlashTick: Ref<number>;
+  /**
+   * pks from the most recent addRecentlyAdded() call that landed above the visible range,
+   * updated immediately before topArcFlashTick increments. The grid uses this to shift
+   * scrollTop by their combined estimated height when topArcFlashTick fires, keeping the
+   * viewport visually stable instead of shifting the rows already on screen down.
+   */
+  topInsertedPks: Ref<any[]>;
   /** Increments each time a flash should trigger on the bottom arc (newly added pks below viewport). */
   bottomArcFlashTick: Ref<number>;
   /** The currently visible row index range as reported by the grid. Read-only for consumers. */
@@ -52,6 +59,7 @@ export function useRecentlyAdded(records: Ref<RowValue[]>, keyField: MaybeRef<st
 
   const topArcFlashTick = ref(0);
   const bottomArcFlashTick = ref(0);
+  const topInsertedPks = ref<any[]>([]);
 
   const pkToIndex = computed(() => {
     const kf = toValue(keyField);
@@ -103,16 +111,19 @@ export function useRecentlyAdded(records: Ref<RowValue[]>, keyField: MaybeRef<st
     // Use nextTick so pkToIndex (computed from records) is already updated.
     nextTick(() => {
       const indexMap = pkToIndex.value;
-      let hasTop = false;
+      const topPks: any[] = [];
       let hasBottom = false;
       pks.forEach((pk) => {
         if (!entries.has(pk)) return; // already expired
         const idx = indexMap.get(pk);
         if (idx === undefined) return;
-        if (idx < start) hasTop = true;
+        if (idx < start) topPks.push(pk);
         else if (idx >= end) hasBottom = true;
       });
-      if (hasTop) topArcFlashTick.value++;
+      if (topPks.length > 0) {
+        topInsertedPks.value = topPks;
+        topArcFlashTick.value++;
+      }
       if (hasBottom) bottomArcFlashTick.value++;
     });
   }
@@ -146,6 +157,7 @@ export function useRecentlyAdded(records: Ref<RowValue[]>, keyField: MaybeRef<st
     triggerTopArc,
     triggerBottomArc,
     topArcFlashTick,
+    topInsertedPks,
     bottomArcFlashTick,
     visibleRange,
     isAdding,

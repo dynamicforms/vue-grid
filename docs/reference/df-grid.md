@@ -89,7 +89,10 @@ default even/odd zebra striping entirely; include the logic yourself if you stil
 `recentlyAdded` — composable instance returned by `useRecentlyAdded`. Rows whose key is in the recently-added list
 get the `state-adding` CSS class, and flash arc overlays are rendered at the top/bottom edge of the body when newly
 added records land outside the visible viewport. The grid keeps the composable's visible range up to date as the
-viewport scrolls. See [Incoming Records Indicator](/examples/incoming).
+viewport scrolls. When records land *above* the viewport, the grid also shifts `scrollTop` by their height so the
+rows already on screen stay in place instead of visually sliding down — first using `estimatedRowHeight` (the
+inserted rows are never mounted, so nothing more is known yet), then corrected by the difference if one of them is
+later measured. See [Incoming Records Indicator](/examples/incoming).
 
 `incomingArcMaxOpacity` — peak opacity (0–1) of the incoming-records arc overlay. Applies to the first flash;
 flashes that follow within 1.5 s start progressively dimmer, down to 15 % of this peak.

@@ -105,6 +105,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   range. Default `100`, replacing the removed `mainShadowCount`.
 - `rows` field on `ResponsiveColumnDefinition`: declares how many grid rows that layout's card
   occupies per record (default `1`), needed for the relative `--row-base` cell placement above.
+- `topInsertedPks` on `UseRecentlyAdded` (`useRecentlyAdded`'s return value): the grid now shifts
+  `scrollTop` by the height of records that land above the visible viewport, so rows already on
+  screen stay in place instead of visually sliding down when content is prepended above them.
 
 ### Removed
 

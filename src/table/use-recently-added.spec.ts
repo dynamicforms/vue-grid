@@ -368,6 +368,48 @@ describe('useRecentlyAdded', () => {
   });
 
   // -------------------------------------------------------------------------
+  describe('topInsertedPks', () => {
+    // The grid watches this (alongside topArcFlashTick) to compensate scrollTop so the viewport
+    // doesn't visually shift when content lands above it — see df-grid.vue.
+    it('carries the pks that landed above the viewport, in order', async () => {
+      const { api } = mountComposable(rows(10));
+      api.setVisibleRange({ start: 5, end: 8 });
+
+      api.addRecentlyAdded([1, 2]);
+      await nextTick();
+
+      expect(api.topInsertedPks.value).toEqual([1, 2]);
+    });
+
+    it('excludes pks that landed below the viewport, even in the same call', async () => {
+      const { api } = mountComposable(rows(10));
+      api.setVisibleRange({ start: 4, end: 6 });
+
+      api.addRecentlyAdded([1, 8]);
+      await nextTick();
+
+      expect(api.topInsertedPks.value).toEqual([1]);
+    });
+
+    it('stays at its previous value when a later call has nothing above the viewport', async () => {
+      const { api } = mountComposable(rows(10));
+      api.setVisibleRange({ start: 4, end: 8 });
+
+      api.addRecentlyAdded([1]);
+      await nextTick();
+      expect(api.topInsertedPks.value).toEqual([1]);
+
+      api.addRecentlyAdded([5]); // index 5 is within [4, 8) - not above it
+      await nextTick();
+
+      // topArcFlashTick did not fire for this second call, so nothing consumes the stale value —
+      // the grid only reads topInsertedPks when topArcFlashTick itself changes.
+      expect(api.topArcFlashTick.value).toBe(1);
+      expect(api.topInsertedPks.value).toEqual([1]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   describe('manual triggers', () => {
     it('triggerTopArc / triggerBottomArc flash without any records changing', () => {
       const { api } = mountComposable(rows(3));

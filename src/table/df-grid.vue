@@ -350,6 +350,35 @@ function handleRowAnchorRef(el: Element | null, key: unknown) {
   }
 }
 
+// Prepending records above the visible window grows the (unmounted) content above the viewport
+// without moving scrollTop, which the browser reports as-is — visually, the rows already on
+// screen slide down by the inserted content's height. `topInsertedPks` (populated by
+// recentlyAdded right before topArcFlashTick fires) is the set of pks that just landed there;
+// nudging scrollTop by their combined *estimated* height (nothing more is known — they're
+// unmounted, so never individually measured) keeps the viewport showing the same rows in the
+// same place, with only the arc flash marking that something arrived above it.
+//
+// That estimate is provisional. If one of those pks later actually mounts (the window scrolls
+// up to it) and windowing measures its real height, `pendingTopHeightCompensation` (pk → the
+// estimate charged against it) lets the difference between the real and estimated height be
+// nudged into scrollTop too — otherwise the top spacer's own height would jump by exactly that
+// difference once the real measurement replaces the estimate, and the viewport would shift again.
+const pendingTopHeightCompensation = new Map<unknown, number>();
+function compensateScrollTop(delta: number) {
+  const el = bodyGridRef.value;
+  if (el && delta !== 0) el.scrollTop += delta;
+}
+watch(
+  () => props.recentlyAdded?.topArcFlashTick.value,
+  () => {
+    const pks = props.recentlyAdded?.topInsertedPks.value;
+    if (!pks || pks.length === 0) return;
+    const estimate = props.estimatedRowHeight!;
+    compensateScrollTop(pks.length * estimate);
+    pks.forEach((pk) => pendingTopHeightCompensation.set(pk, estimate));
+  },
+);
+
 // Fired when a scroll comes within this many px of the end of the list, matching the documented
 // `GridEmits.load` contract.
 const LOAD_DISTANCE = 200;
@@ -501,7 +530,14 @@ onMounted(() => {
   rowResizeObserver = new ResizeObserver((entries) => {
     entries.forEach((entry) => {
       const key = rowElementKeys.get(entry.target);
-      if (key !== undefined) windowing.setMeasured(key, (entry.target as HTMLElement).offsetHeight);
+      if (key === undefined) return;
+      const measured = (entry.target as HTMLElement).offsetHeight;
+      windowing.setMeasured(key, measured);
+      const chargedEstimate = pendingTopHeightCompensation.get(key);
+      if (chargedEstimate !== undefined) {
+        compensateScrollTop(measured - chargedEstimate);
+        pendingTopHeightCompensation.delete(key);
+      }
     });
   });
   observedRowElements.forEach((el) => rowResizeObserver!.observe(el));
