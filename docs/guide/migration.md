@@ -43,10 +43,22 @@ filter row use a different, offset placement scheme (see
 If your layout is responsive, target `.df-record-grid.<layoutCssClass>` the same way you
 previously targeted `.df-grid.card.<layoutCssClass>`.
 
-### Multi-row cards need `rows` and relative `grid-row` placement
+### Every cell needs an explicit `grid-row` — single-row layouts too
 
-If a layout places more than one row of fields per record, two things that used to be implicit
-now have to be explicit:
+This is not optional for multi-row cards only — it applies to **every** layout, including a plain
+single row per record. Plain CSS auto-placement has no notion of "record boundaries": once every
+record's cells are items of the *same* shared grid, an unplaced cell's `grid-row: auto` keeps
+advancing across the whole grid rather than restarting for each record, so cells that used to fall
+into place on row 1 by themselves now collide with (or land behind) whichever record's row the
+auto-placement cursor has already reached. A layout that never gave its cells an explicit
+`grid-row` before migrating needs one now, even with `rows` left at its default of `1`:
+
+```css
+.df-grid.cell { grid-row: calc(var(--row-base) + 1); }
+```
+
+If a layout places more than one row of fields per record, two more things that used to be
+implicit now have to be explicit too:
 
 1. Declare how many grid rows the layout's card occupies via `rows` on its
    `ResponsiveColumnDefinition` (default `1`):
@@ -57,10 +69,10 @@ now have to be explicit:
    ];
    ```
 
-2. Give **every** cell an explicit `grid-row`, relative to `calc(var(--row-base) + N)` rather than
-   an absolute row number — including cells that previously relied on implicit auto-placement for
-   row 1. With every record's cells sharing one grid, `grid-row: 2` would put every record's
-   second row on the very same physical row instead of each record getting its own band:
+2. Give **every** cell its own explicit `grid-row`, relative to `calc(var(--row-base) + N)` rather
+   than an absolute row number. With every record's cells sharing one grid, `grid-row: 2` would put
+   every record's second row on the very same physical row instead of each record getting its own
+   band:
 
    ```css
    /* before */

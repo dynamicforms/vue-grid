@@ -318,11 +318,14 @@ the record's full column and row span, there for zebra striping, borders, and se
 `data-pk`/`data-idx`. It carries no cell content itself, so padding on it does not inset anything; style `.df-grid
 .cell` for that.
 
-If a layout places more than one row per record (a card with several stacked rows of fields), declare how many via
-`rows` on that `ResponsiveColumnDefinition` (default `1`) — see [Column Definitions](./columns) — and give every
-cell an explicit `grid-row` relative to `calc(var(--row-base) + N)` rather than an absolute row number: with every
-record's cells on the same shared grid, `grid-row: 2` would put every record's second row on the very same physical
-row instead of each record getting its own band. `--row-base` is published per record automatically; you don't set
+Every cell needs an explicit `grid-row` relative to `calc(var(--row-base) + N)` — this applies to a plain single row
+per record just as much as a multi-row card, not only layouts with `rows` above `1`: plain CSS auto-placement has no
+notion of record boundaries once every record's cells share the same grid, so an unplaced cell's `grid-row: auto`
+keeps advancing across the whole grid instead of restarting per record. If a layout places more than one row per
+record (a card with several stacked rows of fields), additionally declare how many via `rows` on that
+`ResponsiveColumnDefinition` (default `1`) — see [Column Definitions](./columns). With every record's cells on the
+same shared grid, an absolute `grid-row: 2` would put every record's second row on the very same physical row
+instead of each record getting its own band. `--row-base` is published per record automatically; you don't set
 it yourself, and it isn't the record's own index in your dataset — it advances by `rows` from one *mounted* record
 to the next, so the grid lines a large dataset actually uses stay bounded by how many rows are mounted at once
 rather than growing with the dataset's total size (Firefox stops generating further implicit grid row tracks past
@@ -347,7 +350,7 @@ Read from your own rules; only `--row-base` isn't set on the grid container itse
 | Property | Value |
 |----------|-------|
 | `--grid-template-columns` | Set on `.df-grid.container`. The body grid's own natively-resolved track list, in pixels, copied onto the header with `grid-template-columns: var(--grid-template-columns) !important`. |
-| `--row-base` | Set per record (and on the hidden header clone that feeds column widths) on an ancestor of that record's cells, not on the container. Advances by `rows` from one mounted record to the next — not the record's own dataset index, see above. Read it in your own `grid-row` rules for multi-row layouts. |
+| `--row-base` | Set per record (and on the hidden header clone that feeds column widths) on an ancestor of that record's cells, not on the container. Advances by `rows` from one mounted record to the next — not the record's own dataset index, see above. Read it in your own `grid-row` rule for every layout, single-row included — see above. |
 | `--df-grid-scrollbar-width` | Set on `.df-grid.container`. The width, in pixels, that the body scroller actually reserves for its vertical scrollbar — measured as the scroller's `offsetWidth` minus its `clientWidth`, and re-measured on every container resize. It is `0` on platforms with overlay scrollbars. The header pads itself by this amount so its columns stay aligned with the body columns they label. |
 
 ## Row CSS classes

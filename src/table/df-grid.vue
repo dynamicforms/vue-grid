@@ -605,6 +605,11 @@ defineExpose({
    */
   grid-column: 1 / -1;
   grid-row: calc(var(--row-base) + 1) / span var(--rows-per-record);
+  /* Fills its row/column band regardless of `align-items`/`justify-items` a consumer sets on
+     `.df-record-grid` to center cell content — those would otherwise shrink this empty box to
+     its own zero intrinsic size, breaking the background/border/selection styling it exists for. */
+  align-self: stretch;
+  justify-self: stretch;
 }
 .df-grid-row-spacer {
   /*

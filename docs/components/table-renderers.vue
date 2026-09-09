@@ -93,6 +93,11 @@ const columns = [
   font-size: 0.9rem;
   align-items: center;
 }
+/* One row per record: with every record's cells sharing one grid, plain auto-placement has no
+   notion of record boundaries — every cell needs this same explicit row. */
+:deep(.df-grid.cell) {
+  grid-row: calc(var(--row-base) + 1);
+}
 :deep(.df-grid.card) {
   border-bottom: 1px solid #e0e0e0;
 }

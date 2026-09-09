@@ -180,7 +180,10 @@ function clear() {
   border-bottom: 1px solid rgba(128, 128, 128, 0.5);
 }
 
+/* One row per record: with every record's cells sharing one grid, plain auto-placement has no
+   notion of record boundaries — every cell needs this same explicit row. */
 :deep(.df-grid.cell) {
+  grid-row: calc(var(--row-base) + 1);
   padding: 0 .25em;
   white-space: nowrap;
   overflow: hidden;

@@ -16,10 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   declaration to `.df-record-grid` instead — the marker every place that lays out a record's
   fields carries (the real scrolling body, the header, and the filter row alike), so one
   declaration covers all three instead of just the body. `.df-grid.card` is now the row-anchor: a
-  styleable but otherwise empty box, not a grid container. Multi-row card layouts (more than one
-  row of fields per record) must additionally declare `rows` on their `ResponsiveColumnDefinition`
-  and give every cell an explicit `grid-row: calc(var(--row-base) + N)` rather than an absolute row
-  number — plain CSS auto-placement has no notion of record boundaries once rows share a grid. See
+  styleable but otherwise empty box, not a grid container. Every layout, including a plain single
+  row per record, must now give each cell an explicit `grid-row: calc(var(--row-base) + N)` rather
+  than an absolute row number or none at all — plain CSS auto-placement has no notion of record
+  boundaries once rows share a grid, so an unplaced cell's `grid-row: auto` keeps advancing across
+  the whole grid instead of restarting per record. A layout with more than one row of fields per
+  record must additionally declare `rows` on its `ResponsiveColumnDefinition`. See
   [Card layout CSS](https://dynamicforms.github.io/vue-grid/reference/df-grid#card-layout-css) and
   the [Cookbook](https://dynamicforms.github.io/vue-grid/guide/cookbook#a-responsive-multi-row-card-layout).
 - Row virtualization no longer depends on `@pdanpdan/virtual-scroll` (dropped as a peer
