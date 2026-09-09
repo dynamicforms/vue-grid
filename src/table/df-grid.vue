@@ -124,7 +124,12 @@
           }"
         />
       </div>
-      <div v-if="showSummaryBar || loading || !props.records.length" class="df-summary-bar" data-section="summary-bar">
+      <div
+        v-if="showSummaryBar || loading || !props.records.length"
+        class="df-summary-bar"
+        :class="{ 'df-summary-bar-empty': !props.records.length }"
+        data-section="summary-bar"
+      >
         <slot name="summary-bar">
           <div v-if="loading" class="df-summary-loading">
             <slot name="loading">
@@ -621,6 +626,14 @@ defineExpose({
   justify-content: center;
   gap: 0.5em;
   padding: 1em;
+}
+/* No records means there's nothing else in the body to anchor to, so this renders where a row
+   would — right below the header — rather than at the bottom, its default position (a flex
+   sibling after `.body-grid`, a footer below the rows). Keyed on record count, not `loading`:
+   loading a further page of an already-populated grid keeps the default order, staying at the
+   bottom where the new rows are about to arrive rather than jumping to the top while in flight. */
+.df-summary-bar-empty {
+  order: -1;
 }
 .df-summary-loading,
 .df-summary-no-data {

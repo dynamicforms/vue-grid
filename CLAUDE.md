@@ -147,6 +147,14 @@ leaves it consuming the entirety of `.df-grid-body`'s box in plain block flow, p
 bar past the clipped (`overflow: hidden`) bottom edge — invisible in every state that shows it, not
 just a layout that happens to be short on room.
 
+`.df-summary-bar-empty` (`order: -1`, applied when `!records.length`) puts the bar where a row
+would be — right below the header — instead of its default position, a footer after `.body-grid`.
+With no records, there's nothing else in the body to anchor it to, so the footer position leaves it
+at the bottom of an otherwise-empty scroller instead of where content is expected to start. It's
+keyed on record count rather than `loading` specifically: loading a further page of an
+already-populated grid keeps the default (footer) position, since that's where the incoming rows
+are about to land, not the top.
+
 ## The Playwright tests run, but not for coverage
 
 CI runs them in their own job (`.github/workflows/ci.yml`, the `e2e` job): Playwright installs

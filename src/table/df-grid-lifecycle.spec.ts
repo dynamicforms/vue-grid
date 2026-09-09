@@ -242,4 +242,42 @@ describe('DfGrid — lifecycle', () => {
       expect(disconnect).toHaveBeenCalled();
     });
   });
+
+  describe('summary bar ordering', () => {
+    // `.df-summary-bar-empty` (see df-grid.vue's CSS) reorders the summary bar ahead of the body
+    // grid via `order: -1`, so it renders where a row would — right below the header — instead of
+    // at the bottom (its position without the class, a footer below rows). It's keyed on
+    // `!records.length` specifically, not `loading`: an initial load (no records yet) has nowhere
+    // else for "Loading…" to anchor to but the top, but loading a further page of an
+    // already-populated grid (infinite scroll) belongs at the bottom, where the new rows are
+    // about to arrive, not jumping to the top while it's in flight. JSDOM can't verify the
+    // resulting geometry, only that the class itself is applied correctly.
+    it('gets the empty-state class when there are no records', async () => {
+      const wrapper = mountGrid({ records: [] });
+      await settle();
+
+      expect(wrapper.find('.df-summary-bar').classes()).toContain('df-summary-bar-empty');
+    });
+
+    it('gets the empty-state class for an initial load (no records yet, loading)', async () => {
+      const wrapper = mountGrid({ records: [], loading: true });
+      await settle();
+
+      expect(wrapper.find('.df-summary-bar').classes()).toContain('df-summary-bar-empty');
+    });
+
+    it('does not get the empty-state class while loading a further page of existing records', async () => {
+      const wrapper = mountGrid({ loading: true });
+      await settle();
+
+      expect(wrapper.find('.df-summary-bar').classes()).not.toContain('df-summary-bar-empty');
+    });
+
+    it('does not get the empty-state class for a populated showSummaryBar', async () => {
+      const wrapper = mountGrid({ showSummaryBar: true });
+      await settle();
+
+      expect(wrapper.find('.df-summary-bar').classes()).not.toContain('df-summary-bar-empty');
+    });
+  });
 });

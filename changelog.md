@@ -89,7 +89,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   claiming the whole of `.df-grid-body`'s own box in plain block flow and leaving the summary bar
   — its sibling — no room to render in, invisible in every state that shows it rather than just a
   layout tight on space. `.df-grid-body` is now a flex column so the two share its height
-  properly, the scroller shrinking to make room instead of always claiming all of it.
+  properly, the scroller shrinking to make room instead of always claiming all of it. With no
+  records at all, the bar also now renders where a row would — right below the header — instead
+  of at the bottom of the empty scroller with nothing visually anchoring it there; loading a
+  further page of an already-populated grid keeps its default position at the bottom, where the
+  new rows are about to arrive.
 
 ### Added
 
