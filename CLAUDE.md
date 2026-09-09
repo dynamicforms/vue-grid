@@ -91,9 +91,14 @@ resolve to correct, if overlapping, grid lines), but because a layout that place
 auto-placement (no explicit `grid-column` on any cell — a plain single row per record is exactly
 this) would have the clone's cells and that record's cells compete for the same auto-placed
 columns, pushing one set into newly-created implicit columns instead of the intended track list.
-The clone's own box-model contribution (height, padding, border) is force-collapsed to 0 so this
-reservation doesn't open a visible gap above the first real row — its *width* still contributes to
-column sizing normally, since that is an entirely separate axis.
+The clone's own box-model contribution (height, padding, border) is force-collapsed to 0 — its
+*width* still contributes to column sizing normally, since that is an entirely separate axis — but
+this alone does not make the reservation invisible: the consumer's own `row-gap` (a static per-track
+value the library cannot know in advance) still applies between the `rowsPerRecord` reserved tracks
+and between the last of them and the first real row, growing with how many rows a layout stacks per
+record. `bodyGridRef` is shifted up, and grown by the same amount (`margin-top`/`height`, computed
+from the resolved `row-gap` × `rowsPerRecord`), so its scrollport clips exactly that reserved block
+away at rest without losing any scrollable height at the bottom.
 
 The row-anchor (`.df-grid.card`, spanning `1 / -1` in its row) is `position: absolute` for the
 identical reason: as a normal-flow item it would occupy every column of its row for auto-placement

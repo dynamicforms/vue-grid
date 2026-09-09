@@ -45,6 +45,7 @@
         ref="bodyGridRef"
         class="df-grid body-grid df-record-grid"
         :class="uColumns.cssClass.value"
+        :style="bodyGridStyle"
         data-section="body"
       >
         <div
@@ -451,9 +452,30 @@ function measureScrollbarWidth() {
   if (el) scrollbarWidth.value = el.offsetWidth - el.clientWidth;
 }
 
+// The hidden header-measurement clone's rows (see use-row-placement.ts) have zero height, but
+// `row-gap` — a consumer-set, per-track value the library cannot know in advance — still applies
+// between each of the `rowsPerRecord` reserved tracks and between the last of them and the first
+// real row, showing up as blank space above the first row that grows with how many rows a layout
+// stacks per record. `bodyGridRef` is shifted up by that total and grown by the same amount
+// (`marginTop`/`height` below) so its scrollport clips exactly the reserved block away at rest,
+// without losing any scrollable height at the bottom.
+const reservedBlockGap = ref(0);
+function measureReservedBlockGap() {
+  const el = bodyGridRef.value;
+  if (!el) return;
+  const rowGap = Number.parseFloat(window.getComputedStyle(el).rowGap);
+  reservedBlockGap.value = Number.isFinite(rowGap) ? rowGap * uColumns.rowsPerRecord.value : 0;
+}
+const bodyGridStyle = computed(() =>
+  reservedBlockGap.value > 0
+    ? { marginTop: `-${reservedBlockGap.value}px`, height: `calc(100% + ${reservedBlockGap.value}px)` }
+    : undefined,
+);
+
 let resizeObserver: ResizeObserver | null = null;
 onMounted(() => {
   measureScrollbarWidth();
+  measureReservedBlockGap();
   syncHeaderColumns();
   onBodyScrollSettle();
   bodyGridRef.value?.addEventListener('scroll', onBodyScrollSettle, { passive: true });
@@ -492,6 +514,9 @@ onUpdated(() => {
   // Rows arriving or leaving can make the body scrollbar appear or disappear without the
   // container ever resizing, and can change the body grid's own native column widths.
   measureScrollbarWidth();
+  // A responsive layout switch changes rowsPerRecord (and can change the consumer's own gap for
+  // that layout), both of which feed the reserved-block compensation above.
+  measureReservedBlockGap();
   onBodyScrollSettle();
   syncHeaderColumns();
 });

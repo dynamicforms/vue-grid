@@ -36,12 +36,15 @@ import { defineComponent, h, nextTick, ref } from 'vue';
 
 import DfGrid from './df-grid.vue';
 
-const { scrollerBox, resizeCallback, measuredColumnWidths, fieldMetricsOverride } = vi.hoisted(() => ({
+const { scrollerBox, resizeCallback, measuredColumnWidths, fieldMetricsOverride, measuredRowGap } = vi.hoisted(() => ({
   // What the mocked body scroller reports: a border box wider than its content box means the
   // scrollbar takes up space, an equal one means it does not (overlay scrollbars).
   scrollerBox: { offsetWidth: 615, clientWidth: 600 },
   resizeCallback: { fn: null as ResizeObserverCallback | null },
   measuredColumnWidths: { value: '200px 100px' },
+  // What getComputedStyle(bodyGrid).rowGap reports — the reserved-block gap compensation reads
+  // this directly (not via getPropertyValue), unlike every other measurement in this file.
+  measuredRowGap: { value: '0px' },
   // Lets one test drive the mocked shadow grids' per-field measurements, to check that a
   // layout's field-level savings actually reach the width-based layout picker. Left null the
   // rest of the time, in which case both passes report empty field metrics and the picker sees
@@ -184,9 +187,12 @@ describe('DfGrid — column auto-sizing', () => {
     resizeCallback.fn = null;
     fieldMetricsOverride.current = null;
 
+    measuredRowGap.value = '0px';
     const getPropertyValue = (prop: string) =>
       prop === 'grid-template-columns' ? measuredColumnWidths.value : '600px';
-    vi.spyOn(window, 'getComputedStyle').mockReturnValue({ getPropertyValue } as CSSStyleDeclaration);
+    vi.spyOn(window, 'getComputedStyle').mockImplementation(
+      () => ({ getPropertyValue, rowGap: measuredRowGap.value }) as unknown as CSSStyleDeclaration,
+    );
 
     offsetWidthDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
     clientWidthDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
@@ -336,6 +342,59 @@ describe('DfGrid — column auto-sizing', () => {
       await resizeContainer(wrapper, 600);
 
       expect(containerStyle(wrapper)).toContain('--df-grid-scrollbar-width: 15px');
+    });
+  });
+
+  describe('reserved-block gap compensation', () => {
+    const bodyGridStyle = (wrapper: ReturnType<typeof mountGrid>) =>
+      wrapper.find('.body-grid').attributes('style') ?? '';
+
+    it('shifts the scrollport up by rowsPerRecord × row-gap and grows it by the same amount', async () => {
+      measuredRowGap.value = '10px';
+      const wrapper = mountGrid();
+      await settle();
+
+      // Default rowsPerRecord is 1 — one gap between the reserved row and the first real one.
+      expect(bodyGridStyle(wrapper)).toContain('margin-top: -10px');
+      expect(bodyGridStyle(wrapper)).toContain('height: calc(100% + 10px)');
+    });
+
+    it('scales with rowsPerRecord for a multi-row-per-record layout', async () => {
+      measuredRowGap.value = '10px';
+      const wrapper = mountGrid({
+        columns: [{ ...responsiveColumns[0], rows: 3 }],
+        activeColumns: 'wide',
+      });
+      await settle();
+
+      expect(bodyGridStyle(wrapper)).toContain('margin-top: -30px');
+      expect(bodyGridStyle(wrapper)).toContain('height: calc(100% + 30px)');
+    });
+
+    it('applies no compensation when the consumer sets no gap', async () => {
+      measuredRowGap.value = '0px';
+      const wrapper = mountGrid();
+      await settle();
+
+      expect(bodyGridStyle(wrapper)).not.toContain('margin-top');
+    });
+
+    it('re-measures when the active layout (and so rowsPerRecord) changes', async () => {
+      measuredRowGap.value = '10px';
+      const wrapper = mountGrid({
+        columns: [
+          { ...responsiveColumns[0], rows: 3 },
+          { ...responsiveColumns[1], rows: 1 },
+        ],
+        activeColumns: 'wide',
+      });
+      await settle();
+      expect(bodyGridStyle(wrapper)).toContain('margin-top: -30px');
+
+      await wrapper.setProps({ activeColumns: 'narrow' });
+      await settle();
+
+      expect(bodyGridStyle(wrapper)).toContain('margin-top: -10px');
     });
   });
 });

@@ -77,6 +77,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   arrived later, and a measurement taken while a filter-row input was still mid-layout could read
   too tall in the first place. It now re-measures when column widths change and retries across a
   few animation frames until two consecutive readings agree.
+- The hidden header-measurement clone's reserved rows showed as a visible blank gap above the
+  first real row, growing with how many rows a layout stacks per record (barely noticeable for a
+  single-row layout, over a centimetre for one stacking many fields into a single column): the
+  clone's own height collapses to zero, but the consumer's own `row-gap` still applied between
+  each reserved track and before the first real row. The body scroller is now shifted up and
+  grown by that same measured amount, clipping the reservation away without losing any scrollable
+  height at the bottom.
 
 ### Added
 
