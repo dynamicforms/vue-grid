@@ -161,8 +161,8 @@ describe('DfGrid — lifecycle', () => {
     // screen would visually slide down by the inserted content's height. See df-grid.vue's watch
     // on topArcFlashTick. Real layout geometry (does the viewport actually stay visually stable)
     // is e2e territory (recently-added-top-insert.spec.ts) — this only checks the arithmetic:
-    // scrollTop moves by exactly `pks.length * estimatedRowHeight` when topInsertedPks reports a
-    // batch, alongside topArcFlashTick.
+    // scrollTop moves by `pks.length * (estimatedRowHeight + rowGapPx)` when topInsertedPks
+    // reports a batch, alongside topArcFlashTick.
     function makeScrollableBodyGrid(wrapper: ReturnType<typeof mountGrid>) {
       const bodyGrid = wrapper.element.querySelector('.body-grid') as HTMLElement;
       let scrollTop = 0;
@@ -202,6 +202,29 @@ describe('DfGrid — lifecycle', () => {
       await settle();
 
       expect(bodyGrid.scrollTop).toBe(500);
+    });
+
+    it('also compensates for the row-gap between the inserted block and the record after it', async () => {
+      // A card's own offsetHeight already includes the gap(s) *within* its own rowsPerRecord
+      // span (its grid area spans across those), but not the boundary gap between it and the
+      // next card — that one is only ever visible to getComputedStyle(bodyGrid).rowGap.
+      const getPropertyValue = (prop: string) => (prop === 'width' ? '400px' : '100px');
+      vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+        getPropertyValue,
+        rowGap: '2px',
+      } as unknown as CSSStyleDeclaration);
+
+      const recentlyAdded = makeRecentlyAdded();
+      const wrapper = mountGrid({ recentlyAdded, estimatedRowHeight: 40 });
+      await settle();
+      const bodyGrid = makeScrollableBodyGrid(wrapper);
+      bodyGrid.scrollTop = 500;
+
+      recentlyAdded.topInsertedPks.value = [10, 11];
+      recentlyAdded.topArcFlashTick.value++;
+      await settle();
+
+      expect(bodyGrid.scrollTop).toBe(500 + 2 * (40 + 2));
     });
   });
 

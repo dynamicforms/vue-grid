@@ -355,12 +355,14 @@ function handleRowAnchorRef(el: Element | null, key: unknown) {
 // screen slide down by the inserted content's height. `topInsertedPks` (populated by
 // recentlyAdded right before topArcFlashTick fires) is the set of pks that just landed there;
 // nudging scrollTop by their combined *estimated* height (nothing more is known — they're
-// unmounted, so never individually measured) keeps the viewport showing the same rows in the
-// same place, with only the arc flash marking that something arrived above it.
+// unmounted, so never individually measured), plus one `row-gap` per inserted record for the
+// boundary gap that lands between the inserted block and the record that used to be first (not
+// part of any single card's own height — see `rowGapPx` above), keeps the viewport showing the
+// same rows in the same place, with only the arc flash marking that something arrived above it.
 //
-// That estimate is provisional. If one of those pks later actually mounts (the window scrolls
-// up to it) and windowing measures its real height, `pendingTopHeightCompensation` (pk → the
-// estimate charged against it) lets the difference between the real and estimated height be
+// The row-height estimate is provisional. If one of those pks later actually mounts (the window
+// scrolls up to it) and windowing measures its real height, `pendingTopHeightCompensation` (pk →
+// the estimate charged against it) lets the difference between the real and estimated height be
 // nudged into scrollTop too — otherwise the top spacer's own height would jump by exactly that
 // difference once the real measurement replaces the estimate, and the viewport would shift again.
 const pendingTopHeightCompensation = new Map<unknown, number>();
@@ -374,7 +376,7 @@ watch(
     const pks = props.recentlyAdded?.topInsertedPks.value;
     if (!pks || pks.length === 0) return;
     const estimate = props.estimatedRowHeight!;
-    compensateScrollTop(pks.length * estimate);
+    compensateScrollTop(pks.length * (estimate + rowGapPx.value));
     pks.forEach((pk) => pendingTopHeightCompensation.set(pk, estimate));
   },
 );
@@ -494,11 +496,18 @@ function measureScrollbarWidth() {
 // (`marginTop`/`height` below) so its scrollport clips exactly the reserved block away at rest,
 // without losing any scrollable height at the bottom.
 const reservedBlockGap = ref(0);
+// A single `row-gap` between two adjacent records' cards — used to compensate for the boundary
+// gap a top-inserted record introduces against the record that used to be first (see the
+// `topArcFlashTick` watcher below). Each card's own offsetHeight already includes the gap(s)
+// *within* its own `rowsPerRecord` span (its grid area, per the CSS Grid spec, extends across
+// those internal gaps), so only this one boundary gap per inserted record is otherwise uncounted.
+const rowGapPx = ref(0);
 function measureReservedBlockGap() {
   const el = bodyGridRef.value;
   if (!el) return;
   const rowGap = Number.parseFloat(window.getComputedStyle(el).rowGap);
-  reservedBlockGap.value = Number.isFinite(rowGap) ? rowGap * uColumns.rowsPerRecord.value : 0;
+  rowGapPx.value = Number.isFinite(rowGap) ? rowGap : 0;
+  reservedBlockGap.value = rowGapPx.value * uColumns.rowsPerRecord.value;
 }
 const bodyGridStyle = computed(() =>
   reservedBlockGap.value > 0
