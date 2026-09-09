@@ -162,6 +162,14 @@ test.describe('scroll integrity', () => {
   }
 
   test('sustained scrolling keeps scrollTop advancing under continued input', async ({ page }) => {
+    // 40 cycles × 20 real wheel dispatches each is inherently slow to drive through Firefox's
+    // automation protocol, which has measurably higher per-command overhead than Chromium's CDP
+    // for the same operations — close to the default 60s budget even locally, and CI's weaker,
+    // shared CPU pushes it over that line mid-dispatch (a `mouse.wheel()` call itself timing out,
+    // not the assertion below failing). More headroom, not a smaller test, since the loop count is
+    // what makes a transient "stuck" streak distinguishable from a couple of legitimately no-op
+    // cycles in the first place.
+    test.setTimeout(120_000);
     await gotoGrid(page, 1400);
     const activeLayout = await page.evaluate(
       () => (document.querySelector('.df-grid.body-grid')!.className.match(/three-row/) ?? [])[0],
