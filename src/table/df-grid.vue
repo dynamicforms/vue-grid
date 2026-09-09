@@ -338,7 +338,7 @@ function handleRowAnchorRef(el: Element | null, key: unknown) {
 }
 
 // Fired when a scroll comes within this many px of the end of the list, matching the documented
-// `GridEmits.load` contract (previously the underlying virtual-scroll library's own default).
+// `GridEmits.load` contract.
 const LOAD_DISTANCE = 200;
 
 const onBodyScrollSettle = throttle(() => {

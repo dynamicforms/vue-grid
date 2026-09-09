@@ -9,13 +9,9 @@
  *    body grid's own scroll position — see `onBodyScrollSettle` in df-grid.vue. Mounted rows are
  *    always a superset of the visible ones (the windowing buffer adds extras on both sides), so
  *    this scan doesn't need to know about windowing at all.
+ *  - **windowed row placement** — `--row-base` and the windowing spacers' `grid-row` stay small
+ *    regardless of dataset size; see use-row-placement.ts.
  *  - **teardown** — the resize observers are disconnected, so a detached grid stops reacting.
- *
- * One category this file used to cover is gone: **"learning that a layout needs more room"**
- * (the `onUpdated` overflow-learning block that credited a responsive layout with extra width
- * when a shadow-predicted track list turned out too narrow) is deleted, not just untested — with
- * native column sizing a real row's own grid track *is* the measurement, so there is nothing
- * left for it to overflow.
  */
 
 import { flushPromises, mount } from '@vue/test-utils';
@@ -200,12 +196,7 @@ describe('DfGrid — lifecycle', () => {
   });
 
   describe('windowed row placement', () => {
-    // Firefox stops generating further implicit CSS grid row tracks past roughly 10,000 of
-    // them, silently collapsing every row beyond that onto the same line — a record's `--row-base`
-    // and the spacers' `grid-row` are keyed off its position within the mounted window, not its
-    // absolute index in the full dataset, specifically so the grid line numbers actually used stay
-    // bounded by the window size regardless of how large the dataset or how deep the scroll
-    // position is. See use-row-placement.ts.
+    // See use-row-placement.ts for why this has to hold regardless of dataset size.
     it('keeps --row-base and the spacer grid-row small however deep into a huge dataset the window is', async () => {
       const bigRecords = Array.from({ length: 10_000 }, (_, i) => ({ id: i, name: `Row ${i}` }));
       const wrapper = mountGrid({ records: bigRecords });

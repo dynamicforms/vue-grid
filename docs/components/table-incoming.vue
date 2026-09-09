@@ -135,15 +135,14 @@ const columns = [
 .incoming-demo-grid {
   height: 30em;
 }
-/* Real rows are direct items of one shared grid (`.body-grid`) instead of each being its own
-   independent grid; `.df-grid.card` is the row-anchor (zebra/border), not a grid itself. */
-.incoming-demo-grid .df-grid.body-grid {
+/* `.df-record-grid` is the marker the body, header, and filter row all carry, so one
+   declaration covers all three.
+ * 4 columns:  [narrow id/blank]  [wide title/year]  [wide artist/blank]  [narrow rating]
+ * Row 1: title spans cols 1-3, artist spans cols 3-5 (i.e. 1-2 and 3-4 in a 4-col grid)
+ * Row 2: id · year · (gap) · rating
+ */
+.incoming-demo-grid .df-record-grid {
   display: grid;
-  /*
-   * 4 columns:  [narrow id/blank]  [wide title/year]  [wide artist/blank]  [narrow rating]
-   * Row 1: title spans cols 1-3, artist spans cols 3-5 (i.e. 1-2 and 3-4 in a 4-col grid)
-   * Row 2: id · year · (gap) · rating
-   */
   grid-template-columns: 3.5em 1fr 1fr 3em;
   gap: 0.1em 0.5em;
 }

@@ -73,21 +73,16 @@ the overlay half.
 
 A record's cells are placed on the shared grid via `--row-base` (`use-row-placement.ts`), read in
 consumer CSS as `grid-row: calc(var(--row-base) + N)`. It is a record's position *within the
-currently-mounted window*, not its index in the full dataset — the first mounted record is always
-`--row-base` 0 (or 1, with a top spacer ahead of it reserving one line), regardless of how far
-into the dataset that record actually is. Using the absolute dataset index directly was the
-original design and looked simpler — no recalculation needed as the mounted window slides — but
-Firefox stops generating further implicit CSS grid row tracks past roughly 10,000 of them and
-silently collapses every row beyond that onto the same line; a windowed grid whose row-base grows
-with the full dataset size hits that ceiling on any large enough dataset (three-row's `rows: 3`
-hit it around record 3,300 of 10,000). Chromium was not observed to have this limit. Keeping
-`--row-base` bounded by the window size instead of the dataset size keeps the grid line numbers
-actually referenced small no matter how large the dataset is.
+currently-mounted window*, not its index in the full dataset: Firefox stops generating further
+implicit CSS grid row tracks past roughly 10,000 of them, silently collapsing every row beyond
+that onto the same line (Chromium has no such limit, tested directly up to 100,000 rows), so a
+row-base tied to the dataset's own size hits that ceiling on any large enough dataset — three-row's
+`rows: 3` hit it around record 3,300 of 10,000. Keyed to window position instead, the grid lines
+actually referenced stay bounded by `minRenderedRows` regardless of dataset size.
 
-The two windowing spacers (standing in for the un-mounted records above/below the window) are each
-exactly one grid row line for the same reason — spanning as many lines as the records they stand
-in for would reintroduce the same ceiling. Their `min-height`, not their `grid-row` span, carries
-the estimated pixel height of everything they represent.
+Each windowing spacer (standing in for the un-mounted records above/below the window) is exactly
+one grid row line, not one per record it stands in for — its `min-height` carries the estimated
+pixel height instead.
 
 ## The Playwright tests run, but not for coverage
 

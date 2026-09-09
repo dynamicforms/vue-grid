@@ -162,7 +162,6 @@ test.describe('scroll integrity', () => {
   }
 
   test('sustained scrolling keeps scrollTop advancing under continued input', async ({ page }) => {
-    // three-row: the layout the freeze was originally found in.
     await gotoGrid(page, 1400);
     const activeLayout = await page.evaluate(
       () => (document.querySelector('.df-grid.body-grid')!.className.match(/three-row/) ?? [])[0],
@@ -176,8 +175,7 @@ test.describe('scroll integrity', () => {
     await page.mouse.move(bodyBox.x + bodyBox.width / 2, bodyBox.y + bodyBox.height / 2);
 
     // A real user's scroll gesture is rarely perfectly monotonic — oscillating (mostly down, a
-    // little back up) both matches that and is the shape that most reliably reproduced the
-    // scroll-anchoring freeze during investigation.
+    // little back up) matches that.
     let prevScrollTop = -1;
     let stuckStreak = 0;
     let maxStuckStreak = 0;

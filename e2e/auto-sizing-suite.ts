@@ -288,30 +288,26 @@ export function autoSizingSuite(mode: string, expectScrollbar: (width: number) =
     await waitForStableWidth(page, '.df-grid.container');
     const narrow = await expectGridConsistent(page, `${mode} narrow`);
 
-    // Rarely, in Firefox, a still-lazily-loading font variant (see `waitForStableWidth`'s
-    // comment) shifts a shadow grid's measured width right as this assertion's own resize
-    // settles, landing `wide` on the same layout `narrow` would pick anyway — a flake in this
-    // one width-picking race, not a regression in the geometry checks above, which already
-    // passed for both widths.
+    // Rarely, in Firefox, a still-lazily-loading font variant (see `waitForStableWidth`) shifts a
+    // shadow grid's measured width right as this resize settles, landing `wide` on the same
+    // layout `narrow` picks too — a flake in this width-picking race, not the geometry checks
+    // above, which already passed for both widths.
     expect(narrow.activeLayout, 'layout did not adapt to the narrower container')
       .not.toBe(wide.activeLayout);
   });
 
   test(`[${mode}] entering selection mode keeps the columns consistent`, async ({ page }) => {
     await gotoGrid(page);
-    // This test exercises three-row's own long-press/selection handling specifically — the
-    // project's default viewport (1280x720) no longer lands there on its own once three-row's
-    // own minimum width grew wide enough to make single-column the better fit at that width, so
-    // the width needed to reach three-row is pinned explicitly rather than left to chance.
+    // Pinned wide enough to guarantee three-row specifically, since this test exercises its own
+    // long-press/selection handling — the project's default viewport isn't guaranteed to land there.
     await page.setViewportSize({ width: 1600, height: 800 });
     await page.waitForTimeout(1_500);
     await waitForStableWidth(page, '.df-grid.container');
 
     // Scoped to `.body-grid` — an unscoped `[data-idx]` query matches the header row first (its
-    // own `data-idx` is the string "header"), and the `longpress` directive only ever listens for
-    // `mousedown`/`touchstart` (see `helpers/longpress.ts`), so it has to be `page.mouse`, not a
-    // dispatched `pointerdown`/`pointerup` pair that directive was never listening for in the
-    // first place — both real bugs this test had been silently not exercising at all.
+    // own `data-idx` is the string "header"). The `longpress` directive only listens for
+    // `mousedown`/`touchstart` (see `helpers/longpress.ts`), so the gesture has to go through
+    // `page.mouse`, not a dispatched `pointerdown`/`pointerup` pair.
     const firstCard = page.locator('.df-grid.body-grid .df-grid.card[data-idx]').first();
     await firstCard.scrollIntoViewIfNeeded();
     await page.waitForTimeout(200); // let the scroll itself settle before reading a box off it

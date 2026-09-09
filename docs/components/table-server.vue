@@ -163,10 +163,9 @@ function clear() {
   background-color: #60606040;
 }
 
-/* Single-line row: id | title | artist | year | rating. Real rows are direct items of one
-   shared grid (`.body-grid`) instead of each being its own independent grid — `.df-grid.card`
-   is now just the row-anchor (zebra background, border), not a grid itself. */
-:deep(.df-grid.body-grid) {
+/* Single-line row: id | title | artist | year | rating. `.df-record-grid` is the marker the
+   body, header, and filter row all carry, so one declaration covers all three. */
+:deep(.df-record-grid) {
   display: grid;
   grid-template-columns: minmax(2em, 4em) 1fr 1fr minmax(3em, 5em) minmax(3em, 5em);
   gap: .25em;

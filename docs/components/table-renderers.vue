@@ -84,9 +84,9 @@ const columns = [
 </script>
 
 <style scoped>
-/* Real rows are direct items of one shared grid (`.body-grid`) instead of each being its own
-   independent grid; `.df-grid.card` is the row-anchor (zebra/border), not a grid itself. */
-:deep(.df-grid.body-grid) {
+/* `.df-record-grid` is the marker the body, header, and filter row all carry, so one
+   declaration covers all three. */
+:deep(.df-record-grid) {
   display: grid;
   grid-template-columns: 2fr 1fr 7em 9em 7em 4em;
   gap: 0.25em;

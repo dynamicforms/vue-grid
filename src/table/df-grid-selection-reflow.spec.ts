@@ -1,34 +1,12 @@
 /**
  * @file df-grid-selection-reflow.spec.ts
  *
- * Regression test for the selection-column layout bug, updated for the single-shared-grid
- * architecture.
- *
- * === The bug (historical) ===
- *
- * `.virtual-scroll-item` wrappers rendered by `@pdanpdan/virtual-scroll` carried
- * `will-change: transform`, which promoted them to GPU-composited layers in Chromium. When
- * `--grid-template-columns` changed on the `.df-grid.container` ancestor, Chromium did not
- * re-cascade the new value into composited subtrees — the row cards kept the old column widths
- * until the scroller recycled the element. The fix was to write the variable directly onto every
- * `.virtual-scroll-item`.
- *
- * === Why this file changed ===
- *
- * Rows are no longer positioned via `@pdanpdan/virtual-scroll`'s `position:absolute; transform`
- * wrapper — they're direct items of the shared body grid, in normal document flow. There is no
- * `.virtual-scroll-item` element and nothing in this codebase applies `will-change: transform` to
- * a row, so the GPU-compositing cascade boundary this file's `[BUG]` tests exercised cannot occur
- * by construction. JSDOM has no layout/compositing engine and could never actually observe the
- * Chromium-specific behaviour anyway — those two tests only ever checked that the (now-removed)
- * workaround wrote a DOM property, not that the underlying browser bug was fixed. A real
- * cross-engine check belongs in a Playwright e2e test alongside the rest of the migration's e2e
- * coverage, not here.
- *
- * What this file checks now: the header still receives the correct `--grid-template-columns`
- * after a selection-mode change (the one part of the old mechanism that's still real — see
- * `syncHeaderColumns` in df-grid.vue), and that no `.virtual-scroll-item` elements exist at all
- * (a standing confirmation that this class of bug's precondition is gone).
+ * Confirms the header's `--grid-template-columns` custom property updates correctly when
+ * selection mode toggles (`syncHeaderColumns` in df-grid.vue), and that no `.virtual-scroll-item`
+ * element exists anywhere in the grid: rows are direct items of the shared body grid, in normal
+ * document flow, not descendants of a virtual-scroll library's own positioning wrapper — nothing
+ * in this codebase can promote a row to its own GPU-composited layer carrying a stale
+ * `--grid-template-columns` value.
  */
 import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
