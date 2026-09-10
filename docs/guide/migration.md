@@ -43,6 +43,16 @@ filter row use a different, offset placement scheme (see
 If your layout is responsive, target `.df-record-grid.<layoutCssClass>` the same way you
 previously targeted `.df-grid.card.<layoutCssClass>`.
 
+### `.df-grid.card` is a sibling of its cells now, not their ancestor
+
+If you had your own click handling that walked up from a clicked cell with something like
+`event.target.closest('.df-grid.card')` to work out which row was clicked — rather than using the
+grid's own `click` event or `rowClass` — it will now silently return `null`. A record's cells are
+children of a `display: contents` wrapper next to the row-anchor, not inside it; `.closest()` from
+a cell can only reach the row through that wrapper. Use `.closest('[data-idx]')` (or `[data-pk]`)
+instead — the wrapper carries both, same as the row-anchor does. See
+[Row attributes](/reference/df-grid#row-attributes).
+
 ### Every cell needs an explicit `grid-row` — single-row layouts too
 
 This is not optional for multi-row cards only — it applies to **every** layout, including a plain
