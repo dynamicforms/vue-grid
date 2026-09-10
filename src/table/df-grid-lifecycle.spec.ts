@@ -76,6 +76,7 @@ function makeRecentlyAdded() {
     setVisibleRange: vi.fn(),
     topArcFlashTick: ref(0),
     bottomArcFlashTick: ref(0),
+    topInsertedPks: ref<any[]>([]),
   };
 }
 
@@ -151,6 +152,79 @@ describe('DfGrid — lifecycle', () => {
 
       const bodyGrid = wrapper.element.querySelector('.body-grid') as HTMLElement;
       expect(() => bodyGrid.dispatchEvent(new Event('scroll'))).not.toThrow();
+    });
+  });
+
+  describe('top-insert scroll compensation', () => {
+    // Prepending records above the mounted window grows the scroller's content above the
+    // viewport without moving scrollTop, which the browser reports as-is — the rows already on
+    // screen would visually slide down by the inserted content's height. See df-grid.vue's watch
+    // on topArcFlashTick. Real layout geometry (does the viewport actually stay visually stable)
+    // is e2e territory (recently-added-top-insert.spec.ts) — this only checks the arithmetic:
+    // scrollTop moves by `pks.length * (estimatedRowHeight + rowGapPx)` when topInsertedPks
+    // reports a batch, alongside topArcFlashTick.
+    function makeScrollableBodyGrid(wrapper: ReturnType<typeof mountGrid>) {
+      const bodyGrid = wrapper.element.querySelector('.body-grid') as HTMLElement;
+      let scrollTop = 0;
+      Object.defineProperty(bodyGrid, 'scrollTop', {
+        configurable: true,
+        get: () => scrollTop,
+        set: (v: number) => {
+          scrollTop = v;
+        },
+      });
+      return bodyGrid;
+    }
+
+    it('shifts scrollTop by the estimated height of pks reported above the viewport', async () => {
+      const recentlyAdded = makeRecentlyAdded();
+      const wrapper = mountGrid({ recentlyAdded, estimatedRowHeight: 40 });
+      await settle();
+      const bodyGrid = makeScrollableBodyGrid(wrapper);
+      bodyGrid.scrollTop = 500;
+
+      recentlyAdded.topInsertedPks.value = [10, 11];
+      recentlyAdded.topArcFlashTick.value++;
+      await settle();
+
+      expect(bodyGrid.scrollTop).toBe(500 + 2 * 40);
+    });
+
+    it('does nothing when topArcFlashTick fires with no top-inserted pks', async () => {
+      const recentlyAdded = makeRecentlyAdded();
+      const wrapper = mountGrid({ recentlyAdded, estimatedRowHeight: 40 });
+      await settle();
+      const bodyGrid = makeScrollableBodyGrid(wrapper);
+      bodyGrid.scrollTop = 500;
+
+      // e.g. triggerTopArc() — a flash with no associated insert to compensate for.
+      recentlyAdded.topArcFlashTick.value++;
+      await settle();
+
+      expect(bodyGrid.scrollTop).toBe(500);
+    });
+
+    it('also compensates for the row-gap between the inserted block and the record after it', async () => {
+      // A card's own offsetHeight already includes the gap(s) *within* its own rowsPerRecord
+      // span (its grid area spans across those), but not the boundary gap between it and the
+      // next card — that one is only ever visible to getComputedStyle(bodyGrid).rowGap.
+      const getPropertyValue = (prop: string) => (prop === 'width' ? '400px' : '100px');
+      vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+        getPropertyValue,
+        rowGap: '2px',
+      } as unknown as CSSStyleDeclaration);
+
+      const recentlyAdded = makeRecentlyAdded();
+      const wrapper = mountGrid({ recentlyAdded, estimatedRowHeight: 40 });
+      await settle();
+      const bodyGrid = makeScrollableBodyGrid(wrapper);
+      bodyGrid.scrollTop = 500;
+
+      recentlyAdded.topInsertedPks.value = [10, 11];
+      recentlyAdded.topArcFlashTick.value++;
+      await settle();
+
+      expect(bodyGrid.scrollTop).toBe(500 + 2 * (40 + 2));
     });
   });
 

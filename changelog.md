@@ -5,6 +5,15 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-09-10
+
+### Added
+
+- `topInsertedPks` on `UseRecentlyAdded` (`useRecentlyAdded`'s return value): the grid now shifts
+  `scrollTop` by the height (plus the surrounding `row-gap`) of records that land above the
+  visible viewport, so rows already on screen stay in place instead of visually sliding down when
+  content is prepended above them.
+
 ## [0.5.0] - 2026-09-07
 
 ### Changed
