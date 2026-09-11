@@ -319,7 +319,7 @@ function addRows(count: number) {
  * built to honour.
  */
 :deep(.df-record-grid.three-row) {
-  grid-template-columns: minmax(2em, 4em) repeat(3, minmax(12em, 1fr)) minmax(2em, 4em) minmax(2em, 8em) minmax(min-content, max-content);
+  grid-template-columns: minmax(2em, 4em) repeat(3, minmax(12em, 1fr)) minmax(2em, 4em) minmax(4em, 8em) minmax(min-content, max-content);
 }
 
 /*
