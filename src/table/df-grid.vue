@@ -214,7 +214,7 @@
 
 <script setup lang="ts">
 import { keys, maxBy, pickBy, throttle } from 'lodash-es';
-import { computed, h, nextTick, onMounted, onUnmounted, onUpdated, ref, toRef, watch } from 'vue';
+import { computed, h, nextTick, onMounted, onUnmounted, onUpdated, reactive, ref, toRef, watch } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
 
 import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap, RowValue } from './cell-renderers';
@@ -274,7 +274,13 @@ const {
 } = useSorting(props, filterEmitWrapper, uColumns, filteredRecords);
 
 const headerRef = ref();
-const shadowMeasurements: Record<string, number> = {};
+// Reactive so a measurement landing after the container's own initial ResizeObserver callback
+// (the shadow grids resolve their `grid-template-columns` a frame or more after mount, via their
+// own rAF-polling race in checkShadowGridColumns()) still reaches the watcher below and re-runs
+// the responsive-layout selection — a plain object's mutation would otherwise be invisible to Vue
+// and leave the grid stuck on the fallback `builtColumns[0]` layout picked before any measurement
+// was available.
+const shadowMeasurements = reactive<Record<string, number>>({});
 const shadowRawMeasurements: Record<string, { maxContent?: ShadowGridMeasurements; compact?: ShadowGridMeasurements }> =
   {};
 function onShadowMeasure(name: string, kind: 'maxContent' | 'compact', event: ShadowGridMeasurements) {
@@ -289,6 +295,20 @@ function onShadowMeasure(name: string, kind: 'maxContent' | 'compact', event: Sh
     );
   }
 }
+// Tracks the container's last known width so the watcher below can re-select a layout as soon as
+// a measurement arrives, without waiting for another resize.
+const containerWidth = ref(0);
+function selectResponsiveLayout(width: number) {
+  const filtered = pickBy(shadowMeasurements, (config) => config <= width);
+  const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
+  if (bestLayout != null && bestLayout !== props.activeColumns) {
+    templateColumns.value = '';
+    emit('update:activeColumns', <string>bestLayout);
+  }
+}
+watch(shadowMeasurements, () => {
+  if (containerWidth.value > 0) selectResponsiveLayout(containerWidth.value);
+});
 const bodyGridRef = ref<HTMLElement | null>(null);
 const containerRef = ref<HTMLElement | null>(null);
 
@@ -549,14 +569,10 @@ onMounted(() => {
         return;
       }
       const { width } = entry.contentRect;
+      containerWidth.value = width;
       measureScrollbarWidth();
       syncHeaderColumns();
-      const filtered = pickBy(shadowMeasurements, (config) => config <= width);
-      const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
-      if (bestLayout != null && bestLayout !== props.activeColumns) {
-        templateColumns.value = '';
-        emit('update:activeColumns', <string>bestLayout);
-      }
+      selectResponsiveLayout(width);
     });
   });
   resizeObserver.observe(containerRef.value!);
