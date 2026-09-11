@@ -689,6 +689,16 @@ defineExpose({
    * turns it off rather than let it fight windowing's own bookkeeping.
    */
   overflow-anchor: none;
+  /*
+   * The scroller has a definite height (its own `height: 100%`/`calc()` above) so its `auto`-sized
+   * row tracks are subject to `align-content`'s default `stretch`: whenever mounted rows don't add
+   * up to the full height — too few records, or a container taller than its content needs — the
+   * browser grows every row track by an equal share of the leftover space instead of leaving it
+   * below the last row, inflating every row well past its actual content height. `start` leaves
+   * that leftover space where it belongs, at the bottom, and can be overridden per consumer the
+   * same as any other declaration on this selector.
+   */
+  align-content: start;
 }
 .df-summary-bar {
   display: flex;

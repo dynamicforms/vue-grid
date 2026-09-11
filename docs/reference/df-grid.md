@@ -309,6 +309,14 @@ definite height smaller than every row's true height combined, every row in the 
 that 0 rather than the grid scrolling as expected, each row overlapping the next instead of keeping its own height.
 `min-content` is an explicit (non-`auto`) row-sizing function, so it isn't subject to that reduction.
 
+`.df-grid.body-grid` has a definite height of its own (see [Getting Started](/guide/getting-started) for why the
+grid needs one from somewhere), so it also sets `align-content: start` by default: with too few rows to fill that
+height — or a container taller than the row count needs — the grid's `auto`-sized row tracks would otherwise be
+subject to `align-content`'s own default of `stretch`, growing every row by an equal share of the leftover space
+instead of leaving it below the last row. Override `align-content` on `.df-grid.body-grid` (not `.df-record-grid`,
+which the header and filter row share and have no leftover space to stretch into) if you want the leftover space
+distributed some other way.
+
 Column widths are the one exception you don't (and can't) set this way: unlike `gap` or `font-size`, they aren't a
 static choice you make once — they depend on the body grid's real content, resolved natively by the browser. The
 grid reads that resolution off the body grid, publishes it as the `--grid-template-columns` custom property on the

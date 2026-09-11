@@ -5,6 +5,18 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-09-11
+
+### Changed
+
+- `.df-grid.body-grid` now defaults to `align-content: start`. The body scroller has a definite
+  height of its own, so its `auto`-sized row tracks were previously subject to `align-content`'s
+  own default of `stretch`: with fewer rows than the container's height needs, or a container
+  taller than its content, every row track grew by an equal share of the leftover space instead of
+  leaving it below the last row — inflating every row well past its real content height. Override
+  `align-content` on `.df-grid.body-grid` if you want the leftover space distributed some other
+  way. See [Card layout CSS](https://dynamicforms.github.io/vue-grid/reference/df-grid#card-layout-css).
+
 ## [0.5.1] - 2026-09-10
 
 ### Added
