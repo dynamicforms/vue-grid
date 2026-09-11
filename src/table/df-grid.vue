@@ -274,12 +274,6 @@ const {
 } = useSorting(props, filterEmitWrapper, uColumns, filteredRecords);
 
 const headerRef = ref();
-// Reactive so a measurement landing after the container's own initial ResizeObserver callback
-// (the shadow grids resolve their `grid-template-columns` a frame or more after mount, via their
-// own rAF-polling race in checkShadowGridColumns()) still reaches the watcher below and re-runs
-// the responsive-layout selection — a plain object's mutation would otherwise be invisible to Vue
-// and leave the grid stuck on the fallback `builtColumns[0]` layout picked before any measurement
-// was available.
 const shadowMeasurements = reactive<Record<string, number>>({});
 const shadowRawMeasurements: Record<string, { maxContent?: ShadowGridMeasurements; compact?: ShadowGridMeasurements }> =
   {};
@@ -295,8 +289,6 @@ function onShadowMeasure(name: string, kind: 'maxContent' | 'compact', event: Sh
     );
   }
 }
-// Tracks the container's last known width so the watcher below can re-select a layout as soon as
-// a measurement arrives, without waiting for another resize.
 const containerWidth = ref(0);
 function selectResponsiveLayout(width: number) {
   const filtered = pickBy(shadowMeasurements, (config) => config <= width);
