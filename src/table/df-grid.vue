@@ -785,6 +785,10 @@ defineExpose({
   grid-column: 1 / -1;
   grid-row: calc(var(--row-base) + 1) / span var(--rows-per-record);
 }
+.df-grid.cell {
+  /* Default row 1: covers single-row layouts unwritten; a multi-row layout overrides per field. */
+  grid-row: calc(var(--row-base) + 1);
+}
 .df-grid.container .body-grid .df-unanchored .df-grid.cell {
   /*
    * The hidden header-measurement clone's own cells (see the `df-unanchored` wrapper above) sit

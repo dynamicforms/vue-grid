@@ -9,13 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `.df-grid.cell` now defaults to `grid-row: calc(var(--row-base) + 1)` — a single-row-per-record
+  layout needs no `grid-row` declaration at all; a multi-row layout still overrides it per field for
+  rows after the first.
 - `--card-position` CSS custom property, read by `.df-grid.card`'s `position` (default `absolute`).
   Set it to `static` or `relative` on any ancestor to opt the row-anchor into a real, in-flow box —
   padding and margin on `.df-grid.card` then do something, though padding grows the row's own
   track height rather than insetting cell content, since it's still a sibling of the cells, not
-  their container. Only safe for a layout where every cell has an explicit `grid-column` as well as
-  `grid-row`: an auto-placed `grid-column` collides with an in-flow row-anchor spanning the full
-  row, the same collision `absolute` exists to avoid. See
+  their container. Only safe for a layout where every cell has an explicit `grid-column`: an
+  auto-placed `grid-column` collides with an in-flow row-anchor spanning the full row, the same
+  collision `absolute` exists to avoid. See
   [Row-anchor position](https://dynamicforms.github.io/vue-grid/reference/df-grid#row-anchor-position).
 
 ### Changed
