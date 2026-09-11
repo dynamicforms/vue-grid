@@ -53,6 +53,11 @@ a cell can only reach the row through that wrapper. Use `.closest('[data-idx]')`
 instead — the wrapper carries both, same as the row-anchor does. See
 [Row attributes](/reference/df-grid#row-attributes).
 
+The same no-longer-an-ancestor change means any padding you had on `.df-grid.card` to inset cell
+content is dead now, silently — `.df-grid.card` no longer wraps the cells, so padding on it
+doesn't reach them. Move it onto `.df-grid.cell` instead. See
+[Card layout CSS](/reference/df-grid#card-layout-css) for the full row-anchor/cell split.
+
 ### Every cell needs an explicit `grid-row` — single-row layouts too
 
 This is not optional for multi-row cards only — it applies to **every** layout, including a plain
