@@ -17,6 +17,10 @@
  *  - a container resize re-measures the (still-real) secondary shadow grids and selects the
  *    widest responsive layout that still fits — this mechanism is unchanged by the single-grid
  *    migration, only the primary/per-row measurement was removed;
+ *  - a shadow measurement that lands after the container's own initial resize (the shadow grids
+ *    resolve their track list asynchronously, and can do so after the first `ResizeObserver`
+ *    callback has already run against an empty measurement set) still re-selects the layout that
+ *    now fits, without waiting for a further resize;
  *  - each layout's reported width is adjusted by per-field savings computed from a second,
  *    min-content shadow pass (see shadow-metrics.spec.ts for the underlying math) before the
  *    picker ever sees it, so a field whose typical content wraps comfortably doesn't force a
@@ -297,6 +301,19 @@ describe('DfGrid — column auto-sizing', () => {
       await resizeContainer(wrapper, 300);
 
       expect(wrapper.emitted('update:activeColumns')).toBeUndefined();
+    });
+
+    it('re-selects once shadow measurements land after an early resize, without a later resize', async () => {
+      const wrapper = mountGrid({ activeColumns: 'narrow' });
+      // Fire the container resize before the shadow grids' own queued measurement (still pending
+      // on a microtask) has resolved — mirrors the container's real ResizeObserver firing its
+      // first callback before the shadow grids finish resolving their track list.
+      resizeCallback.fn!([{ contentRect: { width: 500 } } as ResizeObserverEntry], {} as ResizeObserver);
+      expect(wrapper.emitted('update:activeColumns')).toBeUndefined();
+
+      await settle();
+
+      expect(wrapper.emitted('update:activeColumns')?.at(-1)).toEqual(['wide']);
     });
 
     it("picks a layout the field-savings-adjusted width fits, that the raw max-content width wouldn't", async () => {

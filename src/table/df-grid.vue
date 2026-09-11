@@ -214,7 +214,7 @@
 
 <script setup lang="ts">
 import { keys, maxBy, pickBy, throttle } from 'lodash-es';
-import { computed, h, nextTick, onMounted, onUnmounted, onUpdated, ref, toRef, watch } from 'vue';
+import { computed, h, nextTick, onMounted, onUnmounted, onUpdated, reactive, ref, toRef, watch } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
 
 import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap, RowValue } from './cell-renderers';
@@ -274,7 +274,7 @@ const {
 } = useSorting(props, filterEmitWrapper, uColumns, filteredRecords);
 
 const headerRef = ref();
-const shadowMeasurements: Record<string, number> = {};
+const shadowMeasurements = reactive<Record<string, number>>({});
 const shadowRawMeasurements: Record<string, { maxContent?: ShadowGridMeasurements; compact?: ShadowGridMeasurements }> =
   {};
 function onShadowMeasure(name: string, kind: 'maxContent' | 'compact', event: ShadowGridMeasurements) {
@@ -289,6 +289,18 @@ function onShadowMeasure(name: string, kind: 'maxContent' | 'compact', event: Sh
     );
   }
 }
+const containerWidth = ref(0);
+function selectResponsiveLayout(width: number) {
+  const filtered = pickBy(shadowMeasurements, (config) => config <= width);
+  const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
+  if (bestLayout != null && bestLayout !== props.activeColumns) {
+    templateColumns.value = '';
+    emit('update:activeColumns', <string>bestLayout);
+  }
+}
+watch(shadowMeasurements, () => {
+  if (containerWidth.value > 0) selectResponsiveLayout(containerWidth.value);
+});
 const bodyGridRef = ref<HTMLElement | null>(null);
 const containerRef = ref<HTMLElement | null>(null);
 
@@ -549,14 +561,10 @@ onMounted(() => {
         return;
       }
       const { width } = entry.contentRect;
+      containerWidth.value = width;
       measureScrollbarWidth();
       syncHeaderColumns();
-      const filtered = pickBy(shadowMeasurements, (config) => config <= width);
-      const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
-      if (bestLayout != null && bestLayout !== props.activeColumns) {
-        templateColumns.value = '';
-        emit('update:activeColumns', <string>bestLayout);
-      }
+      selectResponsiveLayout(width);
     });
   });
   resizeObserver.observe(containerRef.value!);
