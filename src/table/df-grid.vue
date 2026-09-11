@@ -515,6 +515,10 @@ const bodyGridStyle = computed(() =>
     : undefined,
 );
 
+// Set once a zero-height body scroller has already triggered the warning below, so a container
+// that stays stuck at zero height doesn't spam the console on every subsequent resize entry;
+// cleared on recovery so a later regression warns again.
+let warnedZeroHeight = false;
 let resizeObserver: ResizeObserver | null = null;
 onMounted(() => {
   measureScrollbarWidth();
@@ -524,6 +528,26 @@ onMounted(() => {
   bodyGridRef.value?.addEventListener('scroll', onBodyScrollSettle, { passive: true });
   resizeObserver = new ResizeObserver((entries) => {
     entries.forEach((entry) => {
+      if (entry.target === bodyGridRef.value) {
+        // `.df-grid-body`'s `min-height: 0` deliberately drops the body scroller's content size
+        // out of its own auto-height computation, so a container with no ancestor-supplied
+        // height resolves the whole chain down to a real, persistent 0 here — not a transient
+        // pre-layout reading. That is exactly what leaves virtual scrolling with no viewport to
+        // measure rows against (see useGridWindowing's own `clientHeight <= 0` fallback).
+        if (entry.contentRect.height <= 0) {
+          if (!warnedZeroHeight) {
+            warnedZeroHeight = true;
+            console.warn(
+              '[df-grid] <df-grid> has no measurable height. Give it (or an ancestor) a definite ' +
+                'height — a fixed height, or a flex/grid item sized to fill available space — ' +
+                'otherwise virtual scrolling has no viewport to size and window rows against.',
+            );
+          }
+        } else {
+          warnedZeroHeight = false;
+        }
+        return;
+      }
       const { width } = entry.contentRect;
       measureScrollbarWidth();
       syncHeaderColumns();
@@ -536,6 +560,7 @@ onMounted(() => {
     });
   });
   resizeObserver.observe(containerRef.value!);
+  resizeObserver.observe(bodyGridRef.value!);
   rowResizeObserver = new ResizeObserver((entries) => {
     entries.forEach((entry) => {
       const key = rowElementKeys.get(entry.target);
