@@ -70,6 +70,14 @@ grid has no fallback layout of its own. `.df-record-grid` has to be `display: gr
 before anything lines up. See [Card layout CSS](#card-layout-css) below for why.
 :::
 
+::: warning `<df-grid>` needs a definite height from somewhere
+Rows are virtualized against the grid's own scroll viewport, so `<df-grid>` (or an ancestor of it) needs a bounded
+height — a fixed `height`, a `vh`/`%` value backed by a sized ancestor, or being a flex/grid item that fills
+available space (`flex: 1 1 auto; min-height: 0`, say). Leave every ancestor unconstrained and the body scroller
+collapses to zero height instead, with nothing left to window rows against; `<df-grid>` logs a console warning when
+this happens, but the fix is still on your side of the boundary — give it height.
+:::
+
 ## Card layout CSS
 
 The grid's own layout comes from your own stylesheet, as set above — make `.df-record-grid` a grid and give it a
