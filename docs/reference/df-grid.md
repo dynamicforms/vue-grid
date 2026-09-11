@@ -353,20 +353,28 @@ roughly 10,000 of them, silently collapsing anything past that onto the same lin
 
 ### Row-anchor position
 
-`.df-grid.card`'s `position` is `var(--card-position, absolute)`. The default keeps it out of the grid's own
-placement bookkeeping entirely (see [Grid structure](#grid-structure) for the row-anchor/cell split this depends
-on) — which is what lets a layout leave a cell's `grid-column` on `auto`, auto-placed within its explicit
-`grid-row`, instead of writing an explicit `grid-column` on every cell too.
+`.df-grid.card`'s `position` is `var(--card-position, absolute)`, giving you two modes to place a layout's cells in:
 
-Set `--card-position: static` (or `relative`) on any ancestor to opt `.df-grid.card` into a real, in-flow box —
-but only for a layout where **every** cell has an explicit `grid-column` as well as `grid-row`. An auto-placed
-`grid-column` collides with an in-flow row-anchor: spanning the full row, it claims every column of that row before
-column auto-placement even runs, so an auto-placed cell overflows into newly-created implicit columns instead of
-landing in the track list. With every cell fully explicit there's nothing left to collide with, and the row-anchor
-becomes a real box: padding and margin on `.df-grid.card` do something, though padding grows the row's own track
-height rather than insetting cell content — this is still a sibling of the cells, not their container, so it
-never repositions them. `.df-grid.card`'s `z-index`/`isolation` (unaffected by `--card-position`) keep it painted,
-and hit-tested, behind its cell siblings regardless — both apply to grid items even when `position` is `static`.
+- **`grid-row` only (default).** Leave `--card-position` unset. Every cell still needs an explicit `grid-row` (see
+  above), but `grid-column` can stay `auto` and auto-place within that row — less CSS to write. The trade-off:
+  `.df-grid.card` stays out of the grid's own placement bookkeeping to make that auto-placement possible, which
+  means it's not a real box in the layout — padding and margin on it do nothing; style `.df-grid.cell` instead.
+- **`grid-row` *and* `grid-column`.** Give every cell both, then set `--card-position: static` (or `relative`) on
+  any ancestor. `.df-grid.card` becomes a real, in-flow box: padding and margin on it now do something, though
+  padding grows the row's own track height rather than insetting cell content — it's still a sibling of the cells,
+  not their container, so it never repositions them. `z-index`/`isolation` (unaffected by `--card-position`) keep
+  it painted, and hit-tested, behind its cell siblings either way — both apply to grid items even when `position`
+  is `static`.
+
+Reach for the second mode when your layout needs an explicit `grid-column` on every cell regardless — a responsive
+layout with duplicate field names keyed by `:nth-child` position (see below) already pays that cost, so a real,
+paddable row-anchor comes for free. For a layout that's otherwise happy leaving `grid-column` on `auto`, switching
+modes just to gain row-anchor padding means writing `grid-column` on every cell for that alone — usually not
+worth it; style `.df-grid.cell` instead.
+
+The two modes can't mix within one layout: an auto-placed `grid-column` collides with an in-flow row-anchor, which
+spans the full row and so claims every column of it before column auto-placement even runs — the auto-placed cell
+overflows into newly-created implicit columns instead of landing in the track list.
 
 Selecting a field by name (`.df-grid.cell.title`) works for placement rules as long as every field in that layout
 has a distinct name. If two columns share a field name (say, the same field rendered twice with different
