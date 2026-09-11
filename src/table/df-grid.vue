@@ -766,12 +766,20 @@ defineExpose({
    * columns instead of the intended track list. `inset: 0` (not `align-self`/`justify-self`, which
    * do not apply to absolutely positioned boxes) is what makes it fill that area regardless of
    * whatever `align-items`/`justify-items` a consumer sets on `.df-record-grid` to center cell
-   * content. Being absolutely positioned also makes this a stacking-context participant in its
-   * own right, painted (and hit-tested) *above* its static in-flow siblings — the cells — by
-   * default; without the negative `z-index` below, this otherwise-empty box would sit on top of
+   * content. `z-index`/`isolation` (below/on the grid container) apply to grid items even when
+   * `position` is `static`, so they keep this box painted (and hit-tested) behind its cell siblings
+   * regardless of `--card-position`; without them, this otherwise-empty box would sit on top of
    * real cell content and intercept clicks meant for it (a button rendered inside a cell, say).
+   *
+   * `--card-position` lets a layout that gives every cell an explicit `grid-column` as well as
+   * `grid-row` opt out of `absolute` (`--card-position: static` or `relative`, set on any ancestor)
+   * to get a real, in-flow box back — padding and margin on `.df-grid.card` then do something
+   * (though padding grows the row's own track rather than insetting cell content, since this is
+   * still a sibling of the cells, not their container). A layout with even one auto-placed
+   * `grid-column` must not do this: an in-flow box spanning the full row still occupies every
+   * column of it for auto-placement purposes, the same collision `absolute` exists to avoid.
    */
-  position: absolute;
+  position: var(--card-position, absolute);
   inset: 0;
   z-index: -1;
   grid-column: 1 / -1;

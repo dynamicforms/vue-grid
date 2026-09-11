@@ -334,8 +334,9 @@ exactly how the header/filter row end up silently out of step with the body.
 
 `.df-grid.card` — the row-anchor — is what's left for you to style per row: it's an otherwise-empty box spanning
 the record's full column and row span, there for zebra striping, borders, and selection highlight, and for
-`data-pk`/`data-idx`. It carries no cell content itself, so padding on it does not inset anything; style `.df-grid
-.cell` for that.
+`data-pk`/`data-idx`. It carries no cell content itself, so padding on it does not inset anything by default; style
+`.df-grid.cell` for that, or see [Row-anchor position](#row-anchor-position) below for the opt-in that makes
+padding on `.df-grid.card` do something instead.
 
 Every cell needs an explicit `grid-row` relative to `calc(var(--row-base) + N)` — this applies to a plain single row
 per record just as much as a multi-row card, not only layouts with `rows` above `1`: plain CSS auto-placement has no
@@ -349,6 +350,23 @@ it yourself, and it isn't the record's own index in your dataset — it advances
 to the next, so the grid lines a large dataset actually uses stay bounded by how many rows are mounted at once
 rather than growing with the dataset's total size (Firefox stops generating further implicit grid row tracks past
 roughly 10,000 of them, silently collapsing anything past that onto the same line).
+
+### Row-anchor position
+
+`.df-grid.card`'s `position` is `var(--card-position, absolute)`. The default keeps it out of the grid's own
+placement bookkeeping entirely (see [Grid structure](#grid-structure) for the row-anchor/cell split this depends
+on) — which is what lets a layout leave a cell's `grid-column` on `auto`, auto-placed within its explicit
+`grid-row`, instead of writing an explicit `grid-column` on every cell too.
+
+Set `--card-position: static` (or `relative`) on any ancestor to opt `.df-grid.card` into a real, in-flow box —
+but only for a layout where **every** cell has an explicit `grid-column` as well as `grid-row`. An auto-placed
+`grid-column` collides with an in-flow row-anchor: spanning the full row, it claims every column of that row before
+column auto-placement even runs, so an auto-placed cell overflows into newly-created implicit columns instead of
+landing in the track list. With every cell fully explicit there's nothing left to collide with, and the row-anchor
+becomes a real box: padding and margin on `.df-grid.card` do something, though padding grows the row's own track
+height rather than insetting cell content — this is still a sibling of the cells, not their container, so it
+never repositions them. `.df-grid.card`'s `z-index`/`isolation` (unaffected by `--card-position`) keep it painted,
+and hit-tested, behind its cell siblings regardless — both apply to grid items even when `position` is `static`.
 
 Selecting a field by name (`.df-grid.cell.title`) works for placement rules as long as every field in that layout
 has a distinct name. If two columns share a field name (say, the same field rendered twice with different
@@ -371,6 +389,8 @@ Read from your own rules; only `--row-base` isn't set on the grid container itse
 | `--grid-template-columns` | Set on `.df-grid.container`. The body grid's own natively-resolved track list, in pixels, copied onto the header with `grid-template-columns: var(--grid-template-columns) !important`. |
 | `--row-base` | Set per record (and on the hidden header clone that feeds column widths) on an ancestor of that record's cells, not on the container. Advances by `rows` from one mounted record to the next — not the record's own dataset index, see above. Read it in your own `grid-row` rule for every layout, single-row included — see above. |
 | `--df-grid-scrollbar-width` | Set on `.df-grid.container`. The width, in pixels, that the body scroller actually reserves for its vertical scrollbar — measured as the scroller's `offsetWidth` minus its `clientWidth`, and re-measured on every container resize. It is `0` on platforms with overlay scrollbars. The header pads itself by this amount so its columns stay aligned with the body columns they label. |
+
+`--card-position` runs the other way — you set it, the grid reads it. See [Row-anchor position](#row-anchor-position).
 
 ## Row CSS classes
 

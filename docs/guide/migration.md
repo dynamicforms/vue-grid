@@ -55,8 +55,10 @@ instead — the wrapper carries both, same as the row-anchor does. See
 
 The same no-longer-an-ancestor change means any padding you had on `.df-grid.card` to inset cell
 content is dead now, silently — `.df-grid.card` no longer wraps the cells, so padding on it
-doesn't reach them. Move it onto `.df-grid.cell` instead. See
-[Card layout CSS](/reference/df-grid#card-layout-css) for the full row-anchor/cell split.
+doesn't reach them. Move it onto `.df-grid.cell` instead, or, if your layout gives every cell an
+explicit `grid-column` as well as `grid-row`, opt `.df-grid.card` back into a real, in-flow box via
+`--card-position` — see [Row-anchor position](/reference/df-grid#row-anchor-position) for what that
+buys you and what it requires.
 
 ### Every cell needs an explicit `grid-row` — single-row layouts too
 
