@@ -334,21 +334,33 @@ exactly how the header/filter row end up silently out of step with the body.
 
 `.df-grid.card` — the row-anchor — is what's left for you to style per row: it's an otherwise-empty box spanning
 the record's full column and row span, there for zebra striping, borders, and selection highlight, and for
-`data-pk`/`data-idx`. It carries no cell content itself, so padding on it does not inset anything; style `.df-grid
-.cell` for that.
+`data-pk`/`data-idx`. It carries no cell content itself, so padding on it does not inset anything by default; style
+`.df-grid.cell` for that, or see [Row-anchor position](#row-anchor-position) below for the opt-in that makes
+padding on `.df-grid.card` do something instead.
 
-Every cell needs an explicit `grid-row` relative to `calc(var(--row-base) + N)` — this applies to a plain single row
-per record just as much as a multi-row card, not only layouts with `rows` above `1`: plain CSS auto-placement has no
-notion of record boundaries once every record's cells share the same grid, so an unplaced cell's `grid-row: auto`
-keeps advancing across the whole grid instead of restarting per record. If a layout places more than one row per
-record (a card with several stacked rows of fields), additionally declare how many via `rows` on that
-`ResponsiveColumnDefinition` (default `1`) — see [Column Definitions](./columns). With every record's cells on the
-same shared grid, an absolute `grid-row: 2` would put every record's second row on the very same physical row
-instead of each record getting its own band. `--row-base` is published per record automatically; you don't set
-it yourself, and it isn't the record's own index in your dataset — it advances by `rows` from one *mounted* record
-to the next, so the grid lines a large dataset actually uses stay bounded by how many rows are mounted at once
-rather than growing with the dataset's total size (Firefox stops generating further implicit grid row tracks past
-roughly 10,000 of them, silently collapsing anything past that onto the same line).
+`.df-grid.cell` defaults to `grid-row: calc(var(--row-base) + 1)` — correct for a single row per record, no
+declaration needed. A layout with more than one row per record declares `rows` on its `ResponsiveColumnDefinition`
+(see [Column Definitions](./columns)) and overrides `grid-row` per field for every row after the first — `--row-base`
+advances by `rows` per *mounted* record, not the record's dataset index, so the grid lines a large dataset uses stay
+bounded regardless of its total size.
+
+### Row-anchor position
+
+`.df-grid.card`'s `position` is `var(--card-position, absolute)` — two modes, keyed on `grid-column`
+(`grid-row` is already covered by its own default, either way):
+
+- **`grid-column: auto` (default).** Less CSS — cells auto-place across the row's tracks. `.df-grid.card` stays
+  out of grid placement to make that possible, so it's not a real box: padding/margin on it do nothing; style
+  `.df-grid.cell` instead.
+- **`grid-column` explicit on every cell**, plus `--card-position: static` (or `relative`) on any ancestor.
+  `.df-grid.card` becomes a real, in-flow box — padding/margin work, though padding grows the row's own track
+  height rather than insetting cell content (still a sibling of the cells, not their container). `z-index`/
+  `isolation` keep it behind its cell siblings either way, unaffected by `--card-position`.
+
+The two modes can't mix: an in-flow row-anchor spans the full row, claiming every column of it before column
+auto-placement runs, so an auto-placed cell overflows into newly-created implicit columns instead. Worth the
+switch mainly when the layout needs explicit `grid-column` anyway — a responsive layout with duplicate field
+names keyed by `:nth-child` (see below), say — so the paddable row-anchor comes for free.
 
 Selecting a field by name (`.df-grid.cell.title`) works for placement rules as long as every field in that layout
 has a distinct name. If two columns share a field name (say, the same field rendered twice with different
@@ -371,6 +383,8 @@ Read from your own rules; only `--row-base` isn't set on the grid container itse
 | `--grid-template-columns` | Set on `.df-grid.container`. The body grid's own natively-resolved track list, in pixels, copied onto the header with `grid-template-columns: var(--grid-template-columns) !important`. |
 | `--row-base` | Set per record (and on the hidden header clone that feeds column widths) on an ancestor of that record's cells, not on the container. Advances by `rows` from one mounted record to the next — not the record's own dataset index, see above. Read it in your own `grid-row` rule for every layout, single-row included — see above. |
 | `--df-grid-scrollbar-width` | Set on `.df-grid.container`. The width, in pixels, that the body scroller actually reserves for its vertical scrollbar — measured as the scroller's `offsetWidth` minus its `clientWidth`, and re-measured on every container resize. It is `0` on platforms with overlay scrollbars. The header pads itself by this amount so its columns stay aligned with the body columns they label. |
+
+`--card-position` runs the other way — you set it, the grid reads it. See [Row-anchor position](#row-anchor-position).
 
 ## Row CSS classes
 
