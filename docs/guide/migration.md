@@ -60,31 +60,20 @@ explicit `grid-column`, opt `.df-grid.card` back into a real, in-flow box via `-
 see [Row-anchor position](/reference/df-grid#row-anchor-position) for what that buys you and what
 it requires.
 
-### Every cell needs an explicit `grid-row` — single-row layouts too
+### Multi-row layouts need an explicit `grid-row` per field
 
-As of 0.5.0 this was not optional for multi-row cards only — it applied to **every** layout,
-including a plain single row per record. Plain CSS auto-placement has no notion of "record
-boundaries": once every record's cells are items of the *same* shared grid, an unplaced cell's
-`grid-row: auto` keeps advancing across the whole grid rather than restarting for each record, so
-cells that used to fall into place on row 1 by themselves now collide with (or land behind)
-whichever record's row the auto-placement cursor has already reached. A layout that never gave its
-cells an explicit `grid-row` before migrating needed one, even with `rows` left at its default of
-`1`:
+Plain CSS auto-placement has no notion of "record boundaries": once every record's cells are items
+of the *same* shared grid, an unplaced cell's `grid-row: auto` keeps advancing across the whole
+grid rather than restarting for each record. `.df-grid.cell` defaults to
+`grid-row: calc(var(--row-base) + 1)`, correct for a plain single row per record — nothing to add
+there. A layout that places more than one row of fields per record needs more, two things that
+used to be implicit now explicit:
 
-```css
-.df-grid.cell { grid-row: calc(var(--row-base) + 1); }
-```
-
-::: tip Since 0.5.2, this single-row declaration is the library's own default
-`.df-grid.cell` now defaults to exactly the rule above, so a plain single-row-per-record layout
-needs no `grid-row` of its own — the snippet above is still harmless to keep (it just matches the
-default), but there's nothing left to migrate here on 0.5.2+. The multi-row case below is
-unchanged: a layout with more than one row per record still overrides `grid-row` per field for
-every row after the first. See [Card layout CSS](/reference/df-grid#card-layout-css).
+::: tip Briefly stricter in 0.5.0–0.5.1
+Those two versions required *every* cell, including a plain single row per record, to declare
+`grid-row: calc(var(--row-base) + 1)` itself — 0.5.2 made that the library's own default, closing
+the gap. See [Card layout CSS](/reference/df-grid#card-layout-css).
 :::
-
-If a layout places more than one row of fields per record, two more things that used to be
-implicit now have to be explicit too:
 
 1. Declare how many grid rows the layout's card occupies via `rows` on its
    `ResponsiveColumnDefinition` (default `1`):
