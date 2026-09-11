@@ -62,17 +62,26 @@ it requires.
 
 ### Every cell needs an explicit `grid-row` — single-row layouts too
 
-This is not optional for multi-row cards only — it applies to **every** layout, including a plain
-single row per record. Plain CSS auto-placement has no notion of "record boundaries": once every
-record's cells are items of the *same* shared grid, an unplaced cell's `grid-row: auto` keeps
-advancing across the whole grid rather than restarting for each record, so cells that used to fall
-into place on row 1 by themselves now collide with (or land behind) whichever record's row the
-auto-placement cursor has already reached. A layout that never gave its cells an explicit
-`grid-row` before migrating needs one now, even with `rows` left at its default of `1`:
+As of 0.5.0 this was not optional for multi-row cards only — it applied to **every** layout,
+including a plain single row per record. Plain CSS auto-placement has no notion of "record
+boundaries": once every record's cells are items of the *same* shared grid, an unplaced cell's
+`grid-row: auto` keeps advancing across the whole grid rather than restarting for each record, so
+cells that used to fall into place on row 1 by themselves now collide with (or land behind)
+whichever record's row the auto-placement cursor has already reached. A layout that never gave its
+cells an explicit `grid-row` before migrating needed one, even with `rows` left at its default of
+`1`:
 
 ```css
 .df-grid.cell { grid-row: calc(var(--row-base) + 1); }
 ```
+
+::: tip Since 0.5.2, this single-row declaration is the library's own default
+`.df-grid.cell` now defaults to exactly the rule above, so a plain single-row-per-record layout
+needs no `grid-row` of its own — the snippet above is still harmless to keep (it just matches the
+default), but there's nothing left to migrate here on 0.5.2+. The multi-row case below is
+unchanged: a layout with more than one row per record still overrides `grid-row` per field for
+every row after the first. See [Card layout CSS](/reference/df-grid#card-layout-css).
+:::
 
 If a layout places more than one row of fields per record, two more things that used to be
 implicit now have to be explicit too:
