@@ -206,5 +206,8 @@ defineExpose({
 }
 .df-grid.shadow-grid {
   width: max-content;
+  /* Keeps each cell at its own content height rather than the row's tallest cell — shadow-metrics.ts
+     reads per-cell `scrollHeight` to count wrapped lines per field. */
+  align-items: start;
 }
 </style>
