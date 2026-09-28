@@ -43,8 +43,6 @@ A refactor to an array seems prudent
 ## **Visual Features**
 
 - [ ] Support CSS modes other than grid (e.g. table, flex, Vuetify row/col)
-- [ ] Incoming records indicator currently shifts rows down when a new row is added at top. This is of course wrong and
-      should be fixed.
 
 ---
 
