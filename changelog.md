@@ -5,6 +5,21 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-10-01
+
+### Changed
+
+- **Breaking:** requires `@dynamicforms/vue-forms` 2.0 and `@dynamicforms/vuetify-inputs` 0.12
+  (`peerDependencies` `^2.0.0` and `^0.12.0`).
+- A filter field's `visibility` decides whether it filters. A `HIDDEN` field reads `null` in
+  `filterValues` whatever it holds, and a `SUPPRESS`ed one is left out, as a disabled one already
+  was; neither filters locally or counts as an active filter in the status bar. While every
+  `filterExternal` column's field is left out, the grid filters locally.
+- `update:filterState` and `filter` are emitted when the filter state's value becomes empty - every
+  filter field disabled or suppressed, or a `filterState` without filterable columns passed in - with
+  `filterValues: {}`. Before, nothing was emitted, so an application filtering server-side kept the
+  last filters it was sent.
+
 ## [0.5.2] - 2026-09-11
 
 ### Added

@@ -217,9 +217,7 @@ const selectionCountText = computed(() => {
 
 const activeFilterCount = computed(() => {
   if (!props.filterState) return 0;
-  const filterValues = props.filterState.value;
-  if (!filterValues) return 0;
-  return Object.values(filterValues).filter((v) => v != null && v !== '' && v !== undefined).length;
+  return Object.values(props.filterState.value).filter((v) => v != null && v !== '' && v !== undefined).length;
 });
 
 const activeFiltersText = computed(() =>

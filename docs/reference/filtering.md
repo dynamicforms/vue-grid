@@ -25,13 +25,15 @@ Filtering is opt-in per column, and `createColumn()` does not set `filterable`: 
 
 ### `filterExternal`
 
-Setting `key: filterExternal` signals that this column is filtered externally (e.g. server-side). As soon as such a column has a field in the filter state — whether or not that field currently holds a value — the grid stops filtering locally altogether, including the columns that would filter normally, and only emits `update:filterState` and `filter`, so the application can fetch already-filtered data.
+Setting `key: filterExternal` signals that this column is filtered externally (e.g. server-side). As soon as such a column's field is part of the filter state's value — whether or not it currently holds a value — the grid stops filtering locally altogether, including the columns that would filter normally, and only emits `update:filterState` and `filter`, so the application can fetch already-filtered data.
 
 ```typescript
 import { filterExternal } from '@dynamicforms/vue-grid';
 
 createColumn('title', 'Title', 'plain', { filterable: { key: filterExternal } })
 ```
+
+A field that is disabled or `SUPPRESS`ed is not part of the value, so while every external column's field is in that state the grid filters locally again.
 
 ## Local filtering
 
@@ -81,7 +83,7 @@ const filterState = ref(createFilterState(columns, { title: 'Beatles' }));
 
 ## `GridFilterEvent`
 
-Emitted as `@filter` on every change of any filter value, immediately after `update:filterState`. The grid neither debounces nor batches these events, and nothing is emitted before the first change:
+Emitted as `@filter` on every change of the filter state's value, immediately after `update:filterState`: a filter value edited, and a filter field enabled, disabled, hidden or shown. The grid neither debounces nor batches these events, and nothing is emitted before the first change:
 
 ```typescript
 interface GridFilterEvent {
@@ -90,7 +92,7 @@ interface GridFilterEvent {
 }
 ```
 
-Use `filterValues` for server-side filtering — it maps each filterable column's `fieldName` to the current input value. Every filterable column is present; one whose filter is empty carries `null`. `FilterConfig.key` does not appear here; it only selects the record property used by local filtering.
+Use `filterValues` for server-side filtering — it maps each filterable column's `fieldName` to the current input value. Every filterable column is present; one whose filter is empty carries `null`. A filter field that is disabled or `SUPPRESS`ed is left out, and a `HIDDEN` one carries `null` whatever it holds, so neither filters; with every filter field left out, `filterValues` is `{}`. `FilterConfig.key` does not appear here; it only selects the record property used by local filtering.
 
 ### Example: server-side filtering
 
@@ -112,4 +114,4 @@ async function onFilter({ filterValues }: GridFilterEvent) {
 
 ## Status bar
 
-Setting `showStatusBar` to `true` displays a bar below the filter row showing the number of active filters — every filter value that is not `null`, `undefined` or an empty string, so an emptied multi-select still counts. Override the content with the `#statusBar` slot, which receives `filterState` as a slot prop. While selection mode is active the same bar is shown regardless of `showStatusBar` and carries the selection controls instead; see [Selection](./selection).
+Setting `showStatusBar` to `true` displays a bar below the filter row showing the number of active filters — every filter value that is not `null`, `undefined` or an empty string, so an emptied multi-select still counts. A disabled, hidden or suppressed filter field does not count. Override the content with the `#statusBar` slot, which receives `filterState` as a slot prop. While selection mode is active the same bar is shown regardless of `showStatusBar` and carries the selection controls instead; see [Selection](./selection).

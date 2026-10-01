@@ -1,5 +1,55 @@
 # Migration guide
 
+## 0.5.x → 0.6.0: vue-forms 2.0
+
+0.6.0 requires `@dynamicforms/vue-forms` 2.0 and `@dynamicforms/vuetify-inputs` 0.12. Upgrade the
+three together, and work through the
+[vue-forms](https://docs.velis.si/dynamicforms/vue-forms/guide/migration) and
+[vuetify-inputs](https://docs.velis.si/dynamicforms/vuetify-inputs/guide/migration) migration
+guides first: they cover what changes in forms and inputs. This section covers what changes in the
+grid's filtering on top of them. Both changes are silent - code keeps compiling and behaves
+differently.
+
+```bash
+npm install @dynamicforms/vue-forms@^2.0.0 @dynamicforms/vuetify-inputs@^0.12.0 @dynamicforms/vue-grid@^0.6.0
+```
+
+### A hidden filter field does not filter
+
+`FilterState` is a vue-forms `Group`, and in vue-forms 2.0 a member's `visibility` decides what it
+contributes to the group's value. A filter field set to `HIDDEN` reads `null` in `filterValues`
+whatever it holds, and one set to `SUPPRESS` is left out, the way a disabled one already was:
+
+```typescript
+filterState.fields.status.value = 'open';
+filterState.fields.status.visibility = DisplayMode.HIDDEN;
+// filterValues: before { …, status: 'open' }   after { …, status: null }
+// local filtering: before only 'open' rows     after every row
+```
+
+Neither filters locally, neither counts in the status bar's active-filter count, and a server
+receives `null` or no key for it. An application that hid a filter input to apply a fixed filter
+the user cannot change loses that filter; apply the fixed condition to the records passed to the
+grid, or to the server request, instead.
+
+A `filterExternal` column whose field is disabled or `SUPPRESS`ed is left out as well, so while every
+external column's field is in that state the grid goes back to filtering locally.
+
+### `filter` is emitted when the filter state becomes empty
+
+A `Group` whose members are all left out reads `{}` in vue-forms 2.0, where it read `null`. The grid
+emits `update:filterState` and `filter` for that change as for any other, with `filterValues: {}`:
+
+```typescript
+Object.values(filterState.fields).forEach((field) => (field.enabled = false));
+// before: no event, filterValues stayed what they were last sent
+// after:  @filter with filterValues {}
+```
+
+The same happens when a `filterState` without filterable columns is passed in. An `@filter` handler
+that fetches filtered records now also runs with no filters at all and should fetch the unfiltered
+set; a handler that assumed at least one key in `filterValues` needs to accept an empty object.
+
 ## 0.4.x → 0.5.0: shared-grid row layout
 
 Every row moved from being its own independent CSS grid to being a direct item of one shared

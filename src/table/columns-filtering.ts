@@ -105,7 +105,6 @@ function applyFiltering(
   if (!filterState) return recordsArray;
 
   const filterValues = filterState.value;
-  if (!filterValues) return recordsArray;
 
   // Check if any column uses external filtering
   const hasExternalFilter = Object.keys(filterValues).some((fieldName) => {
@@ -238,10 +237,8 @@ export function useFiltering(
   watch(
     () => filterState.value?.value,
     (newValue) => {
-      if (newValue) {
-        emit('update:filterState', filterState.value as FilterState);
-        emit('filter', { filterState: filterState.value, filterValues: newValue } as GridFilterEvent);
-      }
+      emit('update:filterState', filterState.value as FilterState);
+      emit('filter', { filterState: filterState.value, filterValues: newValue } as GridFilterEvent);
     },
     { deep: true },
   );
