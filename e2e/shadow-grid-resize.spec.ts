@@ -92,12 +92,13 @@ test.describe('shadow-grid — container resize', () => {
     const countBefore = await shadowGridCount(page);
 
     const width = await containerWidth(page);
-    // A few px is well inside any layout's own breakpoint margin — small enough that this
-    // resize cannot itself cross into a narrower layout.
-    await setContainerWidth(page, width - 10);
+    // The resize widens: the docs page leaves the container only a few px above the active
+    // layout's own target width, so a narrowing of the same size can cross into a narrower layout,
+    // while the next wider layout needs hundreds of px more.
+    await setContainerWidth(page, width + 10);
 
     const after = await activeLayout(page);
-    expect(after, 'test premise violated: a 10px narrowing crossed a layout breakpoint').toBe(before);
+    expect(after, 'test premise violated: a 10px widening crossed a layout breakpoint').toBe(before);
     // A shadow grid only ever goes from mounted to unmounted, never back — a within-layout
     // resize re-reads cached measurements and cannot make one reappear.
     expect(await shadowGridCount(page)).toBeLessThanOrEqual(countBefore);
