@@ -69,8 +69,6 @@
     "vue-markdown-render": "^2.3.0"
   },
   "devDependencies": {
-    "@dynamicforms/vue-forms": "file:../.local-packages/dynamicforms-vue-forms-2.0.2.tgz",
-    "@dynamicforms/vuetify-inputs": "file:../.local-packages/dynamicforms-vuetify-inputs-0.12.1.tgz",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
     "@types/lodash-es": "^4.17.12",
