@@ -2,46 +2,44 @@
 
 ## 0.5.x → 0.6.0: vue-forms 2.0
 
-0.6.0 requires `@dynamicforms/vue-forms` 2.0 and `@dynamicforms/vuetify-inputs` 0.12. Upgrade the
-three together, and work through the
+0.6.0 requires `@dynamicforms/vue-forms` 2.0.2 and `@dynamicforms/vuetify-inputs` 0.12.1. Upgrade
+the three together, and work through the
 [vue-forms](https://docs.velis.si/dynamicforms/vue-forms/guide/migration) and
 [vuetify-inputs](https://docs.velis.si/dynamicforms/vuetify-inputs/guide/migration) migration
 guides first: they cover what changes in forms and inputs. This section covers what changes in the
-grid's filtering on top of them. Both changes are silent - code keeps compiling and behaves
-differently.
+grid's filtering on top of them.
 
 ```bash
-npm install @dynamicforms/vue-forms@^2.0.0 @dynamicforms/vuetify-inputs@^0.12.0 @dynamicforms/vue-grid@^0.6.0
+npm install @dynamicforms/vue-forms@^2.0.2 @dynamicforms/vuetify-inputs@^0.12.1 @dynamicforms/vue-grid@^0.6.0
 ```
 
-### A hidden filter field does not filter
+### A filter field's access decides what it contributes
 
-`FilterState` is a vue-forms `Group`, and in vue-forms 2.0 a member's `visibility` decides what it
-contributes to the group's value. A filter field set to `HIDDEN` reads `null` in `filterValues`
-whatever it holds, and one set to `SUPPRESS` is left out, the way a disabled one already was:
+`FilterState` is a vue-forms `Group`, and in vue-forms 2.0.2 a member's `access` decides what it
+contributes to the group's value. A filter field that is `'disabled'` is left out of `filterValues`,
+as a disabled field was before; one that is `'disabled-null'` carries `null` whatever it holds. Code
+that disabled a filter field writes its access:
 
 ```typescript
-filterState.fields.status.value = 'open';
-filterState.fields.status.visibility = DisplayMode.HIDDEN;
-// filterValues: before { …, status: 'open' }   after { …, status: null }
-// local filtering: before only 'open' rows     after every row
+// before
+filterState.fields.status.enabled = false;
+// after
+filterState.fields.status.access = 'disabled';        // left out of filterValues
+filterState.fields.status.access = 'disabled-null';   // sent as status: null
 ```
 
-Neither filters locally, neither counts in the status bar's active-filter count, and a server
-receives `null` or no key for it. An application that hid a filter input to apply a fixed filter
-the user cannot change loses that filter; apply the fixed condition to the records passed to the
-grid, or to the server request, instead.
-
-A `filterExternal` column whose field is disabled or `SUPPRESS`ed is left out as well, so while every
-external column's field is in that state the grid goes back to filtering locally.
+Neither filters locally or counts in the status bar's active-filter count, and while every
+`filterExternal` column's field is `'disabled'` the grid filters locally. A field's `visibility`
+changes none of this: it decides how the filter input is drawn and nothing else.
 
 ### `filter` is emitted when the filter state becomes empty
 
-A `Group` whose members are all left out reads `{}` in vue-forms 2.0, where it read `null`. The grid
-emits `update:filterState` and `filter` for that change as for any other, with `filterValues: {}`:
+This change is silent - code keeps compiling and behaves differently. A `Group` whose members are all
+left out reads `{}` in vue-forms 2.0, where it read `null`. The grid emits `update:filterState` and
+`filter` for that change as for any other, with `filterValues: {}`:
 
 ```typescript
-Object.values(filterState.fields).forEach((field) => (field.enabled = false));
+Object.values(filterState.fields).forEach((field) => (field.access = 'disabled'));
 // before: no event, filterValues stayed what they were last sent
 // after:  @filter with filterValues {}
 ```

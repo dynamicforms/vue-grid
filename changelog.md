@@ -9,14 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Breaking:** requires `@dynamicforms/vue-forms` 2.0 and `@dynamicforms/vuetify-inputs` 0.12
-  (`peerDependencies` `^2.0.0` and `^0.12.0`).
-- A filter field's `visibility` decides whether it filters. A `HIDDEN` field reads `null` in
-  `filterValues` whatever it holds, and a `SUPPRESS`ed one is left out, as a disabled one already
-  was; neither filters locally or counts as an active filter in the status bar. While every
-  `filterExternal` column's field is left out, the grid filters locally.
+- **Breaking:** requires `@dynamicforms/vue-forms` 2.0.2 and `@dynamicforms/vuetify-inputs` 0.12.1
+  (`peerDependencies` `^2.0.2` and `^0.12.1`). A filter field's `access` decides what it contributes
+  to `filterValues`: `'disabled'` leaves it out, as a disabled field was left out before, and
+  `'disabled-null'` sends `null` whatever it holds. Neither filters locally or counts as an active
+  filter in the status bar, and while every `filterExternal` column's field is `'disabled'` the grid
+  filters locally. A field's `visibility` changes none of this.
 - `update:filterState` and `filter` are emitted when the filter state's value becomes empty - every
-  filter field disabled or suppressed, or a `filterState` without filterable columns passed in - with
+  filter field disabled, or a `filterState` without filterable columns passed in - with
   `filterValues: {}`. Before, nothing was emitted, so an application filtering server-side kept the
   last filters it was sent.
 

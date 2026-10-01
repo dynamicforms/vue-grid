@@ -58,8 +58,8 @@
   "homepage": "https://docs.velis.si/dynamicforms/vue-grid",
   "peerDependencies": {
     "@dynamicforms/translatable": "^0.1.0",
-    "@dynamicforms/vue-forms": "^2.0.0",
-    "@dynamicforms/vuetify-inputs": "^0.12.0",
+    "@dynamicforms/vue-forms": "^2.0.2",
+    "@dynamicforms/vuetify-inputs": "^0.12.1",
     "@mdi/font": "^7.4.47",
     "date-fns": "^4.1.0",
     "lodash-es": "^4.17.12",
@@ -69,6 +69,8 @@
     "vue-markdown-render": "^2.3.0"
   },
   "devDependencies": {
+    "@dynamicforms/vue-forms": "file:../.local-packages/dynamicforms-vue-forms-2.0.2.tgz",
+    "@dynamicforms/vuetify-inputs": "file:../.local-packages/dynamicforms-vuetify-inputs-0.12.1.tgz",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
     "@types/lodash-es": "^4.17.12",

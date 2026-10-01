@@ -33,7 +33,7 @@ import { filterExternal } from '@dynamicforms/vue-grid';
 createColumn('title', 'Title', 'plain', { filterable: { key: filterExternal } })
 ```
 
-A field that is disabled or `SUPPRESS`ed is not part of the value, so while every external column's field is in that state the grid filters locally again.
+A field whose `access` is `'disabled'` is not part of the value, so while every external column's field is disabled the grid filters locally again.
 
 ## Local filtering
 
@@ -83,7 +83,7 @@ const filterState = ref(createFilterState(columns, { title: 'Beatles' }));
 
 ## `GridFilterEvent`
 
-Emitted as `@filter` on every change of the filter state's value, immediately after `update:filterState`: a filter value edited, and a filter field enabled, disabled, hidden or shown. The grid neither debounces nor batches these events, and nothing is emitted before the first change:
+Emitted as `@filter` on every change of the filter state's value, immediately after `update:filterState`: a filter value edited, and a filter field's `access` switched where that changes what is sent. The grid neither debounces nor batches these events, and nothing is emitted before the first change:
 
 ```typescript
 interface GridFilterEvent {
@@ -92,7 +92,7 @@ interface GridFilterEvent {
 }
 ```
 
-Use `filterValues` for server-side filtering — it maps each filterable column's `fieldName` to the current input value. Every filterable column is present; one whose filter is empty carries `null`. A filter field that is disabled or `SUPPRESS`ed is left out, and a `HIDDEN` one carries `null` whatever it holds, so neither filters; with every filter field left out, `filterValues` is `{}`. `FilterConfig.key` does not appear here; it only selects the record property used by local filtering.
+Use `filterValues` for server-side filtering — it maps each filterable column's `fieldName` to the current input value. Every filterable column is present; one whose filter is empty carries `null`. A filter field whose `access` is `'disabled'` is left out, and a `'disabled-null'` one carries `null` whatever it holds, so neither filters; with every filter field left out, `filterValues` is `{}`. A field's `visibility` changes none of this: it only decides how its input is drawn. `FilterConfig.key` does not appear here; it only selects the record property used by local filtering.
 
 ### Example: server-side filtering
 
@@ -114,4 +114,4 @@ async function onFilter({ filterValues }: GridFilterEvent) {
 
 ## Status bar
 
-Setting `showStatusBar` to `true` displays a bar below the filter row showing the number of active filters — every filter value that is not `null`, `undefined` or an empty string, so an emptied multi-select still counts. A disabled, hidden or suppressed filter field does not count. Override the content with the `#statusBar` slot, which receives `filterState` as a slot prop. While selection mode is active the same bar is shown regardless of `showStatusBar` and carries the selection controls instead; see [Selection](./selection).
+Setting `showStatusBar` to `true` displays a bar below the filter row showing the number of active filters — every filter value that is not `null`, `undefined` or an empty string, so an emptied multi-select still counts. A filter field that is `'disabled'` or `'disabled-null'` does not count. Override the content with the `#statusBar` slot, which receives `filterState` as a slot prop. While selection mode is active the same bar is shown regardless of `showStatusBar` and carries the selection controls instead; see [Selection](./selection).

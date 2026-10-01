@@ -510,7 +510,7 @@ describe('columns-filtering.ts', () => {
         await nextTick();
         vi.mocked(mockEmit).mockClear();
 
-        Object.values(filterState.value.fields).forEach((field) => (field.enabled = false));
+        Object.values(filterState.value.fields).forEach((field) => (field.access = 'disabled'));
         await nextTick();
 
         expect(mockEmit).toHaveBeenCalledWith('filter', { filterState: filterState.value, filterValues: {} });
