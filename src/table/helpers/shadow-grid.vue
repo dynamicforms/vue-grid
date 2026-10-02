@@ -16,7 +16,10 @@
         :add-row-reset-item="true"
         :no-wrapper-item="true"
       />
-      <component :is="() => headerContentVNodes" />
+      <!-- `df-grid header`: header styling reaches the measured header cells, as in df-grid.vue -->
+      <div class="df-grid header" style="display: contents">
+        <component :is="() => headerContentVNodes" />
+      </div>
     </div>
   </div>
 </template>

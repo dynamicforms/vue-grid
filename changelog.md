@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and border, so a header label and its sorting indicator overlapped in a narrow column.
 - A non-sortable column's header reserved room for a sorting indicator it never draws, widening
   columns sized by their header; `SortingIndicator` now renders nothing when `sortable` is false.
+- A header cell whose column carries `text-right`, `text-end` or `text-center` kept its label at the
+  start of the cell; the label and sorting indicator now follow that alignment.
+- The hidden header copies that size the columns and pick the responsive layout did not receive
+  styling set on `.df-grid.header`, so a bold header label was measured in the regular weight and
+  wrapped in a column sized for it. Both copies now carry the `df-grid header` classes.
 
 ## [0.6.0] - 2026-10-01
 

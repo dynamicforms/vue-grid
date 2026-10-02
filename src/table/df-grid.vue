@@ -48,8 +48,13 @@
         :style="bodyGridStyle"
         data-section="body"
       >
+        <!--
+        The hidden header-measurement clone. `df-grid header` lets inherited header styling (a bold
+        `.df-grid.header`, say) reach the clone, so it sizes the columns with the same font the
+        visible header renders in.
+        -->
         <div
-          class="df-unanchored"
+          class="df-grid header df-unanchored"
           :class="uColumns.cssClass.value"
           style="display: contents; visibility: hidden"
           :style="headerRowBaseVars(uColumns.rowsPerRecord.value)"

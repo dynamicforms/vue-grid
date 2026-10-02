@@ -164,5 +164,5 @@ const columns = [
 /* Zebra & header */
 .incoming-demo-grid .df-grid.card.even { background-color: #b0b0b020; }
 .incoming-demo-grid .df-grid.card.odd  { background-color: #60606020; }
-.incoming-demo-grid .df-grid.header-container { font-weight: bold; }
+.incoming-demo-grid .df-grid.header { font-weight: bold; }
 </style>
