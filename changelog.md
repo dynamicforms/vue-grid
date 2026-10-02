@@ -5,6 +5,21 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-10-01
+
+### Changed
+
+- **Breaking:** requires `@dynamicforms/vue-forms` 2.0.2 and `@dynamicforms/vuetify-inputs` 0.12.1
+  (`peerDependencies` `^2.0.2` and `^0.12.1`). A filter field's `access` decides what it contributes
+  to `filterValues`: `'disabled'` leaves it out, as a disabled field was left out before, and
+  `'disabled-null'` sends `null` whatever it holds. Neither filters locally or counts as an active
+  filter in the status bar, and while every `filterExternal` column's field is `'disabled'` the grid
+  filters locally. A field's `visibility` changes none of this.
+- `update:filterState` and `filter` are emitted when the filter state's value becomes empty - every
+  filter field disabled, or a `filterState` without filterable columns passed in - with
+  `filterValues: {}`. Before, nothing was emitted, so an application filtering server-side kept the
+  last filters it was sent.
+
 ## [0.5.2] - 2026-09-11
 
 ### Added

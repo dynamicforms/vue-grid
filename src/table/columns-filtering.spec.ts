@@ -478,6 +478,45 @@ describe('columns-filtering.ts', () => {
       });
     });
 
+    describe('filter event', () => {
+      const useInternalOnly = () => {
+        mockProps.columns = mockColumnsInternalOnly;
+        mockUColumns.columns = computed(() => mockColumnsInternalOnly);
+        mockUColumns.activeColumnsDefinition = computed(() => ({ columns: mockColumnsInternalOnly }));
+        return useFiltering(
+          mockProps,
+          mockEmit,
+          mockUColumns,
+          computed(() => mockRecords),
+        );
+      };
+
+      it('emits update:filterState and filter with the filter values when a filter changes', async () => {
+        const { filterState } = useInternalOnly();
+
+        filterState.value.fields.title.value = 'an';
+        await nextTick();
+
+        expect(mockEmit).toHaveBeenCalledWith('update:filterState', filterState.value);
+        expect(mockEmit).toHaveBeenCalledWith('filter', {
+          filterState: filterState.value,
+          filterValues: { title: 'an', artist: null, year: null, active: null },
+        });
+      });
+
+      it('emits filter with no filter values when every filter field is disabled', async () => {
+        const { filterState } = useInternalOnly();
+        filterState.value.fields.title.value = 'an';
+        await nextTick();
+        vi.mocked(mockEmit).mockClear();
+
+        Object.values(filterState.value.fields).forEach((field) => (field.access = 'disabled'));
+        await nextTick();
+
+        expect(mockEmit).toHaveBeenCalledWith('filter', { filterState: filterState.value, filterValues: {} });
+      });
+    });
+
     describe('internalFilterState watcher', () => {
       it('should update internalFilterState when props.filterState changes (line 231)', async () => {
         const mockPropsReactive = reactive({
