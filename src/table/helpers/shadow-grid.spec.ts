@@ -214,6 +214,20 @@ describe('ShadowGrid', () => {
       const events = wrapper.emitted('onmeasure') as any[][];
       expect(events[0][0].columnWidths).toBe('200px 200px 200px');
     });
+
+    it('reports how many records the measured render held', async () => {
+      const wrapper = mountShadowGrid({ count: 5, offset: 8 });
+      await nextTick();
+      await nextTick();
+      expect((wrapper.emitted('onmeasure') as any[][])[0][0].sampleSize).toBe(2);
+    });
+
+    it('reports a sample of zero before any records are there', async () => {
+      const wrapper = mountShadowGrid({ records: [] });
+      await nextTick();
+      await nextTick();
+      expect((wrapper.emitted('onmeasure') as any[][])[0][0].sampleSize).toBe(0);
+    });
   });
 
   // -------------------------------------------------------------------------

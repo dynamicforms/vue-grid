@@ -63,7 +63,8 @@ so a local filter that matches no rows leaves the bar hidden.
 no-data indicator is suppressed even when `records` is empty.
 
 `secondaryShadowCount` — number of rows rendered in secondary shadow grids (one per responsive layout, used to
-pre-measure a layout's width before it becomes active so the resize handler can pick the right one). Rarely needs
+pre-measure a layout's width before it becomes active so the resize handler can pick the right one). A layout is
+measured again when more records than it was measured from become available, up to this count. Rarely needs
 changing.
 
 `estimatedRowHeight` — row height, in pixels, assumed for a record that hasn't been rendered (and therefore
@@ -173,11 +174,19 @@ Access these through a template ref on `<df-grid>`.
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `reMeasure()` | `Promise<void>` | Re-reads the body grid's own natively-resolved column widths and republishes them onto the header. |
+| `reMeasureLayouts()` | `Promise<void>` | Measures the width every responsive layout needs again and selects the widest layout that fits. |
 
 `reMeasure()` — forces the same header re-sync a container resize triggers automatically, for
 layout changes the grid has no way to detect on its own — for example a column's rendered content
 changing width without the container itself resizing. The returned promise resolves once the new
 widths have actually reached the header, not merely once they were read.
+
+`reMeasureLayouts()` — discards the width recorded for each [responsive layout](./columns#responsive-layouts) and
+measures every layout again from the records sampled now, then selects the widest layout that fits the container.
+The grid does this by itself only when more records become available to sample; call it when the sampled records
+change without growing in number — for example records replaced by wider ones, or a font that finished loading
+after the first measurement. While a layout is being measured, its previous width keeps driving the layout choice.
+The returned promise resolves once every layout has been measured and the layout has been selected.
 
 ```vue
 <script setup lang="ts">
@@ -188,6 +197,10 @@ const gridRef = ref<InstanceType<typeof DfGrid>>();
 
 async function onContentResized() {
   await gridRef.value?.reMeasure();
+}
+
+async function onRecordsReplaced() {
+  await gridRef.value?.reMeasureLayouts();
 }
 </script>
 

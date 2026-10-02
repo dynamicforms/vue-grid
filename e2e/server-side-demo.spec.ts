@@ -5,7 +5,7 @@
  * itself), regression-tested here because both are easy for a consumer building a similar
  * server-backed grid to reproduce:
  *
- *  - `.df-grid.cell` in this demo is `overflow: hidden` for single-line ellipsis truncation.
+ *  - `.df-grid.cell` in this demo is `overflow: hidden`.
  *    Once enough rows are loaded for the body grid's own scrolling to give it a definite height
  *    smaller than every row's true height combined, a grid item with non-visible overflow gets an
  *    *automatic minimum size* of 0 for the default `auto` row-sizing function instead of its real

@@ -2,17 +2,14 @@
  * @file e2e/shadow-grid-resize.spec.ts
  *
  * The secondary shadow grids (`df-grid.vue`'s `v-for="colsDef in uColumns.builtColumns.value"`
- * block, one `.df-grid.shadow-grid` per responsive layout candidate) each mount once, measure
- * their own natural content width via `getComputedStyle`, and record it in `shadowMeasurements`.
- * That record is a plain (non-reactive) object keyed by layout name, and each shadow grid's
- * `v-if="!shadowMeasurements[colsDef.name]"` only ever transitions from mounted to unmounted —
- * once a layout candidate has measured, its shadow grid is gone from the DOM as soon as
- * `df-grid.vue` next re-renders for any reason (mutating a plain object does not itself trigger
- * one, so exactly when that happens is not something a caller can rely on). A layout's natural
- * width is its own unconstrained text/content width, independent of the container, so nothing
- * about a resize ever gives an already-measured shadow grid a reason to remount: resizing —
- * whether within a layout's own breakpoint or across one — only re-reads the already-recorded
- * measurements (`df-grid.vue`'s `ResizeObserver` picks `bestLayout` from `shadowMeasurements` via
+ * block, one `.df-grid.shadow-grid` per responsive layout candidate) measure their own natural
+ * content width via `getComputedStyle` and record it in `shadowMeasurements`, keyed by layout
+ * name; once a layout candidate has measured, its shadow grid is unmounted. It mounts again only
+ * when more records become available to sample or `reMeasureLayouts()` is called (see
+ * layout-remeasure.spec.ts). A layout's natural width is its own unconstrained text/content width,
+ * independent of the container, so nothing about a resize ever gives an already-measured shadow
+ * grid a reason to remount: resizing — whether within a layout's own breakpoint or across one —
+ * only re-reads the already-recorded measurements (`df-grid.vue`'s `ResizeObserver` picks `bestLayout` from `shadowMeasurements` via
  * `pickBy`/`maxBy`) and, on a cross-layout resize, changes the real body grid's active layout
  * class. Real rows size themselves natively off that class and never consult a shadow grid at
  * all.

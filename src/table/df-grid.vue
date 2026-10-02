@@ -179,9 +179,11 @@
     </div>
     <div v-for="colsDef in uColumns.builtColumns.value" :key="colsDef.name">
       <!--
-      we only render secondary shadows once (v-if="!shadowMeasurements[colsDef.name]") to get ballpark width figures.
-      This will cause issues when switching among the dynamic layouts because the initial render might have been
-      too narrow. This may be mitigated by increasing secondaryShadowCount
+      Secondary shadows render until their layout is measured, and again whenever that measurement is
+      discarded: when more records are available to sample than it was taken from (see
+      remeasureUndersampledLayouts), or on reMeasureLayouts(). They do not re-render when the sampled
+      records merely change, so a sample that is not representative of later records stays in effect
+      until reMeasureLayouts() is called; raising secondaryShadowCount makes the sample larger.
 
       Two passes per layout: one at max-content (today's natural, unwrapped width) and one at
       min-content (forces every field to wrap at every opportunity, so the median line count each
@@ -189,7 +191,8 @@
       only finalized once both have reported — see onShadowMeasure.
       -->
       <shadow-grid
-        v-if="!shadowMeasurements[colsDef.name]"
+        v-if="!(colsDef.name in shadowMeasurements) || layoutsBeingMeasured.has(colsDef.name)"
+        :key="`max-content-${layoutMeasureRuns[colsDef.name] ?? 0}`"
         style="right: auto"
         :records="sortedRecords"
         :columns="colsDef.columnRenderOptsInternal.value"
@@ -201,7 +204,8 @@
         @onmeasure="(event) => onShadowMeasure(colsDef.name, 'maxContent', event)"
       />
       <shadow-grid
-        v-if="!shadowMeasurements[colsDef.name]"
+        v-if="!(colsDef.name in shadowMeasurements) || layoutsBeingMeasured.has(colsDef.name)"
+        :key="`min-content-${layoutMeasureRuns[colsDef.name] ?? 0}`"
         style="right: auto"
         size-to="min-content"
         :records="sortedRecords"
@@ -282,6 +286,43 @@ const headerRef = ref();
 const shadowMeasurements = reactive<Record<string, number>>({});
 const shadowRawMeasurements: Record<string, { maxContent?: ShadowGridMeasurements; compact?: ShadowGridMeasurements }> =
   {};
+// How many records each layout's current measurement was taken from. A layout's previous measurement stays in
+// `shadowMeasurements`, and keeps driving layout selection, while it is being measured again.
+const shadowSampleSizes: Record<string, number> = {};
+const layoutsBeingMeasured = reactive(new Set<string>());
+// Part of the shadow grids' keys: a layout measured again gets freshly mounted shadows, which measure whether or not
+// their props change
+const layoutMeasureRuns = reactive<Record<string, number>>({});
+let layoutMeasurementWaiters: (() => void)[] = [];
+// Same count the secondary shadow grids render (see shadow-grid.vue)
+const availableShadowSample = computed(() =>
+  Math.max(
+    0,
+    Math.min(secondaryShadowOffset.value + props.secondaryShadowCount!, sortedRecords.value.length) -
+      secondaryShadowOffset.value,
+  ),
+);
+function measureLayoutsAgain(names: string[]) {
+  names.forEach((name) => {
+    shadowRawMeasurements[name] = {};
+    layoutMeasureRuns[name] = (layoutMeasureRuns[name] ?? 0) + 1;
+    layoutsBeingMeasured.add(name);
+  });
+}
+// A measurement taken before the records arrived sizes a layout by its header alone; one taken from fewer records
+// than are now available can be just as far off.
+function remeasureUndersampledLayouts() {
+  const size = availableShadowSample.value;
+  measureLayoutsAgain(
+    Object.keys(shadowSampleSizes).filter((name) => !layoutsBeingMeasured.has(name) && shadowSampleSizes[name] < size),
+  );
+}
+function settleLayoutMeasurementWaiters() {
+  if (layoutsBeingMeasured.size > 0) return;
+  const waiters = layoutMeasurementWaiters;
+  layoutMeasurementWaiters = [];
+  waiters.forEach((resolve) => resolve());
+}
 function onShadowMeasure(name: string, kind: 'maxContent' | 'compact', event: ShadowGridMeasurements) {
   const raw = (shadowRawMeasurements[name] ??= {});
   raw[kind] = event;
@@ -292,8 +333,13 @@ function onShadowMeasure(name: string, kind: 'maxContent' | 'compact', event: Sh
       raw.maxContent.fieldMaxWidths ?? {},
       raw.compact.fieldCompactMetrics ?? {},
     );
+    shadowSampleSizes[name] = Math.min(raw.maxContent.sampleSize, raw.compact.sampleSize);
+    layoutsBeingMeasured.delete(name);
+    remeasureUndersampledLayouts();
+    settleLayoutMeasurementWaiters();
   }
 }
+watch(availableShadowSample, remeasureUndersampledLayouts);
 const containerWidth = ref(0);
 function selectResponsiveLayout(width: number) {
   const filtered = pickBy(shadowMeasurements, (config) => config <= width);
@@ -635,6 +681,18 @@ defineExpose({
     await nextTick();
     syncHeaderColumns();
     syncHeaderColumns.flush();
+    await nextTick();
+  },
+  // Measures every responsive layout's width again from the records sampled now, then selects the layout that fits —
+  // for content changes the sample-size check cannot see, e.g. records replaced by wider ones of the same count. The
+  // returned promise resolves once every layout has been measured and the layout selection has run.
+  reMeasureLayouts: async () => {
+    const measured = new Promise<void>((resolve) => {
+      layoutMeasurementWaiters.push(resolve);
+    });
+    measureLayoutsAgain(uColumns.builtColumns.value.map((c) => c.name));
+    settleLayoutMeasurementWaiters();
+    await measured;
     await nextTick();
   },
 });

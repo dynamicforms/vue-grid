@@ -9,6 +9,8 @@ in the Cookbook for the full wiring.
 
 The demo below starts empty. Click **Load data** to fetch the first page from the server; subsequent pages arrive automatically as you scroll to the bottom. **Clear** resets to the empty state. Sort and filter changes always restart from page one.
 
+The grid has two [responsive layouts](/reference/columns#responsive-layouts): a single line, and two rows per record for narrower containers. Before the first page arrives the layouts are measured from the header alone; once it arrives they are measured again from the records, so the layout shown fits the loaded titles and artists.
+
 <table-server/>
 
 <script setup>

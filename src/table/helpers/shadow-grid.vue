@@ -123,13 +123,13 @@ function checkShadowGridColumns(): Promise<void> {
             medianLines: median(lineCounts),
           };
         });
-        emits('onmeasure', { totalWidth, columnWidths, fieldCompactMetrics });
+        emits('onmeasure', { totalWidth, columnWidths, sampleSize: renderedCount, fieldCompactMetrics });
       } else {
         const fieldMaxWidths: Record<string, number> = {};
         fieldGroups.forEach((cells, field) => {
           fieldMaxWidths[field] = cells[0].getBoundingClientRect().width;
         });
-        emits('onmeasure', { totalWidth, columnWidths, fieldMaxWidths });
+        emits('onmeasure', { totalWidth, columnWidths, sampleSize: renderedCount, fieldMaxWidths });
       }
       resolve();
     };
@@ -154,9 +154,13 @@ function groupCellsByField(): Map<string, HTMLElement[]> {
   return groups;
 }
 
+// Records in the last render, which is what a measurement reads off the DOM
+let renderedCount = 0;
+
 function* idxAndItem() {
   nextTick(() => checkShadowGridColumns());
-  const mx = Math.min(props.offset + props.count, props.records.length) - props.offset;
+  const mx = Math.max(0, Math.min(props.offset + props.count, props.records.length) - props.offset);
+  renderedCount = mx;
   for (let i = 0; i < mx; i++) {
     yield props.records[i + props.offset];
   }

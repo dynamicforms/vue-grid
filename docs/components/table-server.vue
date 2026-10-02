@@ -2,7 +2,8 @@
   <div style="display: flex; flex-direction: column; height: 40em">
     <df-grid
       v-model:sortState="sortState"
-      :columns="columns"
+      v-model:activeColumns="activeColumns"
+      :columns="columnsResponsive"
       :records="records"
       :loading="loading"
       class="grid-class"
@@ -36,7 +37,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { createColumn, filterExternal, sortExternal } from '../../src';
-import type { GridFilterEvent, GridSortEvent, SortState } from '../../src';
+import type { GridFilterEvent, GridSortEvent, ResponsiveColumnDefinitions, SortState } from '../../src';
 import { generateMusicLibrary } from './data-generator';
 
 const PAGE_SIZE = 30;
@@ -65,6 +66,14 @@ const columns = [
     filterable: { fieldType: 'number', key: filterExternal },
   }),
 ];
+
+// The grid starts empty and measures each layout again once a page of records has arrived, so the
+// layout it picks fits the records rather than the header alone.
+const columnsResponsive: ResponsiveColumnDefinitions = [
+  { cssClass: 'single-line', columns },
+  { cssClass: 'two-row', rows: 2, columns },
+];
+const activeColumns = ref<string>();
 
 const records = ref<any[]>([]);
 const total = ref(0);
@@ -175,12 +184,12 @@ function clear() {
   background-color: #60606040;
 }
 
-/* Single-line row: id | title | artist | year | rating. `.df-record-grid` is the marker the
-   body, header, and filter row all carry, so one declaration covers all three.
+/* `.df-record-grid` is the marker the body, header, and filter row all carry, so one declaration
+   covers all three.
 
-   `grid-auto-rows: min-content` matters because the cells below are `overflow: hidden` (for the
-   ellipsis truncation) — a grid item with non-visible overflow gets an *automatic minimum size*
-   of 0 for the default `auto` row-sizing function, instead of its content size, which once the
+   `grid-auto-rows: min-content` matters because the cells below are `overflow: hidden` — a grid
+   item with non-visible overflow gets an *automatic minimum size* of 0 for the default `auto`
+   row-sizing function, instead of its content size, which once the
    body grid's own `overflow-y: scroll` gives it a definite height smaller than every row's true
    height combined, lets rows compress toward 0 rather than the grid scrolling as expected —
    every row in the shared grid overlapping the next instead of each keeping its own height.
@@ -188,11 +197,29 @@ function clear() {
    automatic-minimum-size reduction and rows keep their real height regardless of overflow. */
 :deep(.df-record-grid) {
   display: grid;
-  grid-template-columns: minmax(2em, 4em) 1fr 1fr minmax(3em, 5em) minmax(3em, 5em);
   grid-auto-rows: min-content;
   gap: .25em;
   font-size: 0.85rem;
 }
+
+/* single-line: id | title | artist | year | rating
+
+   `minmax(min-content, ...)` rather than `1fr`: the automatic minimum of an `overflow: hidden` cell
+   is 0, so a `1fr` track would let the layout measure as fitting any width. */
+:deep(.df-record-grid.single-line) {
+  grid-template-columns: minmax(2em, 4em) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(3em, 5em) minmax(3em, 5em);
+}
+
+/* two-row: id | title  | year
+            -- | artist | rating */
+:deep(.df-record-grid.two-row) {
+  grid-template-columns: minmax(2em, 4em) minmax(min-content, 1fr) minmax(3em, 5em);
+}
+:deep(.df-record-grid.two-row .df-grid.cell.id) { grid-column: 1; }
+:deep(.df-record-grid.two-row .df-grid.cell.title) { grid-column: 2; }
+:deep(.df-record-grid.two-row .df-grid.cell.year) { grid-column: 3; }
+:deep(.df-record-grid.two-row .df-grid.cell.artist) { grid-column: 2; grid-row: calc(var(--row-base) + 2); }
+:deep(.df-record-grid.two-row .df-grid.cell.rating) { grid-column: 3; grid-row: calc(var(--row-base) + 2); }
 
 :deep(.df-grid.card) {
   border-bottom: 1px solid rgba(128, 128, 128, 0.25);
@@ -206,7 +233,6 @@ function clear() {
   padding: 0 .25em;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 :deep(.df-grid.cell.id), :deep(.df-grid.cell.year), :deep(.df-grid.cell.rating) {
