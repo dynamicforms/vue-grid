@@ -5,6 +5,16 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-10-02
+
+### Fixed
+
+- The sorting indicator in a header cell with `text-right` (or any right/end `text-align`) sat past
+  the label at the cell's right edge, overflowing it; it now follows the label as in left-aligned
+  columns.
+- Columns sized by their header came out narrower than the header cell by its horizontal padding
+  and border, so a header label and its sorting indicator overlapped in a narrow column.
+
 ## [0.6.0] - 2026-10-01
 
 ### Changed

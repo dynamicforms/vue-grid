@@ -40,6 +40,7 @@ const viewBox = computed(
 .df-grid-sorting-indicator-wrapper svg {
   position: absolute;
   top: 50%;
+  right: 0; /* without it the static position follows the cell's text-align and pushes the icon past the cell */
   transform: translateY(-50%);
   width: 0.75em;
   opacity: 0.55;
