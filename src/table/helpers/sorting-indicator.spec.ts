@@ -10,6 +10,8 @@
  *
  * 2. **Conditional SVG paths** — the asc arrow, desc arrow, and sort-index badge are each
  *    controlled by a v-if in the template.
+ *
+ * 3. **Non-sortable columns** — the indicator renders nothing at all, not even its reserved width.
  */
 import { mount } from '@vue/test-utils';
 
@@ -89,8 +91,9 @@ describe('SortingIndicator', () => {
       expect(wrapper.find('svg').exists()).toBe(true);
     });
 
-    it('draws no arrow svg when sortable is false', () => {
+    it('renders nothing when sortable is false, so it takes no room in the header cell', () => {
       const wrapper = mountIndicator({ sortable: false });
+      expect(wrapper.find('.df-grid-sorting-indicator-wrapper').exists()).toBe(false);
       expect(wrapper.find('svg').exists()).toBe(false);
     });
   });

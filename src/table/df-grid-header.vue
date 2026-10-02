@@ -305,6 +305,16 @@ defineExpose({ headerItem, headerOptions, headerHeight });
 :deep(.df-grid.card.header .df-grid.cell.has-pre-post > .content) {
   flex: 0 1 auto;
 }
+/*
+ * A header cell is a flex row, so `text-align` does not move its label and sorting indicator. The
+ * alignment classes a column's `cssClass` can carry are mapped onto the row instead.
+ */
+:deep(.df-grid.card.header .df-grid.cell.has-pre-post:is(.text-right, .text-end)) {
+  justify-content: flex-end;
+}
+:deep(.df-grid.card.header .df-grid.cell.has-pre-post.text-center) {
+  justify-content: center;
+}
 
 .df-grid.cell.filter-cell {
   padding: 0.25em;

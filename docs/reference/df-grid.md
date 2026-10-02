@@ -325,6 +325,12 @@ var(--grid-template-columns) !important`, overriding whatever static fallback yo
 Everything else you put on `.df-record-grid` — `gap`, `font-size`, whatever else — applies to all three as-is,
 with no copying involved.
 
+The header's own contribution to those widths comes from a hidden copy of the header row inside the body grid, and
+the responsive-layout measurement uses a copy as well. Both copies carry the `df-grid header` classes, so inherited
+typography set on `.df-grid.header` (`font-weight`, `font-size`, `letter-spacing`) sizes the columns for the label
+as it renders. A rule that reaches only the visible header — `.df-grid.card.header` or `.df-grid.header-container`
+— sizes the columns for the unstyled label, and the wider rendered label wraps.
+
 Reach for `.df-grid.body-grid` specifically only when you want a rule to apply to the real scrolling body and
 nowhere else (the responsive layout's own per-record cell-placement rules below are the main example, since the
 header and filter row use a different placement scheme entirely — see the `df-anchored`/`df-unanchored` paragraph

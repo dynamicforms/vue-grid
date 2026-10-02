@@ -36,6 +36,10 @@ interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> {
 
 `createColumn()` sets `sortable: true` on the column it builds; a `sortable` key in `otherOptions` overrides it. A `ColumnDefinition` written as a plain object literal has no such default, and a column without `sortable` cannot be sorted.
 
+`cssClass` is set on the column's header cell as well as its body cells. A header cell lays out its label and
+sorting indicator as a flex row, so `text-align` does not move them; the classes `text-right`, `text-end` and
+`text-center` align them to the end or the centre of the header cell.
+
 ### Example
 
 ```typescript

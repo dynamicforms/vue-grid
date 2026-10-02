@@ -1,7 +1,7 @@
 <template>
-  <div class="df-grid-sorting-indicator-wrapper">
+  <div v-if="sortable" class="df-grid-sorting-indicator-wrapper">
     &nbsp;
-    <svg v-if="sortable" :viewBox="viewBox" stroke="currentColor" fill="currentColor">
+    <svg :viewBox="viewBox" stroke="currentColor" fill="currentColor">
       <path v-if="direction !== 'desc'" data-sort="asc" d="M16,0l-16 20 16 -6 16 6Z" />
       <g
         v-if="index"
@@ -40,6 +40,7 @@ const viewBox = computed(
 .df-grid-sorting-indicator-wrapper svg {
   position: absolute;
   top: 50%;
+  right: 0; /* without it the static position follows the cell's text-align and pushes the icon past the cell */
   transform: translateY(-50%);
   width: 0.75em;
   opacity: 0.55;

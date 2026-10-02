@@ -48,8 +48,13 @@
         :style="bodyGridStyle"
         data-section="body"
       >
+        <!--
+        The hidden header-measurement clone. `df-grid header` lets inherited header styling (a bold
+        `.df-grid.header`, say) reach the clone, so it sizes the columns with the same font the
+        visible header renders in.
+        -->
         <div
-          class="df-unanchored"
+          class="df-grid header df-unanchored"
           :class="uColumns.cssClass.value"
           style="display: contents; visibility: hidden"
           :style="headerRowBaseVars(uColumns.rowsPerRecord.value)"
@@ -801,16 +806,14 @@ defineExpose({
   /*
    * The hidden header-measurement clone's own cells (see the `df-unanchored` wrapper above) sit
    * in rows permanently reserved for them (see `topSpacerRowOffset` in the script block), so a
-   * real record's cells sharing a row-base with them never happens. Those reserved rows would
-   * otherwise get real height from this content, even though it never paints (`visibility:
-   * hidden` on the wrapper) — collapsing every box-model contributor to 0 keeps the reservation
-   * from opening a visible gap above the first real row, while still leaving each cell's own
-   * *width* (an entirely separate axis, unaffected by collapsing height) contributing to column
-   * sizing exactly as before.
+   * real record's cells sharing a row-base with them never happens. Collapsing the vertical box
+   * model keeps those reserved rows at zero height, so they open no gap above the first real row.
+   * The horizontal padding and border stay: each cell's width contributes to column sizing, and
+   * without them the columns come out narrower than the visible header cells.
    */
   height: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
+  padding-block: 0 !important;
+  border-block-width: 0 !important;
   overflow: hidden;
 }
 .df-grid-row-spacer {
