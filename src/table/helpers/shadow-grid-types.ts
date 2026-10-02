@@ -1,6 +1,8 @@
 export interface ShadowGridMeasurements {
   totalWidth: number;
   columnWidths: string;
+  // Number of records rendered into the shadow when it was measured
+  sampleSize: number;
   // Present when the shadow was measured with `sizeTo="max-content"` (the default): each field's
   // own rendered width, unwrapped — every sampled row shares this width, since a grid track's
   // resolved size is uniform across its items.

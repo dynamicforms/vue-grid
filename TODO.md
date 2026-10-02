@@ -73,11 +73,13 @@ These are the things standing between the current state and that promise.
   more stable than what it re-exports: either those reach 1.0 first, or their types get wrapped so
   they stop being part of this API.
 
-- **Secondary shadow grids are measured once.** See the comment in `df-grid.vue` next to the
-  per-layout shadow grids: the initial render may be too narrow, and the measurement taken there is
-  the one every later layout decision is made from. Responsive layout switching is a headline
+- **Secondary shadow grids sample once per sample size.** A layout is measured again only when more
+  records become available to sample (or on `reMeasureLayouts()`), so a first sample that is not
+  representative of the records that replace it — a narrow first page, a sort that brings wider
+  records to the top — keeps driving layout selection. Responsive layout switching is a headline
   feature, so this is a behavioural gap rather than a cosmetic one. Either re-measure when the
-  layout changes, or raise `secondaryShadowCount` enough to make the first measurement trustworthy.
+  sampled records change, or raise `secondaryShadowCount` enough to make the first sample
+  trustworthy.
 
 - **The public surface has not been deliberately drawn.** `src/table/index.ts` also exports
   `DfGridHeader`, `GridCard`, `SortingIndicator` and `IncomingArc`. 1.0 freezes whatever is exported,

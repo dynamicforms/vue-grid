@@ -5,6 +5,21 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-10-02
+
+### Added
+
+- `reMeasureLayouts()` exposed method: measures the width every responsive layout needs again from
+  the records sampled now and selects the widest layout that fits. The returned promise resolves
+  once the layout has been selected.
+
+### Fixed
+
+- Responsive layouts measured before the records arrived kept the width measured from the header
+  alone, so a grid whose first page loaded asynchronously stayed on a layout too wide for its
+  container. A layout is now measured again whenever more records are available to sample than it
+  was measured from.
+
 ## [0.6.1] - 2026-10-02
 
 ### Fixed

@@ -25,6 +25,10 @@
  *    min-content shadow pass (see shadow-metrics.spec.ts for the underlying math) before the
  *    picker ever sees it, so a field whose typical content wraps comfortably doesn't force a
  *    layout to look wider than it needs to be;
+ *  - a layout measured from fewer records than are now available (typically none, before an
+ *    asynchronous first page arrives) is measured again and the layout re-selected, while a change
+ *    of records that does not grow the sample leaves the measurement alone; `reMeasureLayouts()`
+ *    measures every layout again on request;
  *  - the width the body scroller reserves for its vertical scrollbar is measured (not assumed)
  *    and published as `--df-grid-scrollbar-width`, which is what keeps the header — which sits
  *    outside the scroller — aligned with the body columns.
@@ -40,26 +44,30 @@ import { defineComponent, h, nextTick, ref } from 'vue';
 
 import DfGrid from './df-grid.vue';
 
-const { scrollerBox, resizeCallback, measuredColumnWidths, fieldMetricsOverride, measuredRowGap } = vi.hoisted(() => ({
-  // What the mocked body scroller reports: a border box wider than its content box means the
-  // scrollbar takes up space, an equal one means it does not (overlay scrollbars).
-  scrollerBox: { offsetWidth: 615, clientWidth: 600 },
-  resizeCallback: { fn: null as ResizeObserverCallback | null },
-  measuredColumnWidths: { value: '200px 100px' },
-  // What getComputedStyle(bodyGrid).rowGap reports — the reserved-block gap compensation reads
-  // this directly (not via getPropertyValue), unlike every other measurement in this file.
-  measuredRowGap: { value: '0px' },
-  // Lets one test drive the mocked shadow grids' per-field measurements, to check that a
-  // layout's field-level savings actually reach the width-based layout picker. Left null the
-  // rest of the time, in which case both passes report empty field metrics and the picker sees
-  // exactly the widths it always has.
-  fieldMetricsOverride: {
-    current: null as null | {
-      fieldMaxWidths: Record<string, number>;
-      fieldCompactMetrics: Record<string, { minContentWidth: number; medianLines: number }>;
+const { scrollerBox, resizeCallback, measuredColumnWidths, fieldMetricsOverride, measuredRowGap, shadowGrids } =
+  vi.hoisted(() => ({
+    // What the mocked body scroller reports: a border box wider than its content box means the
+    // scrollbar takes up space, an equal one means it does not (overlay scrollbars).
+    scrollerBox: { offsetWidth: 615, clientWidth: 600 },
+    resizeCallback: { fn: null as ResizeObserverCallback | null },
+    measuredColumnWidths: { value: '200px 100px' },
+    // What getComputedStyle(bodyGrid).rowGap reports — the reserved-block gap compensation reads
+    // this directly (not via getPropertyValue), unlike every other measurement in this file.
+    measuredRowGap: { value: '0px' },
+    // Lets one test drive the mocked shadow grids' per-field measurements, to check that a
+    // layout's field-level savings actually reach the width-based layout picker. Left null the
+    // rest of the time, in which case both passes report empty field metrics and the picker sees
+    // exactly the widths it always has.
+    fieldMetricsOverride: {
+      current: null as null | {
+        fieldMaxWidths: Record<string, number>;
+        fieldCompactMetrics: Record<string, { minContentWidth: number; medianLines: number }>;
+      },
     },
-  },
-}));
+    // `mounts` counts mocked shadow grids set up, i.e. layout measurements started; `widthScale`
+    // multiplies every width they report.
+    shadowGrids: { mounts: 0, widthScale: 1 },
+  }));
 
 vi.mock('vue-cached-icon', () => ({ CachedIcon: { name: 'CachedIcon', template: '<i/>' } }));
 vi.mock('./df-grid-header.vue', () => ({ default: { name: 'DfGridHeader', template: '<div/>' } }));
@@ -94,13 +102,27 @@ vi.mock('./helpers', async (importOriginal) => {
       },
       emits: ['onmeasure'],
       setup(props, { expose, emit }) {
+        shadowGrids.mounts += 1;
         const payload = () => {
           const compact = props.sizeTo === 'min-content';
-          const totalWidth = props.columns.length * (compact ? 20 : 100);
+          const sampleSize = Math.max(0, Math.min(props.offset + props.count, props.records.length) - props.offset);
+          // Without records only the header is measured, which is narrower than the records
+          const perColumn = (compact ? 20 : 100) * (sampleSize ? 1 : 0.5);
+          const totalWidth = props.columns.length * perColumn * shadowGrids.widthScale;
           const columnWidths = '';
           return compact
-            ? { totalWidth, columnWidths, fieldCompactMetrics: fieldMetricsOverride.current?.fieldCompactMetrics ?? {} }
-            : { totalWidth, columnWidths, fieldMaxWidths: fieldMetricsOverride.current?.fieldMaxWidths ?? {} };
+            ? {
+                totalWidth,
+                columnWidths,
+                sampleSize,
+                fieldCompactMetrics: fieldMetricsOverride.current?.fieldCompactMetrics ?? {},
+              }
+            : {
+                totalWidth,
+                columnWidths,
+                sampleSize,
+                fieldMaxWidths: fieldMetricsOverride.current?.fieldMaxWidths ?? {},
+              };
         };
         expose({ reMeasure: () => emit('onmeasure', payload()) });
         return () => {
@@ -190,6 +212,8 @@ describe('DfGrid — column auto-sizing', () => {
     measuredColumnWidths.value = '200px 100px';
     resizeCallback.fn = null;
     fieldMetricsOverride.current = null;
+    shadowGrids.mounts = 0;
+    shadowGrids.widthScale = 1;
 
     measuredRowGap.value = '0px';
     const getPropertyValue = (prop: string) =>
@@ -330,6 +354,68 @@ describe('DfGrid — column auto-sizing', () => {
       await resizeContainer(wrapper, 350); // narrower than wide's raw 400, wider than its adjusted total
 
       expect(wrapper.emitted('update:activeColumns')?.at(-1)).toEqual(['wide']);
+    });
+  });
+
+  describe('layout re-measurement', () => {
+    it('measures a layout again once records arrive after it was measured without them', async () => {
+      const wrapper = mountGrid({ records: [] });
+      await settle();
+      // header only: `wide` measures 200px and fits
+      await resizeContainer(wrapper, 300);
+      expect(wrapper.emitted('update:activeColumns')?.at(-1)).toEqual(['wide']);
+
+      await wrapper.setProps({ records });
+      await settle();
+
+      // with records `wide` needs 400px
+      expect(wrapper.emitted('update:activeColumns')?.at(-1)).toEqual(['narrow']);
+    });
+
+    it('measures again when more records become available to sample', async () => {
+      const wrapper = mountGrid({ records: records.slice(0, 2) });
+      await settle();
+      const mounts = shadowGrids.mounts;
+
+      await wrapper.setProps({ records });
+      await settle();
+
+      expect(shadowGrids.mounts).toBeGreaterThan(mounts);
+    });
+
+    it('leaves the measurements alone when the records change without growing the sample', async () => {
+      const wrapper = mountGrid();
+      await settle();
+      const mounts = shadowGrids.mounts;
+
+      await wrapper.setProps({ records: records.map((r) => ({ ...r, name: `${r.name} renamed` })) });
+      await settle();
+
+      expect(shadowGrids.mounts).toBe(mounts);
+    });
+
+    it('exposes reMeasureLayouts() to measure every layout again and re-select the layout', async () => {
+      const wrapper = mountGrid({ activeColumns: 'wide' });
+      await settle();
+      await resizeContainer(wrapper, 500);
+      expect(wrapper.emitted('update:activeColumns')).toBeUndefined();
+
+      shadowGrids.widthScale = 1.5; // `wide` now needs 600px
+      // resolves once the layout has been re-selected, with no resize in between
+      await (wrapper.vm as any).reMeasureLayouts();
+
+      expect(wrapper.emitted('update:activeColumns')?.at(-1)).toEqual(['narrow']);
+    });
+  });
+
+  describe('reMeasureLayouts() while a layout is still being measured', () => {
+    it('measures it from fresh shadows and resolves', async () => {
+      const wrapper = mountGrid({ records: [] });
+      // the initial shadows are mounted, their measurement still queued
+      const remeasured = (wrapper.vm as any).reMeasureLayouts();
+      await settle();
+
+      await expect(remeasured).resolves.toBeUndefined();
     });
   });
 
