@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   columns.
 - Columns sized by their header came out narrower than the header cell by its horizontal padding
   and border, so a header label and its sorting indicator overlapped in a narrow column.
+- A non-sortable column's header reserved room for a sorting indicator it never draws, widening
+  columns sized by their header; `SortingIndicator` now renders nothing when `sortable` is false.
 
 ## [0.6.0] - 2026-10-01
 
