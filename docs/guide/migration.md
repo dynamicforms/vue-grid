@@ -1,5 +1,34 @@
 # Migration guide
 
+## 0.6.x → 0.7.0: vue-forms 3.0
+
+0.7.0 requires `@dynamicforms/vue-forms` 3.0.0 and `@dynamicforms/vuetify-inputs` 0.13.0. Upgrade
+the three together, and work through the
+[vue-forms](https://docs.velis.si/dynamicforms/vue-forms/guide/migration) and
+[vuetify-inputs](https://docs.velis.si/dynamicforms/vuetify-inputs/guide/migration) migration
+guides first.
+
+```bash
+npm install @dynamicforms/vue-forms@^3.0.0 @dynamicforms/vuetify-inputs@^0.13.0 @dynamicforms/vue-grid@^0.7.0
+```
+
+### Render content is imported from vuetify-inputs
+
+vue-forms 3.0 exports no rendering. `RenderableValue`, `SimpleComponentDef` and `MdString`, which a
+renderer function, `preRender`, `postRender` and `setCellRenderer()` return, are imported from
+`@dynamicforms/vuetify-inputs`:
+
+```typescript
+// before
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+
+// after
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
+```
+
+`RenderableValue` takes `(content, classes?)`. It has no `code`, `origin` or `sameAs()`, and
+`getTextType` is `kind`.
+
 ## 0.5.x → 0.6.0: vue-forms 2.0
 
 0.6.0 requires `@dynamicforms/vue-forms` 2.0.2 and `@dynamicforms/vuetify-inputs` 0.12.1. Upgrade

@@ -10,7 +10,7 @@ You want an icon or button inside a cell that runs its own handler — deleting 
 grid also treating the click as a click on the row.
 
 ```typescript
-import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 import { createColumn } from '@dynamicforms/vue-grid';
 
 createColumn('actions', 'Delete', 'plain', {
@@ -115,7 +115,7 @@ row. If you instead want an explicit checkbox that only takes up space while sel
 disappearing as part of the layout rather than as a style change — combine the two recipes above into one column:
 
 ```typescript
-import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 import { createColumn } from '@dynamicforms/vue-grid';
 
 const selectionCol = createColumn('_selection', '', 'plain', {
@@ -183,7 +183,8 @@ built specifically to lay out a group of actions. It takes an `Action` (from `@d
 each holding an icon/label and an `ExecuteAction` that runs on click:
 
 ```typescript
-import { Action, ExecuteAction, RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+import { Action, ExecuteAction } from '@dynamicforms/vue-forms';
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 import { createColumn } from '@dynamicforms/vue-grid';
 
 function actionsFor(row: RowValue): Action[] {

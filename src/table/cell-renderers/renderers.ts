@@ -23,7 +23,7 @@
  *    `int`, `float`, and `decimal` columns (delegates to `floatGridColumnCreate`)
  *  - `gridDestroy(gridId)` — tears down all per-column state for a grid instance
  */
-import { MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+import { MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 
 import { translatableStrings } from '../translations';
 

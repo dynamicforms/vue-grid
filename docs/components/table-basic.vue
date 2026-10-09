@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
-import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 
 import { createColumn, DfGrid, filterColumns, ResponsiveColumnDefinitions, SelectionMode } from '../../src';
 import { generateMusicLibrary, languagesMap } from './data-generator';

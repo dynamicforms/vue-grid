@@ -1,4 +1,4 @@
-import { MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+import { MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 
 import type { ColumnSortState } from '../columns-sorting';
 import { useGridMouseEventsPosition } from '../df-grid-mouse-events';

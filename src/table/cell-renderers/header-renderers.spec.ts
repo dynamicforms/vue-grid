@@ -16,7 +16,7 @@
  * The pointer handlers are delegated to `useGridMouseEventsPosition`, so that module is mocked
  * and the delegation asserted rather than its (separately tested) effect on the drag state.
  */
-import { MdString, RenderableValue } from '@dynamicforms/vue-forms';
+import { MdString, RenderableValue } from '@dynamicforms/vuetify-inputs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ColumnSortState } from '../columns-sorting';
@@ -70,14 +70,14 @@ describe('header renderer', () => {
     it('puts the column label in the content slot', () => {
       const { content } = partsOf(header('Artist', {}, makeOptions()));
 
-      expect(content.getTextType).toBe('string');
+      expect(content.kind).toBe('string');
       expect(content.resolvedText).toBe('Artist');
     });
 
     it('keeps a markdown label markdown', () => {
       const { content } = partsOf(header(new MdString('**Artist**'), {}, makeOptions()));
 
-      expect(content.getTextType).toBe('md');
+      expect(content.kind).toBe('md');
     });
 
     it('names the content slot class, so the label is the part that flexes', () => {

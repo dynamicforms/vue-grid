@@ -31,7 +31,7 @@
  *    are set, the output is a compound `RenderableValue` (PreContentPost) and the
  *    top-level `classes` array contains `'has-pre-post'`.
  */
-import { RenderableValue } from '@dynamicforms/vue-forms';
+import { RenderableValue } from '@dynamicforms/vuetify-inputs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CellOptionsInternal } from './interfaces';

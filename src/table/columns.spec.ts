@@ -29,7 +29,7 @@
  *      - exposed computed refs: `name`, `cssClass`, `columns`, `active`, `builtColumns`,
  *        `activeColumnsDefinition`
  */
-import { RenderableValue } from '@dynamicforms/vue-forms';
+import { RenderableValue } from '@dynamicforms/vuetify-inputs';
 import { vi } from 'vitest';
 import { nextTick, reactive } from 'vue';
 

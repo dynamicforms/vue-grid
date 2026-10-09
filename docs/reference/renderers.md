@@ -50,7 +50,7 @@ A column that specifies no `rendererOptions` at all is given `{ nullHandler: 'nu
 Unlike `transform` — whose return value always ends up wrapped in an HTML string (`componentVHtml`) — `preRender`
 and `postRender` can return a `RenderableValue` wrapping a real Vue component, which is what makes them the only way
 to put an interactive element (an icon with its own click handler, say) inside a cell. `SimpleComponentDef` (from
-`@dynamicforms/vue-forms`) is what both `preRender`/`postRender` and `setCellRenderer()` build:
+`@dynamicforms/vuetify-inputs`) is what both `preRender`/`postRender` and `setCellRenderer()` build:
 
 ```typescript
 interface SimpleComponentDef {
@@ -131,7 +131,7 @@ function setCellRenderer(
 `dataType` must be one of the renderer names listed above; new names cannot be added. The replacement is global — every grid in the application renders with it from that point on. Capture the current implementation with `getCellRenderers()` first if you need to keep it.
 
 ```typescript
-import { RenderableValue } from '@dynamicforms/vue-forms';
+import { RenderableValue } from '@dynamicforms/vuetify-inputs';
 import { setCellRenderer } from '@dynamicforms/vue-grid';
 
 setCellRenderer('plain', (value, rowValue, options) => new RenderableValue({
@@ -145,7 +145,7 @@ The transformer receives:
 - `rowValue` — the full row object
 - `options` — the column's `rendererOptions` object, with internal per-grid/per-column state stamped onto it under symbol keys
 
-The return value must be a `RenderableValue` (from `@dynamicforms/vue-forms`). Its `classes` are combined with the column's `fieldName` and `cssClass` when the cell is built.
+The return value must be a `RenderableValue` (from `@dynamicforms/vuetify-inputs`). Its `classes` are combined with the column's `fieldName` and `cssClass` when the cell is built.
 
 ## `getCellRenderers()`
 

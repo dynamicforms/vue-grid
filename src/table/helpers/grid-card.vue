@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { MessagesWidget } from '@dynamicforms/vue-forms';
+import { MessagesWidget } from '@dynamicforms/vuetify-inputs';
 
 import { FormattedDataProps, useFormattedData } from './use-formatted-data';
 
