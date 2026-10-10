@@ -25,7 +25,7 @@
  */
 import { MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 
-import { translatableStrings } from '../translations';
+import { translate } from '../translations';
 
 import { header, HeaderOptions } from './header-renderers';
 import { CellOptions, CellOptionsInternal, CellRendererTransformer, RowValue } from './interfaces';
@@ -114,7 +114,7 @@ export const DefaultRenderers: RenderersMap = {
     wrapWithPrePost(
       new RenderableValue({
         componentName: 'div',
-        componentVHtml: translatableStrings.NullValue,
+        componentVHtml: translate('NullValue'),
         componentProps: { class: 'df-cell-null' },
       }),
       value,

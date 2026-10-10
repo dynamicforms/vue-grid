@@ -139,13 +139,13 @@
           <div v-if="loading" class="df-summary-loading">
             <slot name="loading">
               <cached-icon name="mdi-loading" class="df-summary-spin" />
-              <span>{{ translatableStrings.Loading }}</span>
+              <span>{{ translate('Loading') }}</span>
             </slot>
           </div>
           <div v-else-if="!props.records.length" class="df-summary-no-data">
             <slot name="no-data">
               <cached-icon name="mdi-database-off" />
-              <span>{{ translatableStrings.NoData }}</span>
+              <span>{{ translate('NoData') }}</span>
             </slot>
           </div>
         </slot>
@@ -246,7 +246,7 @@ import {
 import { computeLayoutTargetWidth } from './helpers/shadow-metrics';
 import IncomingArc from './incoming-arc.vue';
 import { useSelection } from './selection';
-import { translatableStrings } from './translations';
+import { translate } from './translations';
 import { useExcessiveScroll } from './use-excessive-scroll';
 import { useGridWindowing } from './use-grid-windowing';
 

@@ -1,39 +1,61 @@
-import { computed } from 'vue';
+import { interpolate } from '@dynamicforms/translatable';
+import { computed, ref } from 'vue';
 
-import { translatableStrings, translateStrings } from './translations';
+import { translate, translateStrings } from './translations';
+
+const untranslated = (key: string) => key;
+
+function dictionaryFunction(dictionary: Record<string, string>) {
+  return (key: string, named: Record<string, unknown>) =>
+    key in dictionary ? interpolate(dictionary[key], named) : key;
+}
 
 describe('translations', () => {
   afterEach(() => {
-    translateStrings(() => undefined);
+    translateStrings(untranslated);
   });
 
-  it('should start out equal to the English defaults', () => {
-    expect(translatableStrings.NoData).toBe('No data');
-    expect(translatableStrings.Loading).toBe('Loading…');
+  it('should return the English defaults while the translation function has no translation', () => {
+    expect(translate('NoData')).toBe('No data');
+    expect(translate('Loading')).toBe('Loading…');
   });
 
-  it('should replace an entry with what the callback returns for it', () => {
-    const translations: Partial<Record<keyof typeof translatableStrings, string>> = { NoData: 'Ni podatkov' };
-    translateStrings((key) => translations[key]);
-
-    expect(translatableStrings.NoData).toBe('Ni podatkov');
+  it('should substitute params into the English default', () => {
+    expect(translate('ActiveFilters', { count: 3 })).toBe('Active filters: 3');
   });
 
-  it('should update a computed built over the table when translateStrings replaces an entry', () => {
-    const noData = computed(() => translatableStrings.NoData);
-    const translations: Partial<Record<keyof typeof translatableStrings, string>> = { NoData: 'Ni podatkov' };
+  it('should return what the translation function returns for a key, with params substituted', () => {
+    translateStrings(dictionaryFunction({ NoData: 'Ni podatkov', ActiveFilters: 'Aktivni filtri: {count}' }));
 
-    translateStrings((key) => translations[key]);
+    expect(translate('NoData')).toBe('Ni podatkov');
+    expect(translate('ActiveFilters', { count: 2 })).toBe('Aktivni filtri: 2');
+    expect(translate('Loading')).toBe('Loading…');
+  });
+
+  it('should look up a key under the namespace', () => {
+    translateStrings(dictionaryFunction({ 'grid.NoData': 'Ni podatkov' }), 'grid');
+
+    expect(translate('NoData')).toBe('Ni podatkov');
+  });
+
+  it('should update a computed when translateStrings is called again', () => {
+    const noData = computed(() => translate('NoData'));
+    expect(noData.value).toBe('No data');
+
+    translateStrings(dictionaryFunction({ NoData: 'Ni podatkov' }));
 
     expect(noData.value).toBe('Ni podatkov');
   });
 
-  it('should reset a key to its English default on a later call that no longer covers it', () => {
-    const translations: Partial<Record<keyof typeof translatableStrings, string>> = { NoData: 'Ni podatkov' };
-    translateStrings((key) => translations[key]);
-    expect(translatableStrings.NoData).toBe('Ni podatkov');
+  it('should update a computed when reactive state the translation function reads changes', () => {
+    const locale = ref('en');
+    const dictionaries: Record<string, Record<string, string>> = { en: {}, sl: { NoData: 'Ni podatkov' } };
+    translateStrings((key, named) => dictionaryFunction(dictionaries[locale.value])(key, named));
+    const noData = computed(() => translate('NoData'));
+    expect(noData.value).toBe('No data');
 
-    translateStrings(() => undefined);
-    expect(translatableStrings.NoData).toBe('No data');
+    locale.value = 'sl';
+
+    expect(noData.value).toBe('Ni podatkov');
   });
 });

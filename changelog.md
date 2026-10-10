@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`peerDependencies` `^3.0.0` and `^0.13.0`). `RenderableValue`, `SimpleComponentDef`, `MdString` and
   `MessagesWidget`, which cell renderers return and the grid renders with, are imported from
   `@dynamicforms/vuetify-inputs`.
+- **Breaking:** requires `@dynamicforms/translatable` 0.3 (`peerDependencies` `^0.3.0`). `translateStrings(t,
+  namespace?)` takes the application's translation function, shaped like vue-i18n's `t`, in place of a callback
+  returning templates; the translation function substitutes the placeholders. `translatableStrings` is removed;
+  `translate(key, params?)` returns the current text of a key.
 
 ## [0.6.2] - 2026-10-02
 
