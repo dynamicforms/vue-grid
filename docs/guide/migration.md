@@ -9,7 +9,7 @@
 guides first.
 
 ```bash
-npm install @dynamicforms/vue-forms@^3.0.0 @dynamicforms/vuetify-inputs@^0.13.0 @dynamicforms/translatable@^0.3.0 \
+npm install @dynamicforms/vue-forms@^3.0.0-alpha.1 @dynamicforms/vuetify-inputs@^0.13.0 @dynamicforms/translatable@^0.3.0 \
   @dynamicforms/vue-grid@^0.7.0
 ```
 
