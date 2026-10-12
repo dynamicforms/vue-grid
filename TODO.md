@@ -85,3 +85,21 @@ These are the things standing between the current state and that promise.
 The two auto-sizing fixes (the shadow grid's containing block, and reserving the measured scrollbar
 width in the header instead of a declared gutter) mean the layout foundation was wrong in real
 conditions until now. Give them time in real use before freezing the API around them.
+
+---
+
+## **Security: cell content and a penetration test**
+
+The built-in cell renderers build HTML strings from the cell value and render them as an `HtmlString`, without
+escaping:
+
+- `plain`, `int`, `float`, `decimal`, `date`, `time`, `datetime`: the formatted value is HTML, so a value holding
+  markup is rendered as markup.
+- `link` and `email`: the value is the `href` and the text of an `<a>`; a `javascript:` URL is not refused.
+- `color`: the value is written into a `style` attribute.
+- `file`: the value is written into an inline `onclick` script.
+- `transform`, `preRender` and `postRender` return strings that are rendered as HTML.
+
+A value from the server or from a user is rendered as text, an attribute is set as a prop, and a URL takes only an
+allowed scheme. A separate PR changes the renderers, followed by a penetration test of the grid and of the
+`@dynamicforms/vuetify-inputs` render content it uses (`HtmlString`, `SimpleComponentDef`, markdown options).
