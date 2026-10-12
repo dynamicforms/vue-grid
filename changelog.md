@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   namespace?)` takes the application's translation function, shaped like vue-i18n's `t`, in place of a callback
   returning templates; the translation function substitutes the placeholders. `translatableStrings` is removed;
   `translate(key, params?)` returns the current text of a key.
+- **Breaking:** a renderer passed to `setCellRenderer()` returns HTML as an `HtmlString` from
+  `@dynamicforms/vuetify-inputs`; `SimpleComponentDef` has no `componentVHtml`. The built-in renderers render the same
+  HTML as before.
 
 ## [0.6.2] - 2026-10-02
 

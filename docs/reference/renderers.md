@@ -47,18 +47,20 @@ A column that specifies no `rendererOptions` at all is given `{ nullHandler: 'nu
 
 ### Interactive content via preRender/postRender
 
-Unlike `transform` — whose return value always ends up wrapped in an HTML string (`componentVHtml`) — `preRender`
+Unlike `transform` — whose return value is rendered as HTML (an `HtmlString`) — `preRender`
 and `postRender` can return a `RenderableValue` wrapping a real Vue component, which is what makes them the only way
 to put an interactive element (an icon with its own click handler, say) inside a cell. `SimpleComponentDef` (from
 `@dynamicforms/vuetify-inputs`) is what both `preRender`/`postRender` and `setCellRenderer()` build:
 
 ```typescript
 interface SimpleComponentDef {
-  componentName: string;              // name of a globally registered component, or a native tag like 'div'
-  componentProps?: Record<any, any>;  // props/attrs/event handlers passed to the component
-  componentVHtml?: string;            // raw HTML rendered via v-html; mutually exclusive in practice with componentProps' children
+  componentName: string; // name of a globally registered component, or a native tag like 'div'
+  componentProps?: Record<string, unknown> & { innerHTML?: never }; // props, attrs and event handlers
 }
 ```
+
+HTML content is an `HtmlString` from `@dynamicforms/vuetify-inputs`, rendered as the inner HTML of a `div` and not
+sanitized.
 
 `componentName` is resolved as a **globally registered** component name — a component only imported locally in your
 `<script setup>` will not resolve.
@@ -134,10 +136,7 @@ function setCellRenderer(
 import { RenderableValue } from '@dynamicforms/vuetify-inputs';
 import { setCellRenderer } from '@dynamicforms/vue-grid';
 
-setCellRenderer('plain', (value, rowValue, options) => new RenderableValue({
-  componentName: 'div',
-  componentVHtml: value ?? '—',
-}));
+setCellRenderer('plain', (value, rowValue, options) => new RenderableValue(value ?? '—'));
 ```
 
 The transformer receives:
