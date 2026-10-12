@@ -3,20 +3,21 @@ import { color, checkbox, link, email, ip4, ip6, ip, date, DateTimeOptions } fro
 
 describe('simple-renderers.ts', () => {
   describe('color renderer', () => {
+    const swatch = (backgroundColor: string) => ({
+      componentName: 'div',
+      componentProps: { class: 'df-cell-color', style: { backgroundColor } },
+    });
+
     it('should render color div with background style', () => {
-      const result = color('#ff0000');
-      expect(result).toBe('<div class="df-cell-color" style="background-color: #ff0000;"/>');
+      expect(color('#ff0000')).toEqual(swatch('#ff0000'));
     });
 
     it('should handle string color values', () => {
-      const result = color('blue');
-      expect(result).toBe('<div class="df-cell-color" style="background-color: blue;"/>');
+      expect(color('blue')).toEqual(swatch('blue'));
     });
 
     it('should handle any value type', () => {
-      const result = color(123);
-      // noinspection CssInvalidPropertyValue
-      expect(result).toBe('<div class="df-cell-color" style="background-color: 123;"/>');
+      expect(color(123)).toEqual(swatch('123'));
     });
   });
 
@@ -43,52 +44,64 @@ describe('simple-renderers.ts', () => {
     });
   });
 
+  const a = (href: string, textContent: string) => ({ componentName: 'a', componentProps: { href, textContent } });
+
   describe('link renderer', () => {
     it('should render basic URL as link', () => {
-      const result = link('https://example.com');
-      expect(result).toBe('<a href="https://example.com">https://example.com</a>');
+      expect(link('https://example.com')).toEqual(a('https://example.com', 'https://example.com'));
     });
 
     it('should handle any value type', () => {
-      const result = link(123);
-      expect(result).toBe('<a href="123">123</a>');
+      expect(link(123)).toEqual(a('123', '123'));
     });
 
     it('should handle empty values', () => {
-      const result = link('');
-      expect(result).toBe('<a href=""></a>');
+      expect(link('')).toEqual(a('', ''));
     });
+
+    it.each(['javascript:alert(1)', ' JavaScript:alert(1)', 'java\tscript:alert(1)', 'data:text/html,<script>'])(
+      'renders %j as text, without a link',
+      (url) => {
+        expect(link(url)).toBe(url);
+      },
+    );
   });
 
   describe('email renderer', () => {
     it('should render simple email address', () => {
-      const result = email('test@example.com');
-      expect(result).toBe('<a href="mailto:test@example.com">test</a>');
+      expect(email('test@example.com')).toEqual(a('mailto:test@example.com', 'test'));
     });
 
     it('should handle email with name format', () => {
-      const result = email('John Doe <john@example.com>');
-      expect(result).toBe('<a href="mailto:John Doe <john@example.com>">John Doe</a>');
+      expect(email('John Doe <john@example.com>')).toEqual(a('mailto:John Doe <john@example.com>', 'John Doe'));
     });
 
     it('should handle email with spaces in name', () => {
-      const result = email('  John Smith  <john@example.com>');
-      expect(result).toBe('<a href="mailto:  John Smith  <john@example.com>">John Smith</a>');
+      expect(email('  John Smith  <john@example.com>')).toEqual(
+        a('mailto:  John Smith  <john@example.com>', 'John Smith'),
+      );
     });
 
     it('should handle plain email without name', () => {
-      const result = email('simple@test.com');
-      expect(result).toBe('<a href="mailto:simple@test.com">simple</a>');
+      expect(email('simple@test.com')).toEqual(a('mailto:simple@test.com', 'simple'));
     });
 
     it('should handle invalid email format', () => {
-      const result = email('not-an-email');
-      expect(result).toBe('<a href="mailto:not-an-email">not-an-email</a>');
+      expect(email('not-an-email')).toEqual(a('mailto:not-an-email', 'not-an-email'));
     });
 
     it('should handle numeric input', () => {
-      const result = email(123);
-      expect(result).toBe('<a href="mailto:123">123</a>');
+      expect(email(123)).toEqual(a('mailto:123', '123'));
+    });
+  });
+
+  describe('markup in a value', () => {
+    it.each([
+      ['ip4', ip4],
+      ['ip6', ip6],
+      ['ip', ip],
+    ])('%s escapes it', (_, render) => {
+      expect(render('<img src=x onerror=alert(1)>')).not.toContain('<img');
     });
   });
 

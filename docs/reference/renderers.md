@@ -6,7 +6,7 @@ Every column has a `renderer` that determines how its value is displayed. Render
 
 | Renderer | Input type | Description |
 |----------|------------|-------------|
-| `plain` | any | Renders the value inside a `div` as HTML, so markup in the value is interpreted. |
+| `plain` | any | Renders the value inside a `div` as text. |
 | `int` | number | Integer. Supports locale-aware formatting. |
 | `float` | number | Floating-point number, formatted with `Intl.NumberFormat`. Fraction digits are controlled through `locale.localeOptions`. |
 | `decimal` | number | Identical to `float`: same formatting, same options. |
@@ -15,10 +15,10 @@ Every column has a `renderer` that determines how its value is displayed. Render
 | `datetime` | string \| Date | Formats a date+time value. |
 | `checkbox` | boolean | Renders a checked/unchecked indicator. |
 | `md` | string | Renders Markdown content. |
-| `color` | string | Renders a colour swatch. |
-| `link` | string | Renders a hyperlink. |
+| `color` | string | Renders a colour swatch: the value is the swatch's `background-color`. |
+| `link` | string | Renders a hyperlink with the value as its text. A URL whose scheme is not `http`, `https`, `mailto` or `tel` renders as text. |
 | `email` | string | Renders a `mailto:` link. |
-| `file` | string | Renders a file download link. |
+| `file` | string | Renders a link to the file, opened in a new tab, with the file name as its text. A click on it does not reach the row. A URL whose scheme is not `http`, `https`, `mailto` or `tel` renders as text. |
 | `ip4` | string | IPv4 address. |
 | `ip6` | string | IPv6 address. |
 | `ip` | string | Auto-detects IPv4 or IPv6. |
@@ -41,13 +41,19 @@ interface CellOptions {
 
 The `transform` function receives the raw cell value and the full row object, and returns the value that will actually be rendered.
 
+A value from the record is rendered as text: the built-in renderers escape it where they build HTML (`int`, `float`,
+`decimal`, `ip4`, `ip6`, `ip`), and set it as a prop where they render an element (`link`, `email`, `file`, `color`).
+A string returned by `transform`, `preRender` or `postRender` is text as well. HTML is returned as a
+`RenderableValue` of an `HtmlString` from `@dynamicforms/vuetify-inputs`, which is rendered as it is: the application
+escapes or sanitizes whatever it puts into it from a record.
+
 A column that specifies no `rendererOptions` at all is given `{ nullHandler: 'null-null' }`, so its `null` and `undefined` cells are rendered by `null-null`. As soon as you supply a `rendererOptions` object, that default is gone: without a `nullHandler` key the column's own renderer receives the `null`. The choice is made on the raw record value, before `transform` runs.
 
 `preRender` and `postRender` allow injecting additional content to the left or right of the main cell value. When either is set, the cell switches to a flex layout with three zones: `pre`, `content`, and `post`. Such cells carry the extra CSS class `has-pre-post`, which is what the flex layout is attached to. `has-pre-post` is applied whenever the column has `preRender`/`postRender` configured, regardless of what an individual row's callback returns.
 
 ### Interactive content via preRender/postRender
 
-Unlike `transform` — whose return value is rendered as HTML (an `HtmlString`) — `preRender`
+Unlike `transform` — whose return value is rendered as text by the column's renderer — `preRender`
 and `postRender` can return a `RenderableValue` wrapping a real Vue component, which is what makes them the only way
 to put an interactive element (an icon with its own click handler, say) inside a cell. `SimpleComponentDef` (from
 `@dynamicforms/vuetify-inputs`) is what both `preRender`/`postRender` and `setCellRenderer()` build:

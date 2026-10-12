@@ -23,25 +23,35 @@
  *    `int`, `float`, and `decimal` columns (delegates to `floatGridColumnCreate`)
  *  - `gridDestroy(gridId)` — tears down all per-column state for a grid instance
  */
-import { HtmlString, MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
+import {
+  HtmlString,
+  MdString,
+  type RenderContentNonCallable,
+  RenderableValue,
+  SimpleComponentDef,
+} from '@dynamicforms/vuetify-inputs';
 
 import { translate } from '../translations';
 
 import { header, HeaderOptions } from './header-renderers';
 import { CellOptions, CellOptionsInternal, CellRendererTransformer, RowValue } from './interfaces';
 import { float, floatGridColumnCreate, floatGridDestroy, int, IntOptions } from './numbers';
-import { checkbox, color, date, DateTimeOptions, email, ip, ip4, ip6, link } from './simple-renderers';
+import { anchor, checkbox, color, date, DateTimeOptions, email, ip, ip4, ip6, link } from './simple-renderers';
 
-const s = (vHtml: string): HtmlString => new HtmlString(vHtml);
+// HTML a renderer built with every value from the record escaped
+const html = (value: string): RenderableValue => new RenderableValue(new HtmlString(value));
 
-const rv = (value: string): RenderableValue => new RenderableValue(s(value));
+// text, an element or a component: Vue escapes what it puts into the page
+const content = (value: RenderContentNonCallable): RenderableValue => new RenderableValue(value);
+
+const text = (value: unknown): RenderableValue => new RenderableValue(String(value ?? ''));
 
 const t = (value: any, rowValue: RowValue, options: CellOptions) =>
   options?.transform ? options.transform(value, rowValue) : value;
 
 const toRv = (val: RenderableValue | string | null): RenderableValue | null => {
   if (val == null) return null;
-  if (typeof val === 'string') return new RenderableValue(s(val));
+  if (typeof val === 'string') return text(val);
   return val;
 };
 
@@ -66,17 +76,12 @@ export const wrapWithPrePost = (
   return result;
 };
 
-const file = (value: any): HtmlString | string => {
-  if (value) {
-    const func = `(function(e) { 
-        e.preventDefault(); 
-        e.stopPropagation(); 
-        window.open('${value.replace(/\/$/, '')}', '_blank');
-      })`.replace(/\s+/g, ' '); // replace to remove excessive whitespace and newlines
-    const fileName = value.replace(/^.*[\\/]/, '');
-    return s(`<a href="javascript:void(0)" onclick="${func}(event)">${fileName}</a>`);
-  }
-  return '';
+const file = (value: any): RenderContentNonCallable => {
+  if (!value) return '';
+  const url = String(value).replace(/\/$/, '');
+  const fileName = url.replace(/^.*[\\/]/, '');
+  // a click opens the file and does not reach the row
+  return anchor(url, fileName, { target: '_blank', rel: 'noopener', onClick: (e: Event) => e.stopPropagation() });
 };
 
 export interface RendererOptionsMap {
@@ -108,46 +113,41 @@ export type RenderersMap = {
 export const DefaultRenderers: RenderersMap = {
   'null-empty': (value, rowValue, options) => wrapWithPrePost(new RenderableValue(''), value, rowValue, options),
   'null-null': (value, rowValue, options) =>
-    wrapWithPrePost(
-      new RenderableValue(new HtmlString(translate('NullValue')), 'df-cell-null'),
-      value,
-      rowValue,
-      options,
-    ),
+    wrapWithPrePost(new RenderableValue(translate('NullValue'), 'df-cell-null'), value, rowValue, options),
   plain: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(rv(t(value, rowValue, options)), value, rowValue, options),
+    wrapWithPrePost(text(t(value, rowValue, options)), value, rowValue, options),
   header: (value: any, rowValue: RowValue, options: CellOptionsInternal<HeaderOptions>) =>
     wrapWithPrePost(header(value, rowValue, options), value, rowValue, options),
   md: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
     wrapWithPrePost(new RenderableValue(new MdString(t(value, rowValue, options))), value, rowValue, options),
   color: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(rv(color(t(value, rowValue, options))), value, rowValue, options),
+    wrapWithPrePost(content(color(t(value, rowValue, options))), value, rowValue, options),
   checkbox: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(rv(checkbox(t(value, rowValue, options))), value, rowValue, options),
+    wrapWithPrePost(html(checkbox(t(value, rowValue, options))), value, rowValue, options),
   link: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(rv(link(t(value, rowValue, options))), value, rowValue, options),
+    wrapWithPrePost(content(link(t(value, rowValue, options))), value, rowValue, options),
   email: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(rv(email(t(value, rowValue, options))), value, rowValue, options),
+    wrapWithPrePost(content(email(t(value, rowValue, options))), value, rowValue, options),
   file: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(new RenderableValue(file(t(value, rowValue, options))), value, rowValue, options),
+    wrapWithPrePost(content(file(t(value, rowValue, options))), value, rowValue, options),
   ip4: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(rv(ip4(t(value, rowValue, options))), value, rowValue, options),
+    wrapWithPrePost(html(ip4(t(value, rowValue, options))), value, rowValue, options),
   ip6: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(rv(ip6(t(value, rowValue, options))), value, rowValue, options),
+    wrapWithPrePost(html(ip6(t(value, rowValue, options))), value, rowValue, options),
   ip: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(rv(ip(t(value, rowValue, options))), value, rowValue, options),
+    wrapWithPrePost(html(ip(t(value, rowValue, options))), value, rowValue, options),
   date: (value: any, rowValue: RowValue, options: CellOptionsInternal<DateTimeOptions>) =>
-    wrapWithPrePost(rv(date(t(value, rowValue, options), 'P', options)), value, rowValue, options),
+    wrapWithPrePost(text(date(t(value, rowValue, options), 'P', options)), value, rowValue, options),
   time: (value: any, rowValue: RowValue, options: CellOptionsInternal<DateTimeOptions>) =>
-    wrapWithPrePost(rv(date(t(value, rowValue, options), 'p', options)), value, rowValue, options),
+    wrapWithPrePost(text(date(t(value, rowValue, options), 'p', options)), value, rowValue, options),
   datetime: (value: any, rowValue: RowValue, options: CellOptionsInternal<DateTimeOptions>) =>
-    wrapWithPrePost(rv(date(t(value, rowValue, options), 'P p', options)), value, rowValue, options),
+    wrapWithPrePost(text(date(t(value, rowValue, options), 'P p', options)), value, rowValue, options),
   int: (value: any, rowValue: RowValue, options: CellOptionsInternal<IntOptions>) =>
-    wrapWithPrePost(rv(int(t(value, rowValue, options), options)), value, rowValue, options),
+    wrapWithPrePost(html(int(t(value, rowValue, options), options)), value, rowValue, options),
   float: (value: any, rowValue: RowValue, options: CellOptionsInternal<IntOptions>) =>
-    wrapWithPrePost(rv(float(t(value, rowValue, options), options)), value, rowValue, options),
+    wrapWithPrePost(html(float(t(value, rowValue, options), options)), value, rowValue, options),
   decimal: (value: any, rowValue: RowValue, options: CellOptionsInternal<IntOptions>) =>
-    wrapWithPrePost(rv(float(t(value, rowValue, options), options)), value, rowValue, options),
+    wrapWithPrePost(html(float(t(value, rowValue, options), options)), value, rowValue, options),
 };
 
 export const setCellRenderer = (dataType: keyof RendererOptionsMap, transform: CellRendererTransformer) => {

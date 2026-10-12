@@ -9,6 +9,8 @@
 </template>
 
 <script setup lang="ts">
+import { RenderableValue } from '@dynamicforms/vuetify-inputs';
+
 import { createColumn } from '../../src';
 
 // Sample employee dataset — deliberately includes nulls to show null handling
@@ -35,14 +37,36 @@ const records = [
   { id: 20, name: 'Tina Allen',      dept: 'Engineering', salary: 91000,  score: 0.905, joined: '2015-10-19', active: true  },
 ];
 
+// a string from preRender or postRender is text: markup is given as an element with its props
+const dot = {
+  display: 'inline-block',
+  width: '8px',
+  height: '8px',
+  borderRadius: '50%',
+  marginRight: '6px',
+  flexShrink: 0,
+};
+const bar = {
+  display: 'inline-block',
+  maxWidth: '60px',
+  height: '6px',
+  background: '#4caf50',
+  borderRadius: '3px',
+  marginLeft: '6px',
+  opacity: 0.7,
+};
+
 const columns = [
   // preRender: inject content to the LEFT of the cell value.
   // Here we show a coloured dot indicating the employee's active status.
   createColumn('name', 'Name', 'plain', {
     rendererOptions: {
       preRender: (_value, row) => {
-        const color = row.active ? 'green' : '#aaa';
-        return `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:6px;flex-shrink:0"></span>`;
+        const background = row.active ? 'green' : '#aaa';
+        return new RenderableValue({
+          componentName: 'span',
+          componentProps: { style: { ...dot, background } },
+        });
       },
     },
   }),
@@ -68,8 +92,10 @@ const columns = [
       transform: (value) => (value == null ? null : `${(value * 100).toFixed(1)} %`),
       postRender: (value) => {
         if (value == null) return null;
-        const pct = (value * 100).toFixed(0);
-        return `<span style="display:inline-block;width:${pct}px;max-width:60px;height:6px;background:#4caf50;border-radius:3px;margin-left:6px;opacity:0.7"></span>`;
+        return new RenderableValue({
+          componentName: 'span',
+          componentProps: { style: { ...bar, width: `${(value * 100).toFixed(0)}px` } },
+        });
       },
     },
   }),
