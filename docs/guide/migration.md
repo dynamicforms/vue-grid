@@ -30,6 +30,25 @@ import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-input
 `RenderableValue` takes `(content, classes?)`. It has no `code`, `origin` or `sameAs()`, and
 `getTextType` is `kind`.
 
+### A value is rendered as text
+
+A cell value, and a string returned by `transform`, `preRender` or `postRender`, is rendered as text: markup in it is
+shown as written. `link` and `file` render a URL whose scheme is not `http`, `https`, `mailto` or `tel` as text, and
+`file` renders a link with `target="_blank"` in place of an inline `onclick` script. HTML is returned as an
+`HtmlString`; an element with props or handlers as a `SimpleComponentDef`:
+
+```typescript
+// before
+preRender: (_value, row) => `<span class="dot" style="background:${row.colour}"></span>`,
+
+// after
+preRender: (_value, row) =>
+  new RenderableValue({ componentName: 'span', componentProps: { class: 'dot', style: { background: row.colour } } }),
+```
+
+A renderer passed to `setCellRenderer()` returns HTML as an `HtmlString`; `SimpleComponentDef` has no
+`componentVHtml`.
+
 ### `translateStrings` takes the translation function
 
 `translateStrings` takes the application's translation function, shaped like vue-i18n's `t`, and the namespace

@@ -76,8 +76,8 @@ way a built-in renderer wraps its own output.
 
 This is the same `CellRendererTransformer` type `setCellRenderer()` uses to replace a *named* renderer application-wide
 (see [Cell Renderers](./renderers#custom-renderers)); passing one directly as `renderer` instead scopes it to a
-single column. `transform` can only ever produce an HTML string, never a component with its own event handlers, so
-it cannot express a cell whose whole content is interactive — this is why the option exists. See
+single column. `transform` produces the value the column's renderer formats, never a component with its own event
+handlers, so it cannot express a cell whose whole content is interactive — this is why the option exists. See
 [A column that isn't tied to a single field](/guide/cookbook#a-column-that-isn-t-tied-to-a-single-field) in the
 Cookbook for a worked example.
 

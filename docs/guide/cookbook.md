@@ -43,9 +43,8 @@ true` (see [Getting Started](./getting-started#installation)).
 mode is active, toggles the row's selection instead of (or in addition to) running your handler.
 :::
 
-Reaching for a raw HTML string with a `data-action` attribute and delegating clicks yourself from `@click` on
-`<df-grid>` works around the same problem the hard way — the grid already gives every `pre`/`post` slot a real
-component with its own event handlers. See [Interactive content via preRender/postRender](/reference/renderers#interactive-content-via-prerender-postrender)
+A string returned by `preRender`/`postRender` is text; an element with its own event handlers is a
+`SimpleComponentDef`. See [Interactive content via preRender/postRender](/reference/renderers#interactive-content-via-prerender-postrender)
 for the `SimpleComponentDef` shape and the full `stopPropagation()` rule.
 
 ## A cell that's empty unless a condition holds

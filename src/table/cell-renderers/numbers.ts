@@ -2,6 +2,7 @@ import { isNumber, isPlainObject } from 'lodash-es';
 
 import { CellOptions, CellOptionsInternal } from './interfaces';
 import { columnIdOption } from './internal-exports';
+import { escapeHtml } from './safe-content';
 
 export interface LocaleWithOptions {
   locale?: string;
@@ -87,7 +88,7 @@ export const float = (value: number | string, options: CellOptionsInternal<IntOp
     options.redrawColumn();
   }
 
-  return v
+  return escapeHtml(v)
     .replace(/^(0+)(?=\d)/, (match: any) => `<span style="opacity: .5">${match}</span>`)
     .replace(/\D\d*?(0+)$/, (match, zeros) => match.replace(zeros, `<span style="opacity: .5">${zeros}</span>`));
 };

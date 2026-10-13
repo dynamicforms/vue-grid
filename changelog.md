@@ -18,8 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   returning templates; the translation function substitutes the placeholders. `translatableStrings` is removed;
   `translate(key, params?)` returns the current text of a key.
 - **Breaking:** a renderer passed to `setCellRenderer()` returns HTML as an `HtmlString` from
-  `@dynamicforms/vuetify-inputs`; `SimpleComponentDef` has no `componentVHtml`. The built-in renderers render the same
-  HTML as before.
+  `@dynamicforms/vuetify-inputs`; `SimpleComponentDef` has no `componentVHtml`.
+- **Breaking:** a cell value, and a string returned by `transform`, `preRender` or `postRender`, is rendered as text.
+  `int`, `float`, `decimal`, `ip4`, `ip6` and `ip` escape the value in the HTML they build; `link`, `email`, `file` and
+  `color` render an element with the value as a prop. `link`, `email` and `file` render a URL whose scheme is not
+  `http`, `https`, `mailto` or `tel` as text. `file` opens the file with `target="_blank"` and stops the click in a
+  handler, without an inline script. HTML is returned as an `HtmlString`.
 
 ## [0.6.2] - 2026-10-02
 
