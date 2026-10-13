@@ -95,9 +95,14 @@ export function useGridWindowing(options: GridWindowingOptions) {
     end.value = Math.min(records.length, lastVisible + 1 + options.buffer);
   }
 
+  /**
+   * `start`/`end` follow `records` only after `recompute()`, which runs after render, so a render
+   * over a shortened `records` sees a range past its end. The sum stops at `records.length`.
+   */
   function sumHeights(records: RowValue[], from: number, to: number): number {
     let sum = 0;
-    for (let i = from; i < to; i++) sum += heightOf(records[i][options.keyField]);
+    const stop = Math.min(to, records.length);
+    for (let i = from; i < stop; i++) sum += heightOf(records[i][options.keyField]);
     return sum;
   }
 
