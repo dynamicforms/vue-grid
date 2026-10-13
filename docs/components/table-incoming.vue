@@ -1,10 +1,10 @@
 <template>
-  <div ref="demoRef" class="my-demo-app" style="display: flex; flex-direction: column; gap: 8px;">
-    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-      <v-btn color="primary"   @click="addRecords('end')">Add at bottom</v-btn>
+  <div ref="demoRef" class="my-demo-app" style="display: flex; flex-direction: column; gap: 8px">
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap">
+      <v-btn color="primary" @click="addRecords('end')">Add at bottom</v-btn>
       <v-btn color="secondary" @click="addRecords('start')">Add at top</v-btn>
-      <v-btn color="success"   @click="addRecords('random')">Add random</v-btn>
-      <v-btn color="error"     @click="addRecords('visible')">Add in visible range</v-btn>
+      <v-btn color="success" @click="addRecords('random')">Add random</v-btn>
+      <v-btn color="error" @click="addRecords('visible')">Add in visible range</v-btn>
       <v-btn :color="autoActive ? 'warning' : 'info'" @click="toggleAuto">
         {{ autoActive ? 'Pause auto-add' : 'Start auto-add' }}
       </v-btn>
@@ -25,6 +25,7 @@
 import { onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { createColumn, DfGrid, useRecentlyAdded } from '../../src';
+
 import { generateMusicLibrary } from './data-generator';
 
 const demoRef = ref<HTMLElement | null>(null);
@@ -69,11 +70,14 @@ let autoTimer: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleNext() {
   if (!autoActive.value) return;
-  autoTimer = setTimeout(() => {
-    const positions = ['start', 'end', 'end', 'end', 'random'] as const;
-    addRecords(positions[Math.floor(Math.random() * positions.length)]);
-    scheduleNext();
-  }, 1200 + Math.random() * 800);
+  autoTimer = setTimeout(
+    () => {
+      const positions = ['start', 'end', 'end', 'end', 'random'] as const;
+      addRecords(positions[Math.floor(Math.random() * positions.length)]);
+      scheduleNext();
+    },
+    1200 + Math.random() * 800,
+  );
 }
 
 function toggleAuto() {
@@ -81,11 +85,16 @@ function toggleAuto() {
   if (autoActive.value) {
     scheduleNext();
   } else {
-    if (autoTimer !== null) { clearTimeout(autoTimer); autoTimer = null; }
+    if (autoTimer !== null) {
+      clearTimeout(autoTimer);
+      autoTimer = null;
+    }
   }
 }
 
-onUnmounted(() => { if (autoTimer !== null) clearTimeout(autoTimer); });
+onUnmounted(() => {
+  if (autoTimer !== null) clearTimeout(autoTimer);
+});
 
 // Pre-scroll so the user can immediately see the arc on first click without
 // having to manually scroll — the arc only fires when new records are outside
@@ -102,11 +111,11 @@ const columns = [
     cssClass: 'incoming-card',
     rows: 2,
     columns: [
-      createColumn('id',     'Id',     'int',   { cssClass: 'text-right' }),
-      createColumn('title',  'Title',  'plain'),
+      createColumn('id', 'Id', 'int', { cssClass: 'text-right' }),
+      createColumn('title', 'Title', 'plain'),
       createColumn('artist', 'Artist', 'plain'),
-      createColumn('year',   'Year',   'int',   { cssClass: 'text-right' }),
-      createColumn('rating', 'Rating', 'int',   { cssClass: 'text-right' }),
+      createColumn('year', 'Year', 'int', { cssClass: 'text-right' }),
+      createColumn('rating', 'Rating', 'int', { cssClass: 'text-right' }),
     ],
   },
 ];
@@ -116,19 +125,30 @@ const columns = [
 /* scaleY reveal + brightness wink. filter:brightness() is GPU-compositable and animates
    smoothly regardless of what else is going on in the row's own layout. */
 @keyframes df-row-scale-in {
-  from { transform: scaleY(0); opacity: 0.3; }
-  to   { transform: scaleY(1); opacity: 1;   }
+  from {
+    transform: scaleY(0);
+    opacity: 0.3;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 @keyframes df-row-wink {
-  0%, 100% { filter: brightness(1);   }
-  50%      { filter: brightness(2.2); }
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(2.2);
+  }
 }
 
 .incoming-demo-grid .df-grid.card.state-adding {
   transform-origin: center center;
   animation:
     df-row-scale-in 0.25s ease-out,
-    df-row-wink     0.4s  0.25s ease-in-out both;
+    df-row-wink 0.4s 0.25s ease-in-out both;
 }
 
 /* ---------- 2-row card layout -------------------------------------------- */
@@ -154,15 +174,38 @@ const columns = [
 /* Placement is relative to each record via --row-base (see use-row-placement.ts): with every
    record's cells sharing one grid, an absolute `grid-row: 1` would put every record's first-row
    cell on the SAME physical row instead of each record getting its own 2-row band. */
-.incoming-demo-grid .df-grid.cell.title  { grid-column: 1 / 3; grid-row: calc(var(--row-base) + 1); }
-.incoming-demo-grid .df-grid.cell.artist { grid-column: 3 / 5; grid-row: calc(var(--row-base) + 1); }
+.incoming-demo-grid .df-grid.cell.title {
+  grid-column: 1 / 3;
+  grid-row: calc(var(--row-base) + 1);
+}
+.incoming-demo-grid .df-grid.cell.artist {
+  grid-column: 3 / 5;
+  grid-row: calc(var(--row-base) + 1);
+}
 
-.incoming-demo-grid .df-grid.cell.id     { grid-column: 1; grid-row: calc(var(--row-base) + 2); font-size: 0.75em; opacity: 0.6; }
-.incoming-demo-grid .df-grid.cell.year   { grid-column: 2; grid-row: calc(var(--row-base) + 2); }
-.incoming-demo-grid .df-grid.cell.rating { grid-column: 4; grid-row: calc(var(--row-base) + 2); }
+.incoming-demo-grid .df-grid.cell.id {
+  grid-column: 1;
+  grid-row: calc(var(--row-base) + 2);
+  font-size: 0.75em;
+  opacity: 0.6;
+}
+.incoming-demo-grid .df-grid.cell.year {
+  grid-column: 2;
+  grid-row: calc(var(--row-base) + 2);
+}
+.incoming-demo-grid .df-grid.cell.rating {
+  grid-column: 4;
+  grid-row: calc(var(--row-base) + 2);
+}
 
 /* Zebra & header */
-.incoming-demo-grid .df-grid.card.even { background-color: #b0b0b020; }
-.incoming-demo-grid .df-grid.card.odd  { background-color: #60606020; }
-.incoming-demo-grid .df-grid.header { font-weight: bold; }
+.incoming-demo-grid .df-grid.card.even {
+  background-color: #b0b0b020;
+}
+.incoming-demo-grid .df-grid.card.odd {
+  background-color: #60606020;
+}
+.incoming-demo-grid .df-grid.header {
+  font-weight: bold;
+}
 </style>
