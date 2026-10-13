@@ -181,6 +181,29 @@ describe('useGridWindowing', () => {
     expect(w.end.value).toBe(10);
   });
 
+  it('sums spacer heights only over existing records when records shrink before recompute()', () => {
+    const records = ref(makeRecords(100));
+    const el = ref(makeEl(1500, 300));
+    const w = useGridWindowing({
+      records: computed(() => records.value),
+      keyField: 'id',
+      estimatedRowHeight: computed(() => 30),
+      bodyEl: el,
+      buffer: 0,
+    });
+
+    w.recompute();
+    expect(w.start.value).toBe(50);
+
+    records.value = makeRecords(20);
+    expect(w.topSpacerHeight.value).toBe(20 * 30);
+    expect(w.bottomSpacerHeight.value).toBe(0);
+
+    records.value = [];
+    expect(w.topSpacerHeight.value).toBe(0);
+    expect(w.totalHeight.value).toBe(0);
+  });
+
   it('does not re-record an unchanged or invalid measurement', () => {
     const records = ref(makeRecords(3));
     const el = ref(makeEl(0, 400));
