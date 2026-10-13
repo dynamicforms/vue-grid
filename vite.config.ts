@@ -69,8 +69,6 @@ export default defineConfig({
         'src/table/index.ts',
         'src/table/helpers/index.ts',
         'src/table/cell-renderers/index.ts',
-        // the test environment's setup, not library code
-        'src/test-setup.ts',
       ],
     },
     server: {
@@ -80,6 +78,6 @@ export default defineConfig({
     },
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['src/test-setup.ts'],
+    setupFiles: ['vitest.setup.ts'],
   },
 });
