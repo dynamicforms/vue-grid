@@ -2,14 +2,14 @@
 
 ## 0.6.x → 0.7.0: vue-forms 3.0
 
-0.7.0 requires `@dynamicforms/vue-forms` 3.0.0, `@dynamicforms/vuetify-inputs` 0.13.0 and
+0.7.0 requires `@dynamicforms/vue-forms` 3.0.0, `@dynamicforms/vuetify-inputs` 0.14.1 and
 `@dynamicforms/translatable` 0.3.0. Upgrade the four together, and work through the
 [vue-forms](https://docs.velis.si/dynamicforms/vue-forms/guide/migration) and
 [vuetify-inputs](https://docs.velis.si/dynamicforms/vuetify-inputs/guide/migration) migration
 guides first.
 
 ```bash
-npm install @dynamicforms/vue-forms@^3.0.0-alpha.1 @dynamicforms/vuetify-inputs@^0.13.0 @dynamicforms/translatable@^0.3.0 \
+npm install @dynamicforms/vue-forms@^3.0.0-alpha.1 @dynamicforms/vuetify-inputs@^0.14.1 @dynamicforms/translatable@^0.3.0 \
   @dynamicforms/vue-grid@^0.7.0
 ```
 
