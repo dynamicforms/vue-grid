@@ -126,6 +126,11 @@ describe('individual renderer return values', () => {
     expect(result).toBeInstanceOf(RenderableValue);
   });
 
+  it.each([null, undefined])('"plain" renders %s as empty content', (value) => {
+    const result = DefaultRenderers.plain(value, {}, opts);
+    expect(String(result.resolvedText)).toBe('');
+  });
+
   it('"null-empty" returns a RenderableValue', () => {
     const result = DefaultRenderers['null-empty'](null, {}, opts);
     expect(result).toBeInstanceOf(RenderableValue);
