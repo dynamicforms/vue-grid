@@ -25,14 +25,25 @@
       <template #toolbar-end>
         <div style="display: flex; flex-direction: column; align-items: flex-end; padding: 4px 8px">
           <div>
-            <cached-icon name="mdi-book-plus" title="add one record" class="shuffle-icon" @click.stop="addRows(1)"/>
-            <cached-icon name="mdi-book-plus-multiple" title="add 1000 records" class="shuffle-icon" @click.stop="addRows(1000)"/>
+            <cached-icon name="mdi-book-plus" title="add one record" class="shuffle-icon" @click.stop="addRows(1)" />
+            <cached-icon
+              name="mdi-book-plus-multiple"
+              title="add 1000 records"
+              class="shuffle-icon"
+              @click.stop="addRows(1000)"
+            />
           </div>
           <span style="font-size: 0.8rem; opacity: 0.8">{{ records.length }} records</span>
         </div>
       </template>
       <template #groupActions>
-        <cached-icon name="mdi-delete" title="Delete selected" class="shuffle-icon" style="color: red" @click.stop="deleteSelected"/>
+        <cached-icon
+          name="mdi-delete"
+          title="Delete selected"
+          class="shuffle-icon"
+          style="color: red"
+          @click.stop="deleteSelected"
+        />
       </template>
       <template #footer-start>
         <span style="padding: 4px 8px; font-size: 0.8rem; opacity: 0.6">@dynamicforms/vue-grid</span>
@@ -45,10 +56,11 @@
 </template>
 
 <script setup lang="ts">
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 import { computed, reactive, ref } from 'vue';
-import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
 
 import { createColumn, DfGrid, filterColumns, ResponsiveColumnDefinitions, SelectionMode } from '../../src';
+
 import { generateMusicLibrary, languagesMap } from './data-generator';
 
 const records = reactive(generateMusicLibrary(10000));
@@ -108,46 +120,55 @@ const columns = [
   createColumn('year', 'Year', 'int', {
     cssClass: 'text-right',
     rendererOptions: { transform: (v) => v % 100 },
-    filterable: { fieldType: 'number' }
+    filterable: { fieldType: 'number' },
   }),
-  createColumn('duration', 'Duration', 'plain', { cssClass: 'text-right', filterable: { fieldType: 'date' } }), // TODO refactor to time
-  createColumn('genres', 'Genres', 'plain', { filterable: true, rendererOptions: { transform: (v: string[]) => v.join(', ') } }),
+  // TODO refactor to time
+  createColumn('duration', 'Duration', 'plain', { cssClass: 'text-right', filterable: { fieldType: 'date' } }),
+  createColumn('genres', 'Genres', 'plain', {
+    filterable: true,
+    rendererOptions: { transform: (v: string[]) => v.join(', ') },
+  }),
   createColumn('rating', 'Rating', 'int', { cssClass: 'text-right', filterable: { fieldType: 'number' } }),
   createColumn('favorite', 'Favorite', 'checkbox', {
     rendererOptions: {
-      postRender: (value: any, rowValue: any) => new RenderableValue({
-        componentName: 'CachedIcon',
-        componentProps: {
-          name: 'mdi-shuffle',
-          class: 'shuffle-icon',
-          onClick: (e: MouseEvent) => {
-            e.stopPropagation();
-            rowValue.favorite = !rowValue.favorite;
+      postRender: (value: any, rowValue: any) =>
+        new RenderableValue({
+          componentName: 'CachedIcon',
+          componentProps: {
+            name: 'mdi-shuffle',
+            class: 'shuffle-icon',
+            onClick: (e: MouseEvent) => {
+              e.stopPropagation();
+              rowValue.favorite = !rowValue.favorite;
+            },
           },
-        },
-      } as SimpleComponentDef),
+        } as SimpleComponentDef),
     },
   }),
   createColumn('play_count', 'Play count', 'int', { cssClass: 'text-right', filterable: { fieldType: 'number' } }),
-  createColumn('moods', 'Moods', 'plain', { filterable: true, rendererOptions: { transform: (v: string[]) => v.join(', ') } }),
+  createColumn('moods', 'Moods', 'plain', {
+    filterable: true,
+    rendererOptions: { transform: (v: string[]) => v.join(', ') },
+  }),
   createColumn('language', 'Languages', 'plain', { filterable: { choices: languagesMap } }),
   createColumn('actions', 'Delete', 'plain', {
     filterable: false,
     sortable: false,
     rendererOptions: {
-      postRender: (value: any, rowValue: any) => new RenderableValue({
-        componentName: 'CachedIcon',
-        componentProps: {
-          name: 'mdi-delete',
-          class: 'shuffle-icon',
-          style: { color: 'red' },
-          onClick: (e: MouseEvent) => {
-            e.stopPropagation();
-            const index = records.findIndex(r => r.id === rowValue.id);
-            if (index !== -1) records.splice(index, 1);
+      postRender: (value: any, rowValue: any) =>
+        new RenderableValue({
+          componentName: 'CachedIcon',
+          componentProps: {
+            name: 'mdi-delete',
+            class: 'shuffle-icon',
+            style: { color: 'red' },
+            onClick: (e: MouseEvent) => {
+              e.stopPropagation();
+              const index = records.findIndex((r) => r.id === rowValue.id);
+              if (index !== -1) records.splice(index, 1);
+            },
           },
-        },
-      } as SimpleComponentDef),
+        } as SimpleComponentDef),
     },
   }),
 ];
@@ -171,19 +192,20 @@ const threeRowActionsCol = createColumn('actions', 'Delete', 'plain', {
         },
       } as SimpleComponentDef);
     },
-    preRender: (_value: any, rowValue: any) => new RenderableValue({
-      componentName: 'CachedIcon',
-      componentProps: {
-        name: 'mdi-delete',
-        class: 'shuffle-icon',
-        style: { color: 'red' },
-        onClick: (e: MouseEvent) => {
-          e.stopPropagation();
-          const index = records.findIndex(r => r.id === rowValue.id);
-          if (index !== -1) records.splice(index, 1);
+    preRender: (_value: any, rowValue: any) =>
+      new RenderableValue({
+        componentName: 'CachedIcon',
+        componentProps: {
+          name: 'mdi-delete',
+          class: 'shuffle-icon',
+          style: { color: 'red' },
+          onClick: (e: MouseEvent) => {
+            e.stopPropagation();
+            const index = records.findIndex((r) => r.id === rowValue.id);
+            if (index !== -1) records.splice(index, 1);
+          },
         },
-      },
-    } as SimpleComponentDef),
+      } as SimpleComponentDef),
   },
 });
 
@@ -198,7 +220,11 @@ const columnsResponsive: ResponsiveColumnDefinitions = [
   {
     cssClass: 'three-row',
     rows: 3,
-    columns: [...filterColumns(columns, [0, 1, 2, 3]), threeRowActionsCol, ...filterColumns(columns, [5, 6, 7, 8, 9, 10, 11])],
+    columns: [
+      ...filterColumns(columns, [0, 1, 2, 3]),
+      threeRowActionsCol,
+      ...filterColumns(columns, [5, 6, 7, 8, 9, 10, 11]),
+    ],
   },
   { cssClass: 'single-column', rows: columns.length, columns },
 ];
@@ -218,8 +244,8 @@ const estimatedRowHeightByLayout: Record<string, number> = { 'single-line': 26, 
 const estimatedRowHeight = computed(() => estimatedRowHeightByLayout[activeColumDef.value] ?? 90);
 
 const fullScreenClass = ref('');
-const fullScreenButtonText = computed(
-  () => (fullScreenClass.value === '' ? 'Stretch grid to window' : "restore grid to original size"),
+const fullScreenButtonText = computed(() =>
+  fullScreenClass.value === '' ? 'Stretch grid to window' : 'restore grid to original size',
 );
 
 function getMaxId() {
@@ -236,24 +262,24 @@ function addRows(count: number) {
   newOnes.forEach((r, i) => {
     (r as any).id = startId + i;
   });
-  (records as any[]).push(...newOnes as any[]);
+  (records as any[]).push(...(newOnes as any[]));
 }
 </script>
 
 <style scoped>
 .full-screen {
-  position:   fixed;
-  inset:      0;
-  z-index:    999;
-  color:      white;
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  color: white;
   background: black;
 }
 
 :global(.shuffle-icon) {
-  cursor:  pointer;
-  padding: 0 .1em;
+  cursor: pointer;
+  padding: 0 0.1em;
   opacity: 0.7;
-  color:   blue;
+  color: blue;
 }
 
 :global(.dark .shuffle-icon) {
@@ -261,9 +287,9 @@ function addRows(count: number) {
 }
 
 :global(.selection-checkbox) {
-  cursor:  pointer;
-  padding: 0 .1em;
-  color:   #1976d2;
+  cursor: pointer;
+  padding: 0 0.1em;
+  color: #1976d2;
 }
 
 :global(.dark .selection-checkbox) {
@@ -334,14 +360,14 @@ function addRows(count: number) {
  * that was solving a problem this selector already solves on its own.
  */
 :deep(.df-record-grid) {
-  display:               grid;
+  display: grid;
   grid-template-columns: minmax(2em, 4em) repeat(3, auto) minmax(2em, 4em) minmax(2em, 8em) repeat(7, auto);
-  gap:                   .25em;
-  font-size:              0.85rem;
+  gap: 0.25em;
+  font-size: 0.85rem;
 }
 
 :deep(.df-grid.card) {
-  border:        1px solid #808080ff;
+  border: 1px solid #808080ff;
   border-radius: 6px;
 }
 
@@ -355,9 +381,9 @@ function addRows(count: number) {
  */
 :deep(.df-grid.card.header),
 :deep(.df-grid.card.filter-row) {
-  border:          none;
-  outline:         1px solid #808080ff;
-  outline-offset:  -1px;
+  border: none;
+  outline: 1px solid #808080ff;
+  outline-offset: -1px;
 }
 
 :deep(.df-record-grid.single-column) {
@@ -388,35 +414,63 @@ function addRows(count: number) {
   grid-column: 1 / 2 !important;
 }
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(2)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(1))  { grid-row: calc(var(--row-base) + 1); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(1)) {
+  grid-row: calc(var(--row-base) + 1);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(3)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(2))  { grid-row: calc(var(--row-base) + 2); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(2)) {
+  grid-row: calc(var(--row-base) + 2);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(4)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(3))  { grid-row: calc(var(--row-base) + 3); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(3)) {
+  grid-row: calc(var(--row-base) + 3);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(5)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(4))  { grid-row: calc(var(--row-base) + 4); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(4)) {
+  grid-row: calc(var(--row-base) + 4);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(6)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(5))  { grid-row: calc(var(--row-base) + 5); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(5)) {
+  grid-row: calc(var(--row-base) + 5);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(7)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(6))  { grid-row: calc(var(--row-base) + 6); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(6)) {
+  grid-row: calc(var(--row-base) + 6);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(8)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(7))  { grid-row: calc(var(--row-base) + 7); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(7)) {
+  grid-row: calc(var(--row-base) + 7);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(9)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(8))  { grid-row: calc(var(--row-base) + 8); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(8)) {
+  grid-row: calc(var(--row-base) + 8);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(10)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(9))  { grid-row: calc(var(--row-base) + 9); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(9)) {
+  grid-row: calc(var(--row-base) + 9);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(11)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(10)) { grid-row: calc(var(--row-base) + 10); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(10)) {
+  grid-row: calc(var(--row-base) + 10);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(12)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(11)) { grid-row: calc(var(--row-base) + 11); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(11)) {
+  grid-row: calc(var(--row-base) + 11);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(13)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(12)) { grid-row: calc(var(--row-base) + 12); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(12)) {
+  grid-row: calc(var(--row-base) + 12);
+}
 :deep(.df-grid.body-grid.single-column .df-anchored .df-grid.cell:nth-child(14)),
-:deep(.df-unanchored.single-column .df-grid.cell:nth-child(13)) { grid-row: calc(var(--row-base) + 13); }
+:deep(.df-unanchored.single-column .df-grid.cell:nth-child(13)) {
+  grid-row: calc(var(--row-base) + 13);
+}
 
 /* --- single-line: 13 columns; first column auto-sizes (0 when cell hidden, ~1.5em when visible) --- */
 :deep(.df-record-grid.single-line) {
-  grid-template-columns: max-content repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content) minmax(min-content, max-content);
+  grid-template-columns:
+    max-content repeat(9, minmax(min-content, max-content)) 1fr minmax(min-content, max-content)
+    minmax(min-content, max-content);
 }
 
 /*
@@ -430,48 +484,74 @@ function addRows(count: number) {
   grid-row: calc(var(--row-base) + 1) !important;
 }
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(2)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(1))  { grid-column: 1; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(1)) {
+  grid-column: 1;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(3)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(2))  { grid-column: 2; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(2)) {
+  grid-column: 2;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(4)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(3))  { grid-column: 3; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(3)) {
+  grid-column: 3;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(5)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(4))  { grid-column: 4; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(4)) {
+  grid-column: 4;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(6)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(5))  { grid-column: 5; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(5)) {
+  grid-column: 5;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(7)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(6))  { grid-column: 6; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(6)) {
+  grid-column: 6;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(8)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(7))  { grid-column: 7; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(7)) {
+  grid-column: 7;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(9)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(8))  { grid-column: 8; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(8)) {
+  grid-column: 8;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(10)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(9))  { grid-column: 9; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(9)) {
+  grid-column: 9;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(11)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(10)) { grid-column: 10; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(10)) {
+  grid-column: 10;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(12)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(11)) { grid-column: 11; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(11)) {
+  grid-column: 11;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(13)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(12)) { grid-column: 12; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(12)) {
+  grid-column: 12;
+}
 :deep(.df-grid.body-grid.single-line .df-anchored .df-grid.cell:nth-child(14)),
-:deep(.df-unanchored.single-line .df-grid.cell:nth-child(13)) { grid-column: 13; }
+:deep(.df-unanchored.single-line .df-grid.cell:nth-child(13)) {
+  grid-column: 13;
+}
 
 /* --- selection checkbox cell: hidden by default; shown when selection is active --- */
 :deep(.df-grid.cell._selection) {
   display: none;
 }
 :deep(.df-grid.container.selection .df-grid.cell._selection) {
-  display:         flex;
-  align-items:     center;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding:         0;
-  border:          none;
+  padding: 0;
+  border: none;
 }
 
 :deep(.df-grid.cell) {
-  border:        1px solid darkgray;
+  border: 1px solid darkgray;
   border-radius: 4px;
-  padding:       0 .25em;
+  padding: 0 0.25em;
 }
 
 :deep(.df-record-grid.three-row .df-grid.cell.title),
@@ -497,11 +577,11 @@ function addRows(count: number) {
  */
 :deep(.df-record-grid.three-row .df-grid.cell.title) {
   grid-column: 1 / 3;
-  grid-row:    calc(var(--row-base) + 1);
+  grid-row: calc(var(--row-base) + 1);
 }
 :deep(.df-record-grid.three-row .df-grid.cell.artist) {
   grid-column: 3 / 5;
-  grid-row:    calc(var(--row-base) + 1);
+  grid-row: calc(var(--row-base) + 1);
 }
 
 /*
@@ -516,43 +596,43 @@ function addRows(count: number) {
  */
 :deep(.df-record-grid.three-row .df-grid.cell.id) {
   grid-column: 5;
-  grid-row:    calc(var(--row-base) + 1);
+  grid-row: calc(var(--row-base) + 1);
 }
 :deep(.df-record-grid.three-row .df-grid.cell.year) {
   grid-column: 6;
-  grid-row:    calc(var(--row-base) + 2);
+  grid-row: calc(var(--row-base) + 2);
 }
 :deep(.df-record-grid.three-row .df-grid.cell.favorite) {
   grid-column: 4;
-  grid-row:    calc(var(--row-base) + 3);
+  grid-row: calc(var(--row-base) + 3);
 }
 :deep(.df-record-grid.three-row .df-grid.cell.play_count) {
   grid-column: 5;
-  grid-row:    calc(var(--row-base) + 3);
+  grid-row: calc(var(--row-base) + 3);
 }
 :deep(.df-record-grid.three-row .df-grid.cell.language) {
   grid-column: 6;
-  grid-row:    calc(var(--row-base) + 3);
+  grid-row: calc(var(--row-base) + 3);
 }
 
 :deep(.df-record-grid.three-row .df-grid.cell.moods) {
   grid-column: 1 / 4;
-  grid-row:    calc(var(--row-base) + 3);
+  grid-row: calc(var(--row-base) + 3);
 }
 
 :deep(.df-record-grid.three-row .df-grid.cell.duration) {
   grid-column: 6;
-  grid-row:    calc(var(--row-base) + 1);
+  grid-row: calc(var(--row-base) + 1);
 }
 
 :deep(.df-record-grid.three-row .df-grid.cell.genres) {
   grid-column: 1 / 5;
-  grid-row:    calc(var(--row-base) + 2);
+  grid-row: calc(var(--row-base) + 2);
 }
 
 :deep(.df-record-grid.three-row .df-grid.cell.rating) {
   grid-column: 5;
-  grid-row:    calc(var(--row-base) + 2);
+  grid-row: calc(var(--row-base) + 2);
 }
 
 :deep(.df-grid.cell.favorite) {
@@ -561,8 +641,8 @@ function addRows(count: number) {
 
 :deep(.df-record-grid.three-row .df-grid.cell.actions) {
   grid-column: 7;
-  grid-row:    calc(var(--row-base) + 1) / calc(var(--row-base) + 4);
-  display:     flex;
+  grid-row: calc(var(--row-base) + 1) / calc(var(--row-base) + 4);
+  display: flex;
   align-items: center;
 }
 </style>

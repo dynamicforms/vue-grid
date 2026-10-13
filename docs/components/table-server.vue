@@ -1,8 +1,8 @@
 <template>
   <div style="display: flex; flex-direction: column; height: 40em">
     <df-grid
-      v-model:sortState="sortState"
-      v-model:activeColumns="activeColumns"
+      v-model:sort-state="sortState"
+      v-model:active-columns="activeColumns"
       :columns="columnsResponsive"
       :records="records"
       :loading="loading"
@@ -19,15 +19,11 @@
       </template>
       <template #toolbar-end>
         <div style="display: flex; align-items: center; gap: 8px; padding: 4px 8px">
-          <span v-if="total > 0" style="opacity: 0.7; font-size: 0.9em">
-            {{ records.length }} / {{ total }}
-          </span>
+          <span v-if="total > 0" style="opacity: 0.7; font-size: 0.9em">{{ records.length }} / {{ total }}</span>
           <v-btn size="small" variant="tonal" :loading="loading && !records.length" @click="initialLoad">
             {{ records.length ? 'Reload' : 'Load data' }}
           </v-btn>
-          <v-btn v-if="records.length" size="small" variant="text" :disabled="loading" @click="clear">
-            Clear
-          </v-btn>
+          <v-btn v-if="records.length" size="small" variant="text" :disabled="loading" @click="clear">Clear</v-btn>
         </div>
       </template>
     </df-grid>
@@ -36,13 +32,17 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
 import { createColumn, filterExternal, sortExternal } from '../../src';
 import type { GridFilterEvent, GridSortEvent, ResponsiveColumnDefinitions, SortState } from '../../src';
+
 import { generateMusicLibrary } from './data-generator';
 
 const PAGE_SIZE = 30;
 
 // Full dataset lives in memory — simulates a database the "server" queries.
+type MusicRecord = ReturnType<typeof generateMusicLibrary>[number];
+
 const allRecords = generateMusicLibrary(300);
 
 const columns = [
@@ -87,19 +87,19 @@ let serverResult: any[] = [];
 function applyFiltersAndSort(sort: SortState, filters: Record<string, any>): any[] {
   let result = [...allRecords];
 
-  if (filters.title)
-    result = result.filter(r => r.title.toLowerCase().includes(String(filters.title).toLowerCase()));
+  if (filters.title) result = result.filter((r) => r.title.toLowerCase().includes(String(filters.title).toLowerCase()));
   if (filters.artist)
-    result = result.filter(r => r.artist.toLowerCase().includes(String(filters.artist).toLowerCase()));
-  if (filters.year != null && filters.year !== '')
-    result = result.filter(r => r.year === Number(filters.year));
+    result = result.filter((r) => r.artist.toLowerCase().includes(String(filters.artist).toLowerCase()));
+  if (filters.year != null && filters.year !== '') result = result.filter((r) => r.year === Number(filters.year));
   if (filters.rating != null && filters.rating !== '')
-    result = result.filter(r => r.rating === Number(filters.rating));
+    result = result.filter((r) => r.rating === Number(filters.rating));
 
   for (let i = sort.length - 1; i >= 0; i--) {
     const { columnName, direction } = sort[i];
     result.sort((a, b) => {
-      const av = a[columnName], bv = b[columnName];
+      const key = columnName as keyof MusicRecord;
+      const av = a[key],
+        bv = b[key];
       const cmp = av < bv ? -1 : av > bv ? 1 : 0;
       return direction === 'asc' ? cmp : -cmp;
     });
@@ -198,7 +198,7 @@ function clear() {
 :deep(.df-record-grid) {
   display: grid;
   grid-auto-rows: min-content;
-  gap: .25em;
+  gap: 0.25em;
   font-size: 0.85rem;
 }
 
@@ -207,7 +207,10 @@ function clear() {
    `minmax(min-content, ...)` rather than `1fr`: the automatic minimum of an `overflow: hidden` cell
    is 0, so a `1fr` track would let the layout measure as fitting any width. */
 :deep(.df-record-grid.single-line) {
-  grid-template-columns: minmax(2em, 4em) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(3em, 5em) minmax(3em, 5em);
+  grid-template-columns: minmax(2em, 4em) minmax(min-content, 1fr) minmax(min-content, 1fr) minmax(3em, 5em) minmax(
+      3em,
+      5em
+    );
 }
 
 /* two-row: id | title  | year
@@ -215,11 +218,23 @@ function clear() {
 :deep(.df-record-grid.two-row) {
   grid-template-columns: minmax(2em, 4em) minmax(min-content, 1fr) minmax(3em, 5em);
 }
-:deep(.df-record-grid.two-row .df-grid.cell.id) { grid-column: 1; }
-:deep(.df-record-grid.two-row .df-grid.cell.title) { grid-column: 2; }
-:deep(.df-record-grid.two-row .df-grid.cell.year) { grid-column: 3; }
-:deep(.df-record-grid.two-row .df-grid.cell.artist) { grid-column: 2; grid-row: calc(var(--row-base) + 2); }
-:deep(.df-record-grid.two-row .df-grid.cell.rating) { grid-column: 3; grid-row: calc(var(--row-base) + 2); }
+:deep(.df-record-grid.two-row .df-grid.cell.id) {
+  grid-column: 1;
+}
+:deep(.df-record-grid.two-row .df-grid.cell.title) {
+  grid-column: 2;
+}
+:deep(.df-record-grid.two-row .df-grid.cell.year) {
+  grid-column: 3;
+}
+:deep(.df-record-grid.two-row .df-grid.cell.artist) {
+  grid-column: 2;
+  grid-row: calc(var(--row-base) + 2);
+}
+:deep(.df-record-grid.two-row .df-grid.cell.rating) {
+  grid-column: 3;
+  grid-row: calc(var(--row-base) + 2);
+}
 
 :deep(.df-grid.card) {
   border-bottom: 1px solid rgba(128, 128, 128, 0.25);
@@ -230,12 +245,14 @@ function clear() {
 }
 
 :deep(.df-grid.cell) {
-  padding: 0 .25em;
+  padding: 0 0.25em;
   white-space: nowrap;
   overflow: hidden;
 }
 
-:deep(.df-grid.cell.id), :deep(.df-grid.cell.year), :deep(.df-grid.cell.rating) {
+:deep(.df-grid.cell.id),
+:deep(.df-grid.cell.year),
+:deep(.df-grid.cell.rating) {
   text-align: right;
 }
 </style>

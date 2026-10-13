@@ -19,7 +19,7 @@
  * appended to the result list, which the card layout uses to force a grid-row break between
  * column groups.
  */
-import { RenderableValue } from '@dynamicforms/vue-forms';
+import { RenderableValue } from '@dynamicforms/vuetify-inputs';
 import { computed } from 'vue';
 
 import { RendererOptionsMap, RenderersMap, RowValue, wrapWithPrePost } from '../cell-renderers';

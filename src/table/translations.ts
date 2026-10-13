@@ -1,6 +1,6 @@
 import { createTranslatable } from '@dynamicforms/translatable';
 
-export const { strings: translatableStrings, translateStrings } = createTranslatable({
+export const { translate, translateStrings } = createTranslatable({
   Loading: 'Loading…',
   NoData: 'No data',
   FilterColumn: 'Filter {column}...',

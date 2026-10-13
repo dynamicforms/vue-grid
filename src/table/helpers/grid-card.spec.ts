@@ -20,8 +20,8 @@ import GridCard from './grid-card.vue';
 // we only care whether it's present, not what it looks like.
 // ---------------------------------------------------------------------------
 
-vi.mock('@dynamicforms/vue-forms', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@dynamicforms/vue-forms')>();
+vi.mock('@dynamicforms/vuetify-inputs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@dynamicforms/vuetify-inputs')>();
   return {
     ...actual,
     MessagesWidget: defineComponent({

@@ -1,4 +1,4 @@
-import { MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+import { type RenderContentNonCallable, RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 
 import type { ColumnSortState } from '../columns-sorting';
 import { useGridMouseEventsPosition } from '../df-grid-mouse-events';
@@ -13,7 +13,7 @@ export interface HeaderOptions extends CellOptions {
 const { processPosition } = useGridMouseEventsPosition();
 
 export const header = (
-  value: string | MdString,
+  value: RenderContentNonCallable,
   rowValue: any,
   options: CellOptionsInternal<HeaderOptions>,
 ): RenderableValue => {

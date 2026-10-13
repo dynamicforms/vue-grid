@@ -97,12 +97,12 @@ See [Card layout CSS](/reference/df-grid#card-layout-css) for how column widths 
 ## Translation
 
 The grid draws a small number of English strings of its own, each under a key naming what it says rather than
-its English text. The library never picks a locale itself — call `translateStrings` once per locale to supply
-translations for as many of them as you have.
+its English text. The library ships no translations and selects no locale: the application passes its translation
+function to `translateStrings` once, with the namespace that holds the grid's keys in its translations.
 
 The authoritative list is
 [`src/table/translations.ts`](https://github.com/dynamicforms/vue-grid/blob/main/src/table/translations.ts) - the
-object passed to `createTranslatable` there is the whole catalogue. As of this writing it holds:
+object passed to `createTranslatable` there is the whole catalogue:
 
 | Key | English default | Where it appears |
 |-----|-----------------|-------------------|
@@ -116,20 +116,34 @@ object passed to `createTranslatable` there is the whole catalogue. As of this w
 | `ActiveFilters` | `Active filters: {count}` | Status bar's default `statusBar` slot content |
 | `NullValue` | `null` | A cell's content when its value is `null`/`undefined` and no `nullHandler` says otherwise |
 
-A translation keeps a message's `{name}` placeholders as they stand — they are substituted after translation.
+With vue-i18n:
 
 ```typescript
+import { formatParams } from '@dynamicforms/translatable';
 import { translateStrings } from '@dynamicforms/vue-grid';
 
-function applyLocale(locale: string) {
-  const dictionary = translations[locale]; // however your app keeps its translations
-  translateStrings((key, defaultValue) => dictionary[key] ?? defaultValue);
-}
+const { t, n } = i18n.global;
+// formats `{count}` for the locale before t substitutes it
+translateStrings(formatParams(t, (value) => (typeof value === 'number' ? n(value) : value)), 'grid');
 ```
 
-The callback receives the key and its English default, and returns the translation for the current locale, or
-`null`/`undefined` to leave the English default in place. Reading a translated key inside a template or a
-`computed` subscribes to it, so a grid already on screen picks up a later `translateStrings` call on its own.
+```json
+{ "grid": { "NoData": "Ni podatkov", "ActiveFilters": "Aktivni filtri: {count}" } }
+```
+
+- A key is looked up as `grid.<Key>`; without a namespace, as `<Key>`.
+- The grid passes each placeholder's value to the translation function, which substitutes it. A translation uses
+  the placeholder names of the English default.
+- A key the translation function returns unchanged has no translation and reads as the English default.
+- The grid calls the translation function on every render, so a grid on screen follows a locale switch of
+  vue-i18n's `t` without another `translateStrings` call. A translation function over non-reactive translations
+  needs another `translateStrings` call after they change.
+
+`translate(key, params?)` returns the current text of one of these keys, for an application drawing its own
+status bar or summary with the grid's strings.
+
+The [`@dynamicforms/translatable` readme](https://github.com/dynamicforms/translatable#readme) describes the
+translation function, the resolution order and a translation function written without an i18n library.
 
 ## Next steps
 

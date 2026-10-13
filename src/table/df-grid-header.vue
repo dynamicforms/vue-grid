@@ -89,14 +89,14 @@
           <cached-icon
             name="mdi-close"
             class="selection-icon"
-            :title="translatableStrings.CancelSelectionMode"
+            :title="translate('CancelSelectionMode')"
             @click="emit('cancel-selection')"
           />
           <span class="selection-count">{{ selectionCountText }}</span>
           <cached-icon
             name="mdi-shuffle"
             class="selection-icon"
-            :title="translatableStrings.InvertSelection"
+            :title="translate('InvertSelection')"
             @click="emit('invert-selection')"
           />
         </div>
@@ -114,7 +114,6 @@
 </template>
 
 <script setup lang="ts">
-import { interpolate } from '@dynamicforms/translatable';
 import { DfCheckbox, DfDateTime, DfInput, DfSelect, FieldDensity } from '@dynamicforms/vuetify-inputs';
 import { computed, onMounted, onUpdated, ref, watch } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
@@ -126,7 +125,7 @@ import { FilterState, getFilterConfig } from './columns-filtering';
 import { getSortConfig, type ColumnSortState, type SortState } from './columns-sorting';
 import { GridCard, headerRowBaseVars, useHeaderContent } from './helpers';
 import type { SelectionMode } from './selection';
-import { translatableStrings } from './translations';
+import { translate } from './translations';
 
 const filterInputDensity = ref<FieldDensity>('inline');
 
@@ -204,7 +203,7 @@ function getFilterableConfig(column: ColumnDefinition<keyof RendererOptionsMap>)
 }
 
 function filterPlaceholder(column: ColumnDefinition<keyof RendererOptionsMap>) {
-  return interpolate(translatableStrings.FilterColumn, { column: column.label });
+  return translate('FilterColumn', { column: column.label });
 }
 
 const isSelectionActive = computed(() => props.selectionMode != null && props.selectionMode !== 'non-select');
@@ -212,7 +211,7 @@ const isSelectionActive = computed(() => props.selectionMode != null && props.se
 const selectionCountText = computed(() => {
   const count = props.selectionKeys?.size ?? 0;
   const key = props.selectionMode === 'selection' ? 'SelectionCountSelected' : 'SelectionCountExcluded';
-  return interpolate(translatableStrings[key], { count });
+  return translate(key, { count });
 });
 
 const activeFilterCount = computed(() => {
@@ -220,9 +219,7 @@ const activeFilterCount = computed(() => {
   return Object.values(props.filterState.value).filter((v) => v != null && v !== '' && v !== undefined).length;
 });
 
-const activeFiltersText = computed(() =>
-  interpolate(translatableStrings.ActiveFilters, { count: activeFilterCount.value }),
-);
+const activeFiltersText = computed(() => translate('ActiveFilters', { count: activeFilterCount.value }));
 
 // A settle chain (below) writes headerHeight.value on every attempt, which re-renders the
 // component (it drives the template's own `minHeight` binding) and fires onUpdated() again —

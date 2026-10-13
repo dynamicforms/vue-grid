@@ -23,19 +23,17 @@
  *    `int`, `float`, and `decimal` columns (delegates to `floatGridColumnCreate`)
  *  - `gridDestroy(gridId)` — tears down all per-column state for a grid instance
  */
-import { MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+import { HtmlString, MdString, RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 
-import { translatableStrings } from '../translations';
+import { translate } from '../translations';
 
 import { header, HeaderOptions } from './header-renderers';
 import { CellOptions, CellOptionsInternal, CellRendererTransformer, RowValue } from './interfaces';
 import { float, floatGridColumnCreate, floatGridDestroy, int, IntOptions } from './numbers';
 import { checkbox, color, date, DateTimeOptions, email, ip, ip4, ip6, link } from './simple-renderers';
 
-const s = (vHtml: string): SimpleComponentDef => ({
-  componentName: 'div',
-  componentVHtml: vHtml,
-});
+// a cell without a value renders empty
+const s = (vHtml: string | null | undefined): HtmlString => new HtmlString(vHtml ?? '');
 
 const rv = (value: string): RenderableValue => new RenderableValue(s(value));
 
@@ -69,7 +67,7 @@ export const wrapWithPrePost = (
   return result;
 };
 
-const file = (value: any): SimpleComponentDef | string => {
+const file = (value: any): HtmlString | string => {
   if (value) {
     const func = `(function(e) { 
         e.preventDefault(); 
@@ -112,11 +110,7 @@ export const DefaultRenderers: RenderersMap = {
   'null-empty': (value, rowValue, options) => wrapWithPrePost(new RenderableValue(''), value, rowValue, options),
   'null-null': (value, rowValue, options) =>
     wrapWithPrePost(
-      new RenderableValue({
-        componentName: 'div',
-        componentVHtml: translatableStrings.NullValue,
-        componentProps: { class: 'df-cell-null' },
-      }),
+      new RenderableValue(new HtmlString(translate('NullValue')), 'df-cell-null'),
       value,
       rowValue,
       options,

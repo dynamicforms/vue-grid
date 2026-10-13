@@ -39,7 +39,7 @@
  * rather than `undefined`.  In production, `makeColumnRenderOptsInternal` always populates
  * this; in tests we supply the minimal empty object manually.
  */
-import { RenderableValue } from '@dynamicforms/vue-forms';
+import { RenderableValue } from '@dynamicforms/vuetify-inputs';
 import { reactive } from 'vue';
 
 import { DefaultRenderers, type RendererOptionsMap, type RenderersMap, type RowValue } from '../cell-renderers';

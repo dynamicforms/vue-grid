@@ -1,7 +1,7 @@
 {
   "name": "@dynamicforms/vue-grid",
   "private": false,
-  "version": "0.6.2",
+  "version": "0.7.0",
   "type": "module",
   "description": "High-performance virtual-scroll data grid for Vue 3 with sorting, filtering, and row selection.",
   "author": "Jure Erznožnik",
@@ -25,7 +25,7 @@
   "scripts": {
     "build": "vite build",
     "test": "vitest run --coverage",
-    "lint": "eslint src && vue-tsc --noEmit",
+    "lint": "eslint src docs/components && vue-tsc --noEmit && vue-tsc --noEmit -p docs/tsconfig.json",
     "test:e2e": "playwright test",
     "docs:dev": "npm run docs:dev -w docs",
     "docs:build": "npm run docs:build -w docs",
@@ -57,9 +57,9 @@
   },
   "homepage": "https://docs.velis.si/dynamicforms/vue-grid",
   "peerDependencies": {
-    "@dynamicforms/translatable": "^0.1.0",
-    "@dynamicforms/vue-forms": "^2.0.2",
-    "@dynamicforms/vuetify-inputs": "^0.12.1",
+    "@dynamicforms/translatable": "^0.3.0",
+    "@dynamicforms/vue-forms": "^3.0.0-alpha.1",
+    "@dynamicforms/vuetify-inputs": "^0.14.1",
     "@mdi/font": "^7.4.47",
     "date-fns": "^4.1.0",
     "lodash-es": "^4.17.12",

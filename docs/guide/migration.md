@@ -1,5 +1,66 @@
 # Migration guide
 
+## 0.6.x → 0.7.0: vue-forms 3.0
+
+0.7.0 requires `@dynamicforms/vue-forms` 3.0.0, `@dynamicforms/vuetify-inputs` 0.14.1 and
+`@dynamicforms/translatable` 0.3.0. Upgrade the four together, and work through the
+[vue-forms](https://docs.velis.si/dynamicforms/vue-forms/guide/migration) and
+[vuetify-inputs](https://docs.velis.si/dynamicforms/vuetify-inputs/guide/migration) migration
+guides first.
+
+```bash
+npm install @dynamicforms/vue-forms@^3.0.0-alpha.1 @dynamicforms/vuetify-inputs@^0.14.1 @dynamicforms/translatable@^0.3.0 \
+  @dynamicforms/vue-grid@^0.7.0
+```
+
+### Render content is imported from vuetify-inputs
+
+vue-forms 3.0 exports no rendering. `RenderableValue`, `SimpleComponentDef` and `MdString`, which a
+renderer function, `preRender`, `postRender` and `setCellRenderer()` return, are imported from
+`@dynamicforms/vuetify-inputs`:
+
+```typescript
+// before
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vue-forms';
+
+// after
+import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
+```
+
+`RenderableValue` takes `(content, classes?)`. It has no `code`, `origin` or `sameAs()`, and
+`getTextType` is `kind`.
+
+### `translateStrings` takes the translation function
+
+`translateStrings` takes the application's translation function, shaped like vue-i18n's `t`, and the namespace
+that holds the grid's keys. The grid passes the placeholder values, and the translation function substitutes
+them:
+
+```typescript
+// before
+translateStrings((key, defaultValue) => dictionary[key] ?? defaultValue);
+
+// after, with vue-i18n
+translateStrings(i18n.global.t, 'grid');
+
+// after, with a plain dictionary
+translateStrings((key, named) => interpolate(dictionary[key] ?? key, named));
+```
+
+One `translateStrings` call with vue-i18n's `t` serves every locale: `t` follows a locale switch on its own.
+
+`translatableStrings` is removed. `translate(key, params?)` returns the current text of a key:
+
+```typescript
+// before
+const text = interpolate(translatableStrings.ActiveFilters, { count });
+
+// after
+const text = translate('ActiveFilters', { count });
+```
+
+See [Translation](/guide/getting-started#translation).
+
 ## 0.5.x → 0.6.0: vue-forms 2.0
 
 0.6.0 requires `@dynamicforms/vue-forms` 2.0.2 and `@dynamicforms/vuetify-inputs` 0.12.1. Upgrade

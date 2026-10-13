@@ -1,4 +1,4 @@
-import { RenderableValue } from '@dynamicforms/vue-forms';
+import { RenderableValue } from '@dynamicforms/vuetify-inputs';
 
 export type RowValue = Record<string | symbol, any>;
 
