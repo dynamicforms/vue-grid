@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Breaking:** requires `@dynamicforms/vue-forms` 3.0 and `@dynamicforms/vuetify-inputs` 0.13.0
-  (`peerDependencies` `^3.0.0-alpha.1` and `^0.13.0`). `RenderableValue`, `SimpleComponentDef`, `MdString` and
+- **Breaking:** requires `@dynamicforms/vue-forms` 3.0 and `@dynamicforms/vuetify-inputs` 0.14.1
+  (`peerDependencies` `^3.0.0-alpha.1` and `^0.14.1`). `RenderableValue`, `SimpleComponentDef`, `MdString` and
   `MessagesWidget`, which cell renderers return and the grid renders with, are imported from
   `@dynamicforms/vuetify-inputs`.
 - **Breaking:** requires `@dynamicforms/translatable` 0.3 (`peerDependencies` `^0.3.0`). `translateStrings(t,

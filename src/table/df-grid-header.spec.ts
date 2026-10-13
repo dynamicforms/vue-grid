@@ -430,6 +430,8 @@ describe('DfGridHeader.vue', () => {
         },
       });
 
+      // a cached-icon renders its element once it has mounted
+      await nextTick();
       await wrapper.find('[title="Cancel selection mode"]').trigger('click');
       expect(wrapper.emitted('cancel-selection')).toBeTruthy();
     });
@@ -446,6 +448,8 @@ describe('DfGridHeader.vue', () => {
         },
       });
 
+      // a cached-icon renders its element once it has mounted
+      await nextTick();
       await wrapper.find('[title="Invert selection"]').trigger('click');
       expect(wrapper.emitted('invert-selection')).toBeTruthy();
     });
