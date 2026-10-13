@@ -32,7 +32,8 @@ import { CellOptions, CellOptionsInternal, CellRendererTransformer, RowValue } f
 import { float, floatGridColumnCreate, floatGridDestroy, int, IntOptions } from './numbers';
 import { checkbox, color, date, DateTimeOptions, email, ip, ip4, ip6, link } from './simple-renderers';
 
-const s = (vHtml: string): HtmlString => new HtmlString(vHtml);
+// a cell without a value renders empty
+const s = (vHtml: string | null | undefined): HtmlString => new HtmlString(vHtml ?? '');
 
 const rv = (value: string): RenderableValue => new RenderableValue(s(value));
 
