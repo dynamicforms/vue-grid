@@ -7,6 +7,7 @@ Demonstrates the `useRecentlyAdded` composable and the arc overlay for notifying
 **`useRecentlyAdded(records, keyField)`** returns a composable instance you pass to `<DfGrid :recently-added="...">`.
 
 When you call `addRecentlyAdded(pks, timeout?)`:
+
 - Each pk is added to the recently-added list with a timestamp.
 - The grid applies the `state-adding` CSS class to rows whose pk is in the list.
 - If any pk maps to a row **above** the current viewport, a flash arc appears at the **top** of the body.

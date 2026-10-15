@@ -1,6 +1,7 @@
 # Cell Renderers
 
-Every column has a `renderer` that determines how its value is displayed. Renderers are specified by name in `createColumn()` and can be customised via `rendererOptions`.
+Every column has a `renderer` that determines how its value is displayed. Renderers are specified by name in
+`createColumn()` and can be customised via `rendererOptions`.
 
 ## Built-in renderers
 
@@ -28,7 +29,8 @@ Every column has a `renderer` that determines how its value is displayed. Render
 
 ## Common options (`CellOptions`)
 
-Renderers accept these base options via `rendererOptions`. `null-empty`, `null-null` and `header` ignore `transform`; every other renderer applies it.
+Renderers accept these base options via `rendererOptions`. `null-empty`, `null-null` and `header` ignore `transform`;
+every other renderer applies it.
 
 ```typescript
 interface CellOptions {
@@ -39,7 +41,8 @@ interface CellOptions {
 }
 ```
 
-The `transform` function receives the raw cell value and the full row object, and returns the value that will actually be rendered.
+The `transform` function receives the raw cell value and the full row object, and returns the value that will actually
+be rendered.
 
 A value from the record is rendered as text: the built-in renderers escape it where they build HTML (`int`, `float`,
 `decimal`, `ip4`, `ip6`, `ip`), and set it as a prop where they render an element (`link`, `email`, `file`, `color`).
@@ -47,9 +50,15 @@ A string returned by `transform`, `preRender` or `postRender` is text as well. H
 `RenderableValue` of an `HtmlString` from `@dynamicforms/vuetify-inputs`, which is rendered as it is: the application
 escapes or sanitizes whatever it puts into it from a record.
 
-A column that specifies no `rendererOptions` at all is given `{ nullHandler: 'null-null' }`, so its `null` and `undefined` cells are rendered by `null-null`. As soon as you supply a `rendererOptions` object, that default is gone: without a `nullHandler` key the column's own renderer receives the `null`. The choice is made on the raw record value, before `transform` runs.
+A column that specifies no `rendererOptions` at all is given `{ nullHandler: 'null-null' }`, so its `null` and
+`undefined` cells are rendered by `null-null`. As soon as you supply a `rendererOptions` object, that default is gone:
+without a `nullHandler` key the column's own renderer receives the `null`. The choice is made on the raw record value,
+before `transform` runs.
 
-`preRender` and `postRender` allow injecting additional content to the left or right of the main cell value. When either is set, the cell switches to a flex layout with three zones: `pre`, `content`, and `post`. Such cells carry the extra CSS class `has-pre-post`, which is what the flex layout is attached to. `has-pre-post` is applied whenever the column has `preRender`/`postRender` configured, regardless of what an individual row's callback returns.
+`preRender` and `postRender` allow injecting additional content to the left or right of the main cell value. When either
+is set, the cell switches to a flex layout with three zones: `pre`, `content`, and `post`. Such cells carry the extra
+CSS class `has-pre-post`, which is what the flex layout is attached to. `has-pre-post` is applied whenever the column
+has `preRender`/`postRender` configured, regardless of what an individual row's callback returns.
 
 ### Interactive content via preRender/postRender
 
@@ -97,13 +106,20 @@ interface IntOptions extends CellOptions {
 }
 ```
 
-A numeric `padToLength` keeps values vertically aligned: the integer part is padded to that many digits, and the padding zeros are rendered at half opacity, as are the trailing zeros of the fraction.
+A numeric `padToLength` keeps values vertically aligned: the integer part is padded to that many digits, and the padding
+zeros are rendered at half opacity, as are the trailing zeros of the fraction.
 
-`padToLength: 'auto'` picks the width instead of taking it from you. The column keeps track of the longest integer part and the longest fraction it has formatted so far; whenever a value exceeds either, the column's formatter is rebuilt with the new minimum digit counts and the column is redrawn, so all its cells pad to the same width. The padding is rendered at half opacity exactly as with a numeric value. Because the measurement only ever grows, the width tracks the widest value the column has actually rendered.
+`padToLength: 'auto'` picks the width instead of taking it from you. The column keeps track of the longest integer part
+and the longest fraction it has formatted so far; whenever a value exceeds either, the column's formatter is rebuilt
+with the new minimum digit counts and the column is redrawn, so all its cells pad to the same width. The padding is
+rendered at half opacity exactly as with a numeric value. Because the measurement only ever grows, the width tracks the
+widest value the column has actually rendered.
 
-`localeOptions` defaults to `{ useGrouping: false }`, so grouping separators are off unless you ask for them, and `maximumFractionDigits` is set to 20 whenever you do not supply it, so fractions are not rounded by default.
+`localeOptions` defaults to `{ useGrouping: false }`, so grouping separators are off unless you ask for them, and
+`maximumFractionDigits` is set to 20 whenever you do not supply it, so fractions are not rounded by default.
 
-The object form of `locale` is recognised only when the object contains a `locale` key; an object carrying only `localeOptions` is ignored and the defaults apply.
+The object form of `locale` is recognised only when the object contains a `locale` key; an object carrying only
+`localeOptions` is ignored and the defaults apply.
 
 `int` formats the value like `float` and then cuts the fractional part off, so it truncates rather than rounds.
 
@@ -119,7 +135,9 @@ interface DateTimeOptions extends CellOptions {
 }
 ```
 
-A `Date` instance is formatted as-is and `parseISOPrefix` is not applied to it. Any other value is parsed with date-fns' `parseISO` first, after `parseISOPrefix` has been prepended; a value `parseISO` cannot read makes formatting throw a `RangeError`.
+A `Date` instance is formatted as-is and `parseISOPrefix` is not applied to it. Any other value is parsed with date-fns'
+`parseISO` first, after `parseISOPrefix` has been prepended; a value `parseISO` cannot read makes formatting throw a
+`RangeError`.
 
 ## Custom renderers
 
@@ -136,7 +154,9 @@ function setCellRenderer(
 ): void
 ```
 
-`dataType` must be one of the renderer names listed above; new names cannot be added. The replacement is global — every grid in the application renders with it from that point on. Capture the current implementation with `getCellRenderers()` first if you need to keep it.
+`dataType` must be one of the renderer names listed above; new names cannot be added. The replacement is global — every
+grid in the application renders with it from that point on. Capture the current implementation with `getCellRenderers()`
+first if you need to keep it.
 
 ```typescript
 import { RenderableValue } from '@dynamicforms/vuetify-inputs';
@@ -146,11 +166,14 @@ setCellRenderer('plain', (value, rowValue, options) => new RenderableValue(value
 ```
 
 The transformer receives:
+
 - `value` — the (possibly transformed) cell value
 - `rowValue` — the full row object
-- `options` — the column's `rendererOptions` object, with internal per-grid/per-column state stamped onto it under symbol keys
+- `options` — the column's `rendererOptions` object, with internal per-grid/per-column state stamped onto it under
+  symbol keys
 
-The return value must be a `RenderableValue` (from `@dynamicforms/vuetify-inputs`). Its `classes` are combined with the column's `fieldName` and `cssClass` when the cell is built.
+The return value must be a `RenderableValue` (from `@dynamicforms/vuetify-inputs`). Its `classes` are combined with the
+column's `fieldName` and `cssClass` when the cell is built.
 
 ## `getCellRenderers()`
 
@@ -158,7 +181,8 @@ The return value must be a `RenderableValue` (from `@dynamicforms/vuetify-inputs
 function getCellRenderers(): RenderersMap
 ```
 
-`getCellRenderers()` returns a copy of the registry as it stands at the moment of the call. Use it to wrap an existing renderer:
+`getCellRenderers()` returns a copy of the registry as it stands at the moment of the call. Use it to wrap an existing
+renderer:
 
 ```typescript
 import { getCellRenderers, setCellRenderer } from '@dynamicforms/vue-grid';
@@ -173,4 +197,5 @@ setCellRenderer('int', (value, rowValue, options) => original(value, rowValue, o
 type RowValue = Record<string | symbol, any>;
 ```
 
-Each item in the `records` prop must satisfy this type. The `keyField` prop names the property used as a unique row identifier.
+Each item in the `records` prop must satisfy this type. The `keyField` prop names the property used as a unique row
+identifier.

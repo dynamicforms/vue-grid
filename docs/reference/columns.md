@@ -1,6 +1,7 @@
 # Column Definitions
 
-Columns are defined using `createColumn()` and passed to `<DfGrid>` via the `columns` prop. The grid supports both flat (single-layout) and responsive (multi-layout) column definitions.
+Columns are defined using `createColumn()` and passed to `<DfGrid>` via the `columns` prop. The grid supports both flat
+(single-layout) and responsive (multi-layout) column definitions.
 
 ## `createColumn()`
 
@@ -34,7 +35,9 @@ interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> {
 }
 ```
 
-`createColumn()` sets `sortable: true` on the column it builds; a `sortable` key in `otherOptions` overrides it. A `ColumnDefinition` written as a plain object literal has no such default, and a column without `sortable` cannot be sorted.
+`createColumn()` sets `sortable: true` on the column it builds; a `sortable` key in `otherOptions` overrides it. A
+`ColumnDefinition` written as a plain object literal has no such default, and a column without `sortable` cannot be
+sorted.
 
 `cssClass` is set on the column's header cell as well as its body cells. A header cell lays out its label and
 sorting indicator as a flex row, so `text-align` does not move them; the classes `text-right`, `text-end` and
@@ -83,7 +86,8 @@ Cookbook for a worked example.
 
 ## Responsive layouts
 
-To define multiple layouts that activate at different container widths, pass an array of `ResponsiveColumnDefinition` objects:
+To define multiple layouts that activate at different container widths, pass an array of `ResponsiveColumnDefinition`
+objects:
 
 ```typescript
 interface ResponsiveColumnDefinition {
@@ -100,11 +104,22 @@ type ResponsiveColumnDefinitions = ColumnDefinitionsList | ResponsiveColumnDefin
 single-line one) — see [Card layout CSS](/reference/df-grid#card-layout-css) for how it plugs into `--row-base` in
 your own CSS.
 
-The grid decides whether the array is responsive by looking at its first element: an element carrying `name` or `cssClass` together with `columns` marks the whole array as a list of layouts. Every entry must end up with a non-empty name — `name`, or `cssClass` when `name` is omitted — otherwise the grid throws `column definition <idx> must have a name or cssClasses assigned and non-empty`.
+The grid decides whether the array is responsive by looking at its first element: an element carrying `name` or
+`cssClass` together with `columns` marks the whole array as a list of layouts. Every entry must end up with a non-empty
+name — `name`, or `cssClass` when `name` is omitted — otherwise the grid throws
+`column definition <idx> must have a name or cssClasses assigned and non-empty`.
 
-The grid renders a hidden shadow grid for each layout from the first `secondaryShadowCount` records in display order and records the width that layout needs. A layout is measured again when more records are available to sample than its width was recorded from, so a grid that starts empty and receives its first page later is measured from that page rather than from its header alone. Records that change without growing the sample keep the recorded width; [`reMeasureLayouts()`](/reference/df-grid#exposed-methods) measures every layout again. When the container is resized or a recorded width changes, the grid emits `update:activeColumns` with the *name* of the widest layout whose recorded width still fits the container. If no layout fits, the active layout stays as it is.
+The grid renders a hidden shadow grid for each layout from the first `secondaryShadowCount` records in display order and
+records the width that layout needs. A layout is measured again when more records are available to sample than its width
+was recorded from, so a grid that starts empty and receives its first page later is measured from that page rather than
+from its header alone. Records that change without growing the sample keep the recorded width;
+[`reMeasureLayouts()`](/reference/df-grid#exposed-methods) measures every layout again. When the container is resized or
+a recorded width changes, the grid emits `update:activeColumns` with the *name* of the widest layout whose recorded
+width still fits the container. If no layout fits, the active layout stays as it is.
 
-The value of `activeColumns` is matched against the layout name — `name` when given, otherwise `cssClass`. When `activeColumns` is unset, or names no existing layout, the first layout in the array is used. A flat column list is treated as a single layout named `default` with an empty `cssClass`.
+The value of `activeColumns` is matched against the layout name — `name` when given, otherwise `cssClass`. When
+`activeColumns` is unset, or names no existing layout, the first layout in the array is used. A flat column list is
+treated as a single layout named `default` with an empty `cssClass`.
 
 ```typescript
 import { createColumn, filterColumns } from '@dynamicforms/vue-grid';
@@ -149,11 +164,14 @@ function filterColumns(
 ```
 
 Selectors can be:
+
 - `number` — picks column at that index
 - `string` — picks the first column with that `fieldName`
-- `{ fieldName: occurrence }` — picks the column with that `fieldName` at index `occurrence` (0-based) among all columns sharing the name; only the first entry of the object is read
+- `{ fieldName: occurrence }` — picks the column with that `fieldName` at index `occurrence` (0-based) among all columns
+  sharing the name; only the first entry of the object is read
 
-The returned list follows the order of the selectors, not the order of the columns. A column selected twice appears twice, and a selector that matches nothing is dropped.
+The returned list follows the order of the selectors, not the order of the columns. A column selected twice appears
+twice, and a selector that matches nothing is dropped.
 
 ## `useColumns()`
 
@@ -161,7 +179,9 @@ The returned list follows the order of the selectors, not the order of the colum
 function useColumns(props: GridProps, gridId: symbol)
 ```
 
-The composable `<DfGrid>` uses to resolve the `columns` prop down to a single active layout. `gridId` is a symbol identifying the grid instance; it is what the numeric renderers register their per-column formatting state under, and what releases it when the grid unmounts. The returned members are all computed refs:
+The composable `<DfGrid>` uses to resolve the `columns` prop down to a single active layout. `gridId` is a symbol
+identifying the grid instance; it is what the numeric renderers register their per-column formatting state under, and
+what releases it when the grid unmounts. The returned members are all computed refs:
 
 | Member | Description |
 |--------|-------------|
