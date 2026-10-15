@@ -7,6 +7,7 @@ npm install @dynamicforms/vue-grid
 ```
 
 In your `main.ts`:
+
 ```typescript
 import { DynamicFormsVueGrid } from '@dynamicforms/vue-grid';
 import '@dynamicforms/vue-grid/styles.css';
@@ -151,7 +152,8 @@ The example above covers a plain, read-only grid. From here:
 
 - **[Sorting](/reference/sorting)** — `sortable: true` on any column
 - **[Filtering](/reference/filtering)** — `filterable: true` on a column, `:show-filter-row="true"` on the grid
-- **[Responsive layouts](/reference/columns#responsive-layouts)** — multiple column sets that switch automatically with container width
+- **[Responsive layouts](/reference/columns#responsive-layouts)** — multiple column sets that switch automatically with
+  container width
 - **[Row selection](/reference/selection)** — shift+click, long-press, and `#groupActions` batch actions, built in
 
 The **[Cookbook](/guide/cookbook)** has copy-pasteable recipes for common tasks beyond a plain data column — clickable

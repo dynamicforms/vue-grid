@@ -85,7 +85,8 @@ default even/odd zebra striping entirely; include the logic yourself if you stil
 `selectionMode` — active selection mode (`null`, `'selection'`, `'exclusion'`, or `'non-select'`). Use with
 `v-model:selectionMode` for controlled selection. See [Selection](./selection).
 
-`selectionKeys` — set of selected (or excluded) row keys. Use with `v-model:selectionKeys`. See [Selection](./selection).
+`selectionKeys` — set of selected (or excluded) row keys. Use with `v-model:selectionKeys`. See
+[Selection](./selection).
 
 `recentlyAdded` — composable instance returned by `useRecentlyAdded`. Rows whose key is in the recently-added list
 get the `state-adding` CSS class, and flash arc overlays are rendered at the top/bottom edge of the body when newly
@@ -248,9 +249,10 @@ async function onRecordsReplaced() {
 
 ### Grid structure
 
-The grid renders the following layers from top to bottom. Each section carries a `data-section` attribute so you can target it from CSS or event handlers without relying on internal class names.
+The grid renders the following layers from top to bottom. Each section carries a `data-section` attribute so you can
+target it from CSS or event handlers without relying on internal class names.
 
-```
+```text
 ┌─────────────────────────────────────┐  data-section="toolbar"
 │  toolbar-start    │    toolbar-end  │  div.df-grid-toolbar  (only when a slot has content)
 ├─────────────────────────────────────┤  data-section="header"
@@ -280,9 +282,12 @@ The grid renders the following layers from top to bottom. Each section carries a
 | `summary-bar` | `div.df-summary-bar` | Present when `showSummaryBar` is `true`, `loading` is `true`, or `records` is empty. Rendered at the end of the scrolled content, after the last row |
 | `footer` | `div.df-grid-footer` | Present only when `footer-start` or `footer-end` slot has content |
 
-The grid's own mouse event handler (`processMouse`) reads `data-section` first and immediately ignores clicks that originate in `toolbar`, `filter`, `status-bar`, and `footer` — those sections never trigger row interactions or selection.
+The grid's own mouse event handler (`processMouse`) reads `data-section` first and immediately ignores clicks that
+originate in `toolbar`, `filter`, `status-bar`, and `footer` — those sections never trigger row interactions or
+selection.
 
-Both `div.df-grid-toolbar` and `div.df-grid-footer` use `display: flex; justify-content: space-between` and are only mounted when at least one of their two slots has content.
+Both `div.df-grid-toolbar` and `div.df-grid-footer` use `display: flex; justify-content: space-between` and are only
+mounted when at least one of their two slots has content.
 
 ### Row attributes
 
@@ -407,7 +412,8 @@ Read from your own rules; only `--row-base` isn't set on the grid container itse
 
 ## Row CSS classes
 
-The `rowClass` prop lets you attach per-row CSS classes based on row data or position. It receives the raw row object and its 0-based index, and its return value is passed directly to Vue's `:class` binding.
+The `rowClass` prop lets you attach per-row CSS classes based on row data or position. It receives the raw row object
+and its 0-based index, and its return value is passed directly to Vue's `:class` binding.
 
 ```vue
 <!-- Highlight negative amounts in red, keep zebra striping for the rest -->
@@ -429,7 +435,8 @@ The `rowClass` prop lets you attach per-row CSS classes based on row data or pos
 />
 ```
 
-When `rowClass` is omitted the default is `(item, index) => index % 2 === 0 ? 'even' : 'odd'`, which produces the standard zebra striping. Providing your own function replaces this default entirely.
+When `rowClass` is omitted the default is `(item, index) => index % 2 === 0 ? 'even' : 'odd'`, which produces the
+standard zebra striping. Providing your own function replaces this default entirely.
 
 ## Pull to refresh
 

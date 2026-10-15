@@ -2,7 +2,7 @@
 
 ## **Grid Structure (layers top → bottom)**
 
-```
+```text
 ┌─────────────────────────────────────┐
 │  toolbar-start    │    toolbar-end  │  slot, existing
 ├─────────────────────────────────────┤
@@ -46,21 +46,24 @@ A refactor to an array seems prudent
 
 ---
 
-# Out of scope
+## Out of scope
 
-## **Core Data Management**
+### **Core Data Management**
+
 - API-based data management (CRUD operations)
 - Pagination support (results + next URL format)
 
-## **Column Management**
+### **Column Management**
+
 - Dynamic column configuration via JSON definitions
 
-## **Sorting & Filtering**
+### **Sorting & Filtering**
+
 - Dynamic filter parameters
 
 ---
 
-# Road to 1.0
+## Road to 1.0
 
 1.0 is a promise that the public API will not break, not a promise that everything is finished.
 These are the things standing between the current state and that promise.
@@ -88,7 +91,7 @@ conditions until now. Give them time in real use before freezing the API around 
 
 ---
 
-## **Security: penetration test**
+### **Security: penetration test**
 
 A penetration test of the grid and of the `@dynamicforms/vuetify-inputs` render content it uses (`HtmlString`,
 `SimpleComponentDef`, markdown options): a record value, `transform`, `preRender`, `postRender`, `setCellRenderer()`,

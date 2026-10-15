@@ -27,11 +27,14 @@ features:
 
 # @dynamicforms/vue-grid
 
-A (not so) simple, (but hopefully) fast Vue 3 grid component with virtual scrolling, responsive layouts, and built-in sorting and filtering.
+A (not so) simple, (but hopefully) fast Vue 3 grid component with virtual scrolling, responsive layouts, and built-in
+sorting and filtering.
 
 ## Introduction
 
-`@dynamicforms/vue-grid` provides a single `<DfGrid>` component that renders large tabular datasets efficiently. Real rows share one CSS grid, so the browser resolves column widths natively from actual content; responsive layouts switch based on container width, and sorting and filtering work out of the box — locally or delegated to a backend.
+`@dynamicforms/vue-grid` provides a single `<DfGrid>` component that renders large tabular datasets efficiently. Real
+rows share one CSS grid, so the browser resolves column widths natively from actual content; responsive layouts switch
+based on container width, and sorting and filtering work out of the box — locally or delegated to a backend.
 
 ## Next steps
 

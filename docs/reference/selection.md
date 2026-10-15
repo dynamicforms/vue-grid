@@ -1,6 +1,7 @@
 # Selection
 
-The grid supports row selection out of the box. Selection is activated by the user through gestures and managed either internally (uncontrolled) or externally via `v-model` bindings (controlled).
+The grid supports row selection out of the box. Selection is activated by the user through gestures and managed either
+internally (uncontrolled) or externally via `v-model` bindings (controlled).
 
 ## Selection modes
 
@@ -15,9 +16,11 @@ type SelectionMode = null | 'selection' | 'exclusion' | 'non-select';
 | `'exclusion'` | The set of selected rows is **opt-out**: all rows are considered selected *except* those whose key is in `selectionKeys`. |
 | `'non-select'` | Selection cannot be activated by mouse or touch gestures. The programmer can still switch to another mode programmatically (e.g. via `v-model:selectionMode`). Normal click events fire as usual. |
 
-The distinction matters when you have a very large dataset and the user wants to select "everything except a few items" — exclusion mode lets you store only the exceptions.
+The distinction matters when you have a very large dataset and the user wants to select "everything except a few items"
+— exclusion mode lets you store only the exceptions.
 
-`'non-select'` is useful when you want to disable user-initiated selection (e.g. while a batch operation is in progress), or when selection should only be triggered by explicit application logic rather than user gestures.
+`'non-select'` is useful when you want to disable user-initiated selection (e.g. while a batch operation is in
+progress), or when selection should only be triggered by explicit application logic rather than user gestures.
 
 ## Activating selection
 
@@ -31,13 +34,17 @@ Users activate selection mode without any prop wiring:
 
 In `'non-select'` mode neither gesture changes the selection.
 
-Long-press relies on the `v-longpress` directive, which the grid does not register itself — it comes from installing the plugin: `app.use(DynamicFormsVueGrid)`, which registers it by default. When `<DfGrid>` is imported and used directly without that call, the directive is missing and long-press does nothing; shift+click remains the way to enter selection mode. See [Plugin options](/reference/index#plugin-options).
+Long-press relies on the `v-longpress` directive, which the grid does not register itself — it comes from installing the
+plugin: `app.use(DynamicFormsVueGrid)`, which registers it by default. When `<DfGrid>` is imported and used directly
+without that call, the directive is missing and long-press does nothing; shift+click remains the way to enter selection
+mode. See [Plugin options](/reference/index#plugin-options).
 
 Once active, a status bar appears at the bottom of the header area with:
 
 - **✕** (`mdi-close`) — cancels selection mode and clears all selected keys
 - **N items selected / excluded** — live count of keys in `selectionKeys`
-- **⇄** (`mdi-shuffle`, "Invert selection") — switches between `'selection'` and `'exclusion'` mode while keeping the same key set
+- **⇄** (`mdi-shuffle`, "Invert selection") — switches between `'selection'` and `'exclusion'` mode while keeping the
+  same key set
 - **`#groupActions` slot** (right-aligned) — populate with your own action buttons (delete, export, etc.)
 
 ## Props
@@ -76,7 +83,8 @@ When neither `selectionMode` nor `selectionKeys` props are passed, the grid mana
 </df-grid>
 ```
 
-The `update:selectionMode` and `update:selectionKeys` events still fire, so you can react to changes without taking control of the state.
+The `update:selectionMode` and `update:selectionKeys` events still fire, so you can react to changes without taking
+control of the state.
 
 ## Controlled mode (external state)
 
@@ -101,10 +109,14 @@ const selectionMode = ref<SelectionMode>(null);
 const selectedKeys = ref<Set<any>>(new Set());
 ```
 
-Both props shadow the grid's internal state: `selectionKeys` is a `Set`, so once it is bound the grid always shows the bound set and gestures change nothing on screen until the parent assigns the set carried by `update:selectionKeys`; `selectionMode` shadows the internal mode as soon as it is anything other than `null`. Use `v-model` on both, or handle the events and assign the values yourself — a one-way `:selection-keys` binding freezes the selection.
+Both props shadow the grid's internal state: `selectionKeys` is a `Set`, so once it is bound the grid always shows the
+bound set and gestures change nothing on screen until the parent assigns the set carried by `update:selectionKeys`;
+`selectionMode` shadows the internal mode as soon as it is anything other than `null`. Use `v-model` on both, or handle
+the events and assign the values yourself — a one-way `:selection-keys` binding freezes the selection.
 
 ::: tip
-You can bind only `selectionMode` and leave `selectionKeys` unbound — the grid will still manage the key set internally while you observe or control the mode externally.
+You can bind only `selectionMode` and leave `selectionKeys` unbound — the grid will still manage the key set internally
+while you observe or control the mode externally.
 :::
 
 ## Reading the selection
@@ -138,7 +150,8 @@ const selectedRecords = computed(() =>
 
 ## CSS classes
 
-The grid exposes CSS classes on the container and on each row card so you can style selection state purely in CSS without any JavaScript logic.
+The grid exposes CSS classes on the container and on each row card so you can style selection state purely in CSS
+without any JavaScript logic.
 
 ### Container classes
 
@@ -176,13 +189,18 @@ These classes are added to each row card **only while selection mode is active**
 The default `rowClass` prop already adds `even` and `odd` alternating row classes regardless of selection state.
 
 An explicit selection checkbox, as its own column rather than a row-card style change, is also possible — combining
-`postRender` with the CSS classes above. See [A dedicated selection checkbox column](/guide/cookbook#a-dedicated-selection-checkbox-column)
+`postRender` with the CSS classes above. See [A dedicated selection checkbox
+column](/guide/cookbook#a-dedicated-selection-checkbox-column)
 in the Cookbook for the full recipe.
 
 ## Click events and selection
 
-When selection mode is active, clicking a data row **toggles** the row instead of emitting the normal `click` event. `click` is emitted for data rows in two cases: when `selectionMode` is `null` and the shift key is not held, and when `selectionMode` is `'non-select'` (with or without shift).
+When selection mode is active, clicking a data row **toggles** the row instead of emitting the normal `click` event.
+`click` is emitted for data rows in two cases: when `selectionMode` is `null` and the shift key is not held, and when
+`selectionMode` is `'non-select'` (with or without shift).
 
-Shift+click activates selection mode when it is not yet active and emits no `click`; while a mode is already active it toggles the row, exactly like a regular click. In `'non-select'` mode shift+click changes nothing and emits `click` like any other click.
+Shift+click activates selection mode when it is not yet active and emits no `click`; while a mode is already active it
+toggles the row, exactly like a regular click. In `'non-select'` mode shift+click changes nothing and emits `click` like
+any other click.
 
 Header row clicks always emit `click` regardless of selection mode.

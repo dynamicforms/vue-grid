@@ -255,6 +255,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.3] - 2026-08-28
 
 ### Fixed
+
 - A column's sort indicator no longer disappears when its `sortable` config sets `key` (or `nulls`,
   `compare`, `locale`) without an explicit `direction` - e.g. a compound-key column such as
   `sortable: { key: ['width', 'height'] }`. The header computed whether to draw the indicator from
@@ -265,6 +266,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.2] - 2026-08-27
 
 ### Fixed
+
 - A column's header no longer draws sort-direction arrows when its `sortable` is `false`.
   `SortingIndicator` read `direction` and `index` but never `sortable`, so every header drew the
   asc/desc chevrons regardless of whether clicking them did anything - indistinguishable from an
@@ -277,6 +279,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.1] - 2026-08-22
 
 ### Changed
+
 - The peer range on `@dynamicforms/vuetify-inputs` moves to `^0.10.0`. That release rebuilds
   `<df-rtf-editor>` on TipTap instead of CKEditor 5, so the VitePress SSR plugin that stubbed out
   CKEditor's browser-only modules during pre-rendering (`docs/.vitepress/ssr-ckeditor-stub.ts`) has
@@ -285,6 +288,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2026-08-22
 
 ### Changed
+
 - The peer ranges move to `@dynamicforms/vue-forms@^0.17.1` and `@dynamicforms/vuetify-inputs@^0.9.2`, and `vue`
   rises to `^3.5.2` with `engines.node` at `>=22`. The last two are floors the peer libraries themselves impose:
   the type declarations vue-tsc emits for `MessagesWidget` take a `DefineComponent` with 20 type arguments, and
@@ -299,12 +303,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - 2026-08-14
 
 ### Added
+
 - Statement coverage raised from 74.94% to 95% with new specs for `use-excessive-scroll.ts`, `use-recently-added.ts`,
   `incoming-arc.vue`, `header-renderers.ts` and grid lifecycle behaviour (visible-range reporting, overflow
   learning, teardown), plus a dedicated auto-sizing spec and Playwright regression tests covering overlay and
   classic scrollbars.
 
 ### Fixed
+
 - The grid no longer overflows its container in a Vuetify app. Column widths are measured on a hidden shadow
   grid, absolutely positioned against `.df-grid.container`; without `position: relative` on that container the
   shadow stretched to whatever ancestor happened to be positioned instead - `.v-application__wrap`, the full page
@@ -328,6 +334,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.8] - 2026-08-13
 
 ### Added
+
 - `types` and `module` export conditions on the package manifest. Without `types`, TypeScript could not resolve
   `dist/index.d.ts` through the `.` export, so consumers got implicit `any` for the whole grid; `module` points
   bundlers that still read it at the ESM build instead of the UMD one.
@@ -337,6 +344,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.7] - 2026-08-01
 
 ### Added
+
 - Column sorting: clicking a header cycles a column through ascending, descending and unsorted (skipping
   descending where a column disallows it), multiple columns can be sorted at once, and sort state can be used
   either as an uncontrolled internal state or as a `v-model:sortState` bound by the consumer. A `sort` event
@@ -377,6 +385,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lower opacity automatically.
 
 ### Changed
+
 - The sort indicator direction is inverted: an ascending sort now shows the indicator that previously meant
   descending, since watching a descending-looking indicator while data was actually sorted ascending read as
   backwards.
@@ -384,6 +393,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   owning grid's id and column identity internally.
 
 ### Fixed
+
 - The published CSS path in the package manifest now points at `dist/dynamicforms-vue-grid.css`, matching the
   file the build actually emits, instead of the stale `dist/style.css`.
 - Row selection survives a reflow of the underlying data (sort, filter, or the record list changing shape)
@@ -394,6 +404,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.6] - 2025-09-07
 
 ### Added
+
 - Mouse handling on the grid: `click` and `dblclick` events report the row index, key, row data and the CSS
   classes of the clicked column.
 - A dedicated header component (`df-grid-header.vue`), with grid layout, mouse-event handling and per-column
@@ -405,17 +416,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   than any cell in a column no longer gets clipped.
 
 ### Changed
+
 - Responsive layout rendering is optimised to avoid redundant measurement passes.
 
 ## [0.1.4] - 2025-09-07
 
 ### Fixed
+
 - The shadow grid used for measuring column widths renders with the same markup as the visible grid again, after
   drifting out of sync with it.
 
 ## [0.1.3] - 2025-09-06
 
 ### Added
+
 - A cell renderer system: a `CellRendererTransformer` function per data type (`plain`, `md`, `color`, `checkbox`,
   `link`, `email`, `file`, `ip4`, `ip6`, `ip`, `date`, `time`, `datetime`, `int`, `float`, `decimal`), registered
   in a `DefaultRenderers` map that a consumer can extend via `setCellRenderer()`.
@@ -423,12 +437,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   CSS class.
 
 ### Changed
+
 - The card-based row rendering (`df-table.vue`) is replaced by `df-grid.vue`, rendering rows through the new cell
   renderer system instead of dumping raw field values.
 
 ## [0.1.0] - 2025-08-30
 
 ### Added
+
 - Initial release: a virtual-scrolling data grid for Vue 3, built on `vue-virtual-scroller`, rendering
   arbitrary records as user-supplied row cards with a shadow grid used to measure column widths for CSS grid
   layout.

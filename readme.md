@@ -1,10 +1,13 @@
 # @dynamicforms/vue-grid
 
-A (not so) simple, (but hopefully) fast Vue 3 grid component with virtual scrolling, responsive layouts, and built-in sorting and filtering.
+A (not so) simple, (but hopefully) fast Vue 3 grid component with virtual scrolling, responsive layouts, and built-in
+sorting and filtering.
 
 ## Introduction
 
-`@dynamicforms/vue-grid` provides a single `<DfGrid>` component that renders large tabular datasets efficiently. Column widths are measured automatically via shadow grids, responsive layouts switch based on container width, and sorting and filtering work out of the box — locally or delegated to a backend.
+`@dynamicforms/vue-grid` provides a single `<DfGrid>` component that renders large tabular datasets efficiently. Column
+widths are measured automatically via shadow grids, responsive layouts switch based on container width, and sorting and
+filtering work out of the box — locally or delegated to a backend.
 
 ## Features
 
@@ -13,12 +16,12 @@ A (not so) simple, (but hopefully) fast Vue 3 grid component with virtual scroll
 - Responsive column layouts — define multiple column sets, the grid activates the best fit based on container width
 - Built-in sorting — local multi-column sort with `natural-orderby`; external (server-side) sort supported
 - Built-in filtering — local filtering with string/number/boolean/date inputs; external filtering supported
-- Per-row CSS classes via `rowClass` callback — data-driven styling or conditional highlighting; defaults to zebra 
+- Per-row CSS classes via `rowClass` callback — data-driven styling or conditional highlighting; defaults to zebra
   striping
 - Flexible cell renderers — plain text, markdown, numbers, dates, links, checkboxes, colors, IP addresses, and more
 - `preRender` / `postRender` hooks for adding prefix/suffix content to any cell. Custom cell renderers support
 - Toolbar and footer slots for adding UI above and below the grid
-- Comprehensive events offer all data necessary to correctly identify the exact target of an event. Built-in event 
+- Comprehensive events offer all data necessary to correctly identify the exact target of an event. Built-in event
   handlers as well as support for handling the events separately
 - Overscroll indicator — elastic visual feedback when scrolling past the top or bottom of the content
 - Row selection — long-press or Shift+click a row to enter selection mode; `selection`, `exclusion` and `non-select`
@@ -101,7 +104,8 @@ columns can be placed and styled by name.
 
 ## TypeScript Support
 
-The library is written in TypeScript and provides full type definitions for all props, emits, column definitions, sort/filter state, and renderer options.
+The library is written in TypeScript and provides full type definitions for all props, emits, column definitions,
+sort/filter state, and renderer options.
 
 ## License
 
