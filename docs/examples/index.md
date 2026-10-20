@@ -16,6 +16,10 @@ and `@filter` events and update records from an async source.
 
 `transform`, `preRender`, `postRender`, `nullHandler` — customising cell display without writing a custom renderer.
 
+## [Built-in Renderers](./built-in-renderers)
+
+Every built-in renderer side by side, including the `-fast` variants.
+
 ## [Incoming Records Indicator](./incoming)
 
 `useRecentlyAdded` composable — arc flash overlay and row reveal animation when new records arrive.

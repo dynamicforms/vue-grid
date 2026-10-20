@@ -6,10 +6,11 @@ import { escapeHtml, safeUrl } from './safe-content';
 
 import { CellOptions, CellOptionsInternal } from '@/table/cell-renderers/interfaces';
 
-// the value is a style property set through the CSS object model: it cannot leave the property
+// The element is the grid cell itself, stretched to the row; the swatch is its ::before. The value is a
+// custom property set through the CSS object model: it cannot leave the property.
 export const color = (value: any): SimpleComponentDef => ({
   componentName: 'div',
-  componentProps: { class: 'df-cell-color', style: { backgroundColor: String(value ?? '') } },
+  componentProps: { class: 'df-cell-color', style: { '--df-cell-color': String(value ?? '') } },
 });
 
 const cbOptions = {
@@ -33,28 +34,35 @@ export const checkbox = (value: any): string => {
   }
 };
 
+export interface LinkOptions extends CellOptions {
+  /** The URL schemes a link in the column may take. Default: the schemes `setAllowedUrlSchemes` sets. */
+  urlSchemes?: readonly string[];
+}
+
 /**
- * A link to `href` showing `text`, or `text` alone where `href` takes a scheme `safeUrl` refuses. `extra` are further
- * props of the `<a>`.
+ * A link to `href` showing `text`, or `text` alone where the scheme of `href` is not one of `schemes` (by default the
+ * schemes `setAllowedUrlSchemes` sets). `extra` are further props of the `<a>`.
  */
 export const anchor = (
   href: unknown,
   text: string,
   extra: Record<string, unknown> = {},
+  schemes?: readonly string[],
 ): SimpleComponentDef | string => {
-  const url = safeUrl(href);
+  const url = safeUrl(href, schemes);
   if (url === null) return text;
   return { componentName: 'a', componentProps: { href: url, textContent: text, ...extra } };
 };
 
-export const link = (value: any): SimpleComponentDef | string => anchor(value, String(value ?? ''));
+export const link = (value: any, schemes?: readonly string[]): SimpleComponentDef | string =>
+  anchor(value, String(value ?? ''), {}, schemes);
 
-export const email = (value: any): SimpleComponentDef | string => {
+export const email = (value: any, schemes?: readonly string[]): SimpleComponentDef | string => {
   const match = String(value).match(/^([^<]+)<.*>$|^([^@]+)@/);
   let name = String(value);
   if (match && match.length >= 1 && match[1]) name = match[1].trim();
   if (match && match.length >= 2 && match[2]) name = match[2];
-  return anchor(`mailto:${value}`, name);
+  return anchor(`mailto:${value}`, name, {}, schemes);
 };
 
 // `text` is escaped already: an IPv6 address passes its escaped IPv4 part

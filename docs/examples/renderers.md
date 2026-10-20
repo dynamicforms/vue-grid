@@ -11,10 +11,6 @@ The grid below combines all four options: a coloured status dot injected with `p
 falling back to `null-empty` for the missing salaries, a percentage `transform` with a bar appended by `postRender`, the
 `date` renderer with a custom `format` string (`MMM d, yyyy`), and the `checkbox` renderer.
 
-The grid below combines all four options: a coloured status dot injected with `preRender`, a currency `transform`
-falling back to `null-empty` for the missing salaries, a percentage `transform` with a bar appended by `postRender`, the
-`date` renderer with a custom `format` string (`MMM d, yyyy`), and the `checkbox` renderer.
-
 <table-renderers/>
 
 <script setup>

@@ -5,14 +5,39 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.1] - Unreleased
+## [0.7.2] - 2026-10-20
+
+### Added
+
+- `link-fast`, `email-fast`, `file-fast` and `null-null-fast` renderers: they render the `<a>` or the framed `null`
+  as the cell itself, one element less per cell. The element is stretched to the cell's grid area: the whole cell is
+  the link, a click anywhere in a `file-fast` cell does not reach the row, and the `null` frame is drawn around the
+  whole cell.
+- `setAllowedUrlSchemes()`, `getAllowedUrlSchemes()` and `defaultUrlSchemes`: the URL schemes a link in a cell may
+  take, for every grid; the grids render their links again when they are set. The `urlSchemes` renderer option of
+  `link`, `email`, `file` and their `-fast` variants sets them for one column. The default remains `http`, `https`,
+  `mailto` and `tel`.
+- The Built-in Renderers example shows every built-in renderer.
+
+### Fixed
+
+- `color`: the cell keeps the size of its grid area and the swatch is a 1.25em square centred vertically in it. The
+  renderer's element is the cell itself, so the swatch's size and `background-color` were applied to the whole cell:
+  it was not square and sat at the top of the row. The value is now passed as the `--df-cell-color` custom property
+  and drawn by the cell's `::before`.
+- `link`, `email`, `file`: the `<a>` is put in a `div` that is the cell, so the link is as wide as its text. The `<a>`
+  was the cell itself, stretched to its grid area, and a click anywhere in a `file` cell did not reach the row.
+- `null-null`: the text is put in a `span` with the CSS class `df-cell-null`, in a `div` that is the cell, so the
+  frame is drawn around the text. The class was on the cell, and the frame was drawn around the whole cell.
+
+## [0.7.1] - 2026-10-13
 
 ### Fixed
 
 - The grid no longer throws when `records` shrinks below the first mounted row while the body is scrolled down, e.g.
   when the records are cleared or filtered after more rows have been loaded.
 
-## [0.7.0] - Unreleased
+## [0.7.0] - 2026-10-13
 
 ### Changed
 

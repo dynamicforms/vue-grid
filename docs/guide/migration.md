@@ -33,8 +33,9 @@ import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-input
 ### A value is rendered as text
 
 A cell value, and a string returned by `transform`, `preRender` or `postRender`, is rendered as text: markup in it is
-shown as written. `link` and `file` render a URL whose scheme is not `http`, `https`, `mailto` or `tel` as text, and
-`file` renders a link with `target="_blank"` in place of an inline `onclick` script. HTML is returned as an
+shown as written. `link` and `file` render a URL whose scheme is not allowed as text (by default `http`, `https`,
+`mailto` and `tel` are; see [URL schemes](/reference/renderers#url-schemes-link-email-file)), and `file` renders a link
+with `target="_blank"` in place of an inline `onclick` script. HTML is returned as an
 `HtmlString`; an element with props or handlers as a `SimpleComponentDef`:
 
 ```typescript
