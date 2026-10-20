@@ -1,3 +1,7 @@
+---
+description: 'Live Vue 3 data grid examples: responsive layouts over 10 000 rows, server-side sorting and filtering, cell renderers and an incoming records indicator.'
+---
+
 # Examples
 
 Practical demos with working code. Each example focuses on a specific feature area.

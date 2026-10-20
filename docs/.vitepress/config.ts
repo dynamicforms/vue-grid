@@ -3,7 +3,12 @@ import { defineConfig } from 'vitepress';
 
 export default defineConfig({
   title: 'DynamicForms Vue Grid',
-  description: 'A (not so) simple, (but hopefully) fast vue grid component.',
+  description: 'Vue 3 data grid with responsive row layouts: picks the layout that fits the container, from table line to multi-line card. Virtual scroll, sort, filter.',
+  srcExclude: ['readme.md'],
+  transformHead({ pageData, siteConfig }) {
+    const path = pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '.html');
+    return [['link', { rel: 'canonical', href: `https://docs.velis.si${siteConfig.site.base}${path}` }]];
+  },
   themeConfig: {
     logo: '/logo.png',
     nav: [

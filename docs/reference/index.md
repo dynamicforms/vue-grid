@@ -1,3 +1,7 @@
+---
+description: 'API reference for the Vue 3 data grid: DfGrid props, events and methods, column definitions, responsive layouts, sorting, filtering, selection, renderers.'
+---
+
 # Reference
 
 This section documents the parts of `@dynamicforms/vue-grid` you use to build a grid: the components, the column,

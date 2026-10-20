@@ -1,4 +1,6 @@
 ---
+title: Vue 3 data grid with responsive layouts
+description: 'Responsive Vue 3 data grid: rows are CSS grid cards whose layout follows the container width. Virtual scrolling, sorting, filtering, row selection.'
 layout: home
 hero:
   name: DynamicForms Vue Grid
