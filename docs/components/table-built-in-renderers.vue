@@ -35,7 +35,7 @@ const values: Record<Exclude<Renderer, `${string}-fast`>, unknown[]> = {
   md: ['**bold**', '_italic_', '`code`'],
   color: ['#e53935', 'rgb(67 160 71)', 'hsl(210 80% 55%)'],
   checkbox: [true, false, null],
-  link: ['https://w3.org', 'https://vuejs.org', 'javascript:alert(1)'],
+  link: ['https://w3.org', 'https://vuejs.org', 'ftp://ftp.example.com'],
   email: ['ana@example.com', 'Bor Novak <bor@example.com>', 'info@example.com'],
   file: ['/files/report.pdf', '/files/photo.jpg', '/files/archive/data.csv'],
   ip4: ['192.168.0.1', '10.0.0.12', '8.8.8.8'],

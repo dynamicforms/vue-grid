@@ -26,8 +26,8 @@ Each link has a tinted background, so its box is visible. In `link`, `email` and
 and a click beside it reaches the row. In the `-fast` variants the link is the whole cell, and a click anywhere in a
 `file-fast` cell does not reach the row. The line below the grid shows the key of the last row clicked.
 
-The third `link` value is `javascript:alert(1)`: a URL whose scheme is not `http`, `https`, `mailto` or `tel` renders
-as text, without a link.
+The third `link` value is `ftp://ftp.example.com`: a URL whose scheme is not `http`, `https`, `mailto` or `tel`
+renders as text, without a link.
 
 <TableBuiltInRenderers :columns="['link', 'link-fast', 'email', 'email-fast', 'file', 'file-fast']" clicks/>
 
