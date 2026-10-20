@@ -25,6 +25,8 @@ export default defineConfig({
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      // On a 4 vCPU CI runner, 4 WebKit workers push the scroll-integrity tests past their timeout
+      workers: 2,
     },
   ],
 
