@@ -1,7 +1,7 @@
 <template>
   <div class="built-in-renderers" :style="{ '--columns': columns.length }">
     <df-grid
-      :columns="columns"
+      :columns="gridColumns"
       :records="records"
       key-field="id"
       style="height: 10em"
@@ -60,7 +60,7 @@ const records = [0, 1, 2].map((row) =>
   Object.fromEntries([['id', row + 1], ...parsed.map((column) => [column.field, column.rowValues[row]])]),
 );
 
-const columns = parsed.map(({ field, renderer, nullHandler }) => {
+const gridColumns = parsed.map(({ field, renderer, nullHandler }) => {
   const label = nullHandler ? `${renderer} · ${nullHandler}` : renderer;
   if (nullHandler === 'default') return createColumn(field, label, renderer);
   // an empty `rendererOptions` leaves `null` to the column's own renderer, rather than to the default `null-null`
