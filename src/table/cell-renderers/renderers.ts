@@ -6,7 +6,8 @@
  * A cell renderer is a function `(value, rowValue, options) => RenderableValue`.
  * `DefaultRenderers` ships built-in implementations for every supported type:
  *   null-empty, null-null, plain, header, md, color, checkbox, link, email, file,
- *   ip4, ip6, ip, date, time, datetime, int, float, decimal.
+ *   ip4, ip6, ip, date, time, datetime, int, float, decimal, and the `-fast` variants
+ *   null-null-fast, link-fast, email-fast, file-fast.
  *
  * `wrapWithPrePost` wraps a main `RenderableValue` with optional pre/post render values when
  * `preRender`/`postRender` are configured on the options. It is exported so a `ColumnDefinition.renderer`
@@ -25,6 +26,7 @@
  */
 import {
   HtmlString,
+  isSimpleComponentDef,
   MdString,
   type RenderContentNonCallable,
   RenderableValue,
@@ -45,6 +47,17 @@ const html = (value: string): RenderableValue => new RenderableValue(new HtmlStr
 const content = (value: RenderContentNonCallable): RenderableValue => new RenderableValue(value);
 
 const text = (value: unknown): RenderableValue => new RenderableValue(String(value ?? ''));
+
+// The element of a component is the cell itself, stretched to its grid area. An element is put in a `div` that is the
+// cell, so that it keeps its own size; text is put in such a `div` by MessagesWidget.
+const inCell = (value: RenderContentNonCallable): RenderContentNonCallable =>
+  isSimpleComponentDef(value) ? { componentName: 'div', children: value } : value;
+
+const nullText = (): SimpleComponentDef => ({
+  componentName: 'span',
+  componentProps: { class: 'df-cell-null' },
+  children: translate('NullValue'),
+});
 
 const t = (value: any, rowValue: RowValue, options: CellOptions) =>
   options?.transform ? options.transform(value, rowValue) : value;
@@ -95,6 +108,10 @@ export interface RendererOptionsMap {
   link: CellOptions;
   email: CellOptions;
   file: CellOptions;
+  'null-null-fast': CellOptions;
+  'link-fast': CellOptions;
+  'email-fast': CellOptions;
+  'file-fast': CellOptions;
   ip4: CellOptions;
   ip6: CellOptions;
   ip: CellOptions;
@@ -112,8 +129,7 @@ export type RenderersMap = {
 
 export const DefaultRenderers: RenderersMap = {
   'null-empty': (value, rowValue, options) => wrapWithPrePost(new RenderableValue(''), value, rowValue, options),
-  'null-null': (value, rowValue, options) =>
-    wrapWithPrePost(new RenderableValue(translate('NullValue'), 'df-cell-null'), value, rowValue, options),
+  'null-null': (value, rowValue, options) => wrapWithPrePost(content(inCell(nullText())), value, rowValue, options),
   plain: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
     wrapWithPrePost(text(t(value, rowValue, options)), value, rowValue, options),
   header: (value: any, rowValue: RowValue, options: CellOptionsInternal<HeaderOptions>) =>
@@ -125,10 +141,21 @@ export const DefaultRenderers: RenderersMap = {
   checkbox: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
     wrapWithPrePost(html(checkbox(t(value, rowValue, options))), value, rowValue, options),
   link: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(content(link(t(value, rowValue, options))), value, rowValue, options),
+    wrapWithPrePost(content(inCell(link(t(value, rowValue, options)))), value, rowValue, options),
   email: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(content(email(t(value, rowValue, options))), value, rowValue, options),
+    wrapWithPrePost(content(inCell(email(t(value, rowValue, options)))), value, rowValue, options),
   file: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
+    wrapWithPrePost(content(inCell(file(t(value, rowValue, options)))), value, rowValue, options),
+  // The -fast renderers render one element less: the `<a>` or the framed `null` is the cell itself, stretched to its
+  // grid area. The `null` frame is drawn around the whole cell, the whole cell is the link, and a click anywhere in a
+  // `file-fast` cell does not reach the row.
+  'null-null-fast': (value, rowValue, options) =>
+    wrapWithPrePost(new RenderableValue(translate('NullValue'), 'df-cell-null'), value, rowValue, options),
+  'link-fast': (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
+    wrapWithPrePost(content(link(t(value, rowValue, options))), value, rowValue, options),
+  'email-fast': (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
+    wrapWithPrePost(content(email(t(value, rowValue, options))), value, rowValue, options),
+  'file-fast': (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
     wrapWithPrePost(content(file(t(value, rowValue, options))), value, rowValue, options),
   ip4: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
     wrapWithPrePost(html(ip4(t(value, rowValue, options))), value, rowValue, options),

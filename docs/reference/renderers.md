@@ -19,17 +19,36 @@ Every column has a `renderer` that determines how its value is displayed. Render
 | `color` | string | Renders a 1.25em square colour swatch, centred vertically in the cell: the value is the swatch's `background-color`, passed as the `--df-cell-color` custom property of the cell. |
 | `link` | string | Renders a hyperlink with the value as its text. A URL whose scheme is not `http`, `https`, `mailto` or `tel` renders as text. |
 | `email` | string | Renders a `mailto:` link. |
-| `file` | string | Renders a link to the file, opened in a new tab, with the file name as its text. A click on it does not reach the row. A URL whose scheme is not `http`, `https`, `mailto` or `tel` renders as text. |
+| `file` | string | Renders a link to the file, opened in a new tab, with the file name as its text. A click on the link does not reach the row; a click beside it does. A URL whose scheme is not `http`, `https`, `mailto` or `tel` renders as text. |
 | `ip4` | string | IPv4 address. |
 | `ip6` | string | IPv6 address. |
 | `ip` | string | Auto-detects IPv4 or IPv6. |
 | `null-empty` | any | Renders an empty cell. It does not look at the value; it exists to be named as a `nullHandler`. |
-| `null-null` | any | Renders the text `null` inside a `div` with the CSS class `df-cell-null`. It does not look at the value; it exists to be named as a `nullHandler`. |
+| `null-null` | any | Renders the text `null` in a `span` with the CSS class `df-cell-null`, which frames it. It does not look at the value; it exists to be named as a `nullHandler`. |
+| `link-fast`, `email-fast`, `file-fast`, `null-null-fast` | as without `-fast` | One element less per cell: see [Cell element](#cell-element). |
 | `header` | — | Internal renderer for header cells. Not for data columns. |
+
+## Cell element
+
+Every cell fills its grid area: it is stretched to the width of its column and the height of its row. Text and HTML are
+rendered in a `div` that is the cell. `link`, `email`, `file` and `null-null` put their element (the `<a>`, or the `span`
+with `df-cell-null`) in a `div` that is the cell, so the element keeps its own size inside it. `color` draws its swatch
+as the cell's `::before`.
+
+The `-fast` variants render that element as the cell itself, without the `div`. The element is then stretched to the
+grid area:
+
+- `link-fast`, `email-fast`, `file-fast`: the cell is the `<a>`, so the whole cell is the link. A click anywhere in a
+  `file-fast` cell does not reach the row.
+- `null-null-fast`: the cell is a `div` with the text `null` and the CSS class `df-cell-null`, so the frame is drawn
+  around the whole cell.
+
+The [Built-in Renderers](/examples/built-in-renderers) example shows both.
 
 ## Common options (`CellOptions`)
 
-Renderers accept these base options via `rendererOptions`. `null-empty`, `null-null` and `header` ignore `transform`;
+Renderers accept these base options via `rendererOptions`. `null-empty`, `null-null`, `null-null-fast` and `header`
+ignore `transform`;
 every other renderer applies it.
 
 ```typescript
@@ -45,10 +64,10 @@ The `transform` function receives the raw cell value and the full row object, an
 be rendered.
 
 A value from the record is rendered as text: the built-in renderers escape it where they build HTML (`int`, `float`,
-`decimal`, `ip4`, `ip6`, `ip`), and set it as a prop where they render an element (`link`, `email`, `file`, `color`).
-A string returned by `transform`, `preRender` or `postRender` is text as well. HTML is returned as a
-`RenderableValue` of an `HtmlString` from `@dynamicforms/vuetify-inputs`, which is rendered as it is: the application
-escapes or sanitizes whatever it puts into it from a record.
+`decimal`, `ip4`, `ip6`, `ip`), and set it as a prop where they render an element (`link`, `email`, `file`, `color`
+and the `-fast` variants). A string returned by `transform`, `preRender` or `postRender` is text as well. HTML is
+returned as a `RenderableValue` of an `HtmlString` from `@dynamicforms/vuetify-inputs`, which is rendered as it is:
+the application escapes or sanitizes whatever it puts into it from a record.
 
 A column that specifies no `rendererOptions` at all is given `{ nullHandler: 'null-null' }`, so its `null` and
 `undefined` cells are rendered by `null-null`. As soon as you supply a `rendererOptions` object, that default is gone:
@@ -173,7 +192,9 @@ The transformer receives:
   symbol keys
 
 The return value must be a `RenderableValue` (from `@dynamicforms/vuetify-inputs`). Its `classes` are combined with the
-column's `fieldName` and `cssClass` when the cell is built.
+column's `fieldName` and `cssClass` when the cell is built. Text, markdown and HTML are rendered in a `div` that is the
+cell. The element of a `SimpleComponentDef` is the cell itself and is stretched to the grid area; to keep its own size,
+it is given as the child of a `div`: `{ componentName: 'div', children: element }`.
 
 ## `getCellRenderers()`
 

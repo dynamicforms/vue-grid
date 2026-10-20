@@ -75,7 +75,8 @@ type CellRendererTransformer = (
 The function is called directly instead of looking up a renderer in the registry, and takes full ownership of the
 cell's main content — no `transform` or type-specific formatting runs, since there is no registry renderer in the
 loop at all. It still composes with `preRender`/`postRender`: whatever the function returns is wrapped exactly the
-way a built-in renderer wraps its own output.
+way a built-in renderer wraps its own output. An element it returns is the cell itself, stretched to its grid area;
+see [Custom renderers](./renderers#custom-renderers).
 
 This is the same `CellRendererTransformer` type `setCellRenderer()` uses to replace a *named* renderer application-wide
 (see [Cell Renderers](./renderers#custom-renderers)); passing one directly as `renderer` instead scopes it to a
