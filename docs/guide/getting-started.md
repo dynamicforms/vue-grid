@@ -1,3 +1,7 @@
+---
+description: 'Install @dynamicforms/vue-grid, register the Vue 3 plugin and render a first <DfGrid> data grid from columns, records and a key field.'
+---
+
 # Getting Started
 
 ## Installation
