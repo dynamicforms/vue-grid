@@ -6,11 +6,15 @@
  */
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-const grid = (page: Page, renderer: string) =>
-  page.locator('.built-in-renderers').filter({ has: page.locator(`.df-grid.header .df-grid.cell.${renderer}`) });
+// a column of the demo has its field as a CSS class; the `null` columns are `int-<nullHandler>`, `null` in row 1
+const grid = (page: Page, field: string) =>
+  page.locator('.built-in-renderers').filter({ has: page.locator(`.df-grid.header .df-grid.cell.${field}`) });
 
-const firstCell = (page: Page, renderer: string) =>
-  grid(page, renderer).locator(`.df-anchored .df-grid.cell.${renderer}`).first();
+const cellAt = (page: Page, field: string, row = 0) =>
+  grid(page, field).locator(`.df-anchored .df-grid.cell.${field}`).nth(row);
+
+const nullRow: Record<string, number> = { 'int-null-null': 1, 'int-null-null-fast': 1 };
+const firstCell = (page: Page, field: string) => cellAt(page, field, nullRow[field] ?? 0);
 
 const width = async (locator: Locator) => (await locator.boundingBox())!.width;
 
@@ -21,7 +25,7 @@ test.describe('built-in renderers', () => {
   });
 
   test('a cell fills its grid area', async ({ page }) => {
-    for (const renderer of ['color', 'null-null', 'link', 'email', 'file']) {
+    for (const renderer of ['color', 'int-null-null', 'link', 'email', 'file']) {
       // eslint-disable-next-line no-await-in-loop -- one measurement after another
       const size = await firstCell(page, renderer).evaluate((cell) => {
         // every column of the demo is as wide as the first, and every cell of a row is as tall as the row
@@ -46,7 +50,7 @@ test.describe('built-in renderers', () => {
     expect(swatch.height).toBeCloseTo(1.25 * swatch.fontSize, 0);
 
     for (const [renderer, inner] of [
-      ['null-null', '.df-cell-null'],
+      ['int-null-null', '.df-cell-null'],
       ['link', 'a'],
       ['email', 'a'],
       ['file', 'a'],
@@ -62,7 +66,14 @@ test.describe('built-in renderers', () => {
       // eslint-disable-next-line no-await-in-loop -- one renderer after another
       expect(await firstCell(page, renderer).evaluate((cell) => cell.tagName), renderer).toBe('A');
     }
-    await expect(firstCell(page, 'null-null-fast')).toHaveClass(/df-cell-null/);
+    await expect(firstCell(page, 'int-null-null-fast')).toHaveClass(/df-cell-null/);
+  });
+
+  test('a null in a column is rendered with its nullHandler, null-null without rendererOptions', async ({ page }) => {
+    await expect(cellAt(page, 'int-default', 1).locator('.df-cell-null')).toHaveText('null');
+    await expect(cellAt(page, 'int-null-null', 1).locator('.df-cell-null')).toHaveText('null');
+    await expect(cellAt(page, 'int-null-empty', 1)).toHaveText('');
+    await expect(cellAt(page, 'int-null-empty', 0)).toHaveText('7');
   });
 
   test('a click beside the link of a file cell reaches the row, in a file-fast cell it does not', async ({ page }) => {

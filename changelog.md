@@ -26,14 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `null-null`: the text is put in a `span` with the CSS class `df-cell-null`, in a `div` that is the cell, so the
   frame is drawn around the text. The class was on the cell, and the frame was drawn around the whole cell.
 
-## [0.7.1] - Unreleased
+## [0.7.1] - 2026-10-13
 
 ### Fixed
 
 - The grid no longer throws when `records` shrinks below the first mounted row while the body is scrolled down, e.g.
   when the records are cleared or filtered after more rows have been loaded.
 
-## [0.7.0] - Unreleased
+## [0.7.0] - 2026-10-13
 
 ### Changed
 

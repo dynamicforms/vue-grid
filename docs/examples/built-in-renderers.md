@@ -6,26 +6,30 @@ its grid area, and a swatch, a link or the framed `null` keeps its own size insi
 
 ## Text, numbers and dates
 
-<TableBuiltInRenderers :renderers="['plain', 'md', 'checkbox', 'int', 'float', 'decimal']"/>
+<TableBuiltInRenderers :columns="['plain', 'md', 'checkbox', 'int', 'float', 'decimal']"/>
 
-<TableBuiltInRenderers :renderers="['date', 'time', 'datetime']"/>
+<TableBuiltInRenderers :columns="['date', 'time', 'datetime', 'color']"/>
 
-<TableBuiltInRenderers :renderers="['ip4', 'ip6', 'ip']"/>
+<TableBuiltInRenderers :columns="['ip4', 'ip6', 'ip']"/>
 
-## Colour and `null`
+## `null` values
 
-`null-empty`, `null-null` and `null-null-fast` are given `null` in every row. `null-null-fast` frames the whole cell.
+The same `int` column, with a `null` in the second row, rendered with each `nullHandler`. The first column has no
+`rendererOptions`, so the grid renders its `null` with `null-null`. `null-null` frames the text, `null-null-fast` frames
+the whole cell.
 
-<TableBuiltInRenderers :renderers="['color', 'null-empty', 'null-null', 'null-null-fast']"/>
+<TableBuiltInRenderers :columns="['int:default', 'int:null-empty', 'int:null-null', 'int:null-null-fast']"/>
 
 ## Links
 
-The third `link` value has a `javascript:` URL and renders as text; the third `file` value is empty. In `link`,
-`email` and `file` the link is as wide as its text, and a click beside it reaches the row. In the `-fast` variants the
-link is the whole cell, and a click anywhere in a `file-fast` cell does not reach the row. The line below the grid
-shows the key of the last row clicked.
+Each link has a tinted background, so its box is visible. In `link`, `email` and `file` the link is as wide as its text,
+and a click beside it reaches the row. In the `-fast` variants the link is the whole cell, and a click anywhere in a
+`file-fast` cell does not reach the row. The line below the grid shows the key of the last row clicked.
 
-<TableBuiltInRenderers :renderers="['link', 'link-fast', 'email', 'email-fast', 'file', 'file-fast']" clicks/>
+The third `link` value is `javascript:alert(1)`: a URL whose scheme is not `http`, `https`, `mailto` or `tel` renders
+as text, without a link.
+
+<TableBuiltInRenderers :columns="['link', 'link-fast', 'email', 'email-fast', 'file', 'file-fast']" clicks/>
 
 <script setup>
 import TableBuiltInRenderers from '../components/table-built-in-renderers.vue';
