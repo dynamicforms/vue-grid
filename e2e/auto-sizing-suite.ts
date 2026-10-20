@@ -34,6 +34,8 @@
 
 import { expect, Page, test } from '@playwright/test';
 
+import { longPressUntilSelection, waitForGridSettled } from './grid-settled';
+
 // Sub-pixel slack: track widths are fractional, clientWidth/scrollWidth are integers.
 const EPS = 1.5;
 
@@ -118,9 +120,8 @@ async function readMetrics(page: Page): Promise<GridMetrics> {
 }
 
 // `readMetrics` right after a resize can catch the header mid-sync: `syncHeaderColumns` is
-// throttled (100ms) independently of `waitForStableWidth`'s own settle window, which only tracks
-// the *container's* width, not whether the header has actually re-read the body's latest
-// `grid-template-columns` yet. Polling for the header's own first field to have caught up with
+// throttled (100ms), and a settled grid (see `waitForGridSettled`) only says that nothing changed
+// for a while, not that the header has re-read the body's latest `grid-template-columns`. Polling for the header's own first field to have caught up with
 // the body's is a direct, cause-agnostic proxy for "the sync throttle has actually fired" — far
 // cheaper than teaching every call site its own extra wait. It also requires the header and body
 // to report the *same active layout class* before trusting a field-position match: a resize can
@@ -208,40 +209,11 @@ async function expectGridConsistent(page: Page, label: string) {
   return m;
 }
 
-// The docs site's theme registers many weight/style variants of its body font, most of which
-// load lazily — only once some rendered text actually needs that particular weight — rather than
-// upfront. A variant that finishes loading after this page's initial paint reflows whatever text
-// uses it, which can change a shadow grid's own measured natural width (and, downstream, which
-// layout the width-based picker settles on) well after `document.fonts.ready` first resolves.
-// Waiting for the container's own measured width to stop moving is a direct, cause-agnostic
-// stand-in for "layout has actually settled" — cheaper and more robust than trying to name every
-// specific thing that can still be in flight.
-async function waitForStableWidth(page: Page, selector: string, timeoutMs = 8_000) {
-  const deadline = Date.now() + timeoutMs;
-  let lastWidth = -1;
-  let stableSince = Date.now();
-  // eslint-disable-next-line no-await-in-loop -- each read must follow the previous one's wait
-  while (Date.now() < deadline) {
-    // eslint-disable-next-line no-await-in-loop
-    const width = await page.evaluate((sel) => document.querySelector(sel)?.getBoundingClientRect().width ?? -1, selector);
-    if (width !== lastWidth) {
-      lastWidth = width;
-      stableSince = Date.now();
-    } else if (Date.now() - stableSince >= 400) {
-      return;
-    }
-    // eslint-disable-next-line no-await-in-loop
-    await page.waitForTimeout(100);
-  }
-}
-
 async function gotoGrid(page: Page) {
   await page.goto('/examples/table');
   await page.waitForSelector('.df-grid.container', { timeout: 20_000 });
   await page.waitForSelector('.df-grid.card[data-idx]', { timeout: 10_000 });
-  // Let the measure → copy → re-measure round trip settle.
-  await page.waitForTimeout(1_500);
-  await waitForStableWidth(page, '.df-grid.container');
+  await waitForGridSettled(page);
 }
 
 export function autoSizingSuite(mode: string, expectScrollbar: (width: number) => void) {
@@ -262,8 +234,7 @@ export function autoSizingSuite(mode: string, expectScrollbar: (width: number) =
     /* eslint-disable no-await-in-loop -- each width must settle before the next one is applied */
     for (const width of [1600, 1280, 900, 700, 500]) {
       await page.setViewportSize({ width, height: 800 });
-      await page.waitForTimeout(1_000);
-      await waitForStableWidth(page, '.df-grid.container');
+      await waitForGridSettled(page);
       await expectGridConsistent(page, `${mode} @ ${width}`);
     }
     /* eslint-enable no-await-in-loop */
@@ -272,8 +243,7 @@ export function autoSizingSuite(mode: string, expectScrollbar: (width: number) =
   test(`[${mode}] narrowing the viewport switches to a narrower layout`, async ({ page }) => {
     await gotoGrid(page);
     await page.setViewportSize({ width: 1600, height: 800 });
-    await page.waitForTimeout(1_500);
-    await waitForStableWidth(page, '.df-grid.container');
+    await waitForGridSettled(page);
     const wide = await expectGridConsistent(page, `${mode} wide`);
 
     // Secondary shadow grids only measure once each (see the comment above the secondary
@@ -281,14 +251,13 @@ export function autoSizingSuite(mode: string, expectScrollbar: (width: number) =
     // resizeObserver tick to have measured by the time the final, narrowest width is checked,
     // rather than relying on a single jump landing after all of them happened to finish.
     await page.setViewportSize({ width: 900, height: 800 });
-    await page.waitForTimeout(1_000);
+    await waitForGridSettled(page);
 
     await page.setViewportSize({ width: 400, height: 800 });
-    await page.waitForTimeout(1_500);
-    await waitForStableWidth(page, '.df-grid.container');
+    await waitForGridSettled(page);
     const narrow = await expectGridConsistent(page, `${mode} narrow`);
 
-    // Rarely, in Firefox, a still-lazily-loading font variant (see `waitForStableWidth`) shifts a
+    // Rarely, in Firefox, a still-lazily-loading font variant (see `waitForGridSettled`) shifts a
     // shadow grid's measured width right as this resize settles, landing `wide` on the same
     // layout `narrow` picks too — a flake in this width-picking race, not the geometry checks
     // above, which already passed for both widths.
@@ -301,39 +270,15 @@ export function autoSizingSuite(mode: string, expectScrollbar: (width: number) =
     // Pinned wide enough to guarantee three-row specifically, since this test exercises its own
     // long-press/selection handling — the project's default viewport isn't guaranteed to land there.
     await page.setViewportSize({ width: 1600, height: 800 });
-    await page.waitForTimeout(1_500);
-    await waitForStableWidth(page, '.df-grid.container');
+    await waitForGridSettled(page);
 
     // Scoped to `.body-grid` — an unscoped `[data-idx]` query matches the header row first (its
-    // own `data-idx` is the string "header"). The `longpress` directive only listens for
-    // `mousedown`/`touchstart` (see `helpers/longpress.ts`), so the gesture has to go through
-    // `page.mouse`, not a dispatched `pointerdown`/`pointerup` pair.
+    // own `data-idx` is the string "header").
     const firstCard = page.locator('.df-grid.body-grid .df-grid.card[data-idx]').first();
-    await firstCard.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(200); // let the scroll itself settle before reading a box off it
-    const box = await firstCard.boundingBox();
-    if (!box) throw new Error('first mounted row-anchor has no box');
-
-    // Not asserted on the first attempt: on a busy machine a synthetic 1000ms-threshold hold can
-    // occasionally miss its window for reasons that have nothing to do with the grid (a paused
-    // event loop delays when the timer's callback actually runs, same as it would delay a real
-    // user's own hold), and re-pressing after that is indistinguishable from a real user trying
-    // again. The geometry check below is the point of this test; retrying the gesture just gets
-    // it into the state that check needs.
-    let isSelectionActive = false;
-    /* eslint-disable no-await-in-loop -- each retry must follow the previous attempt's result */
-    for (let attempt = 0; attempt < 8 && !isSelectionActive; attempt++) {
-      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-      await page.waitForTimeout(150);
-      await page.mouse.down();
-      await page.waitForTimeout(1_800); // longpress.ts's default threshold is 1000ms
-      await page.mouse.up();
-      await page.waitForTimeout(500);
-      isSelectionActive = await page.evaluate(() => !!document.querySelector('.df-grid.container.selection'));
-    }
-    /* eslint-enable no-await-in-loop */
+    const isSelectionActive = await longPressUntilSelection(page, firstCard);
 
     expect(isSelectionActive, `${mode}: long-press did not activate selection mode after 8 attempts`).toBe(true);
+    await waitForGridSettled(page);
 
     await expectGridConsistent(page, `${mode} selection`);
   });

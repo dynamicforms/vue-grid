@@ -31,8 +31,8 @@
  *      Each batch = the windowed row range changed (rows mounted/unmounted).
  *      Indicator: how often `onBodyScrollSettle`'s recompute actually moved the window.
  *
- * We wait 3 s after initial render (to let startup noise settle) then observe for
- * a further 3 s. A healthy system produces ≤ 3 events in that window.
+ * We wait for the grid to settle after the initial render (see grid-settled.ts), then
+ * observe for 3 s. A healthy system produces ≤ 3 events in that window.
  * A looping system produces O(seconds / throttle_ms) events — 12–30+ per 3 s.
  *
  * === Running ===
@@ -45,8 +45,8 @@
 
 import { expect, test } from '@playwright/test';
 
-// Settle time after mount before we start counting.
-const SETTLE_MS = 3_000;
+import { longPressUntilSelection, waitForGridSettled } from './grid-settled';
+
 // Observation window.
 const OBSERVE_MS = 3_000;
 // Max events we allow in the observation window (healthy system).
@@ -87,7 +87,7 @@ test.describe('DfGrid — idle render-loop detection', () => {
   // ---------------------------------------------------------------------------
   test('[LOOP-1] container style stops changing after initial render', async ({ page }) => {
     // Let the initial render pipeline fully settle.
-    await page.waitForTimeout(SETTLE_MS);
+    await waitForGridSettled(page);
 
     // Inject a MutationObserver that counts container style changes.
     const styleChangeCount = await page.evaluate(({ observeMs }) => new Promise<number>((resolve) => {
@@ -116,7 +116,7 @@ test.describe('DfGrid — idle render-loop detection', () => {
   // once the initial window has settled it should not keep changing.
   // ---------------------------------------------------------------------------
   test('[LOOP-2] body grid stops mounting/unmounting rows after initial render', async ({ page }) => {
-    await page.waitForTimeout(SETTLE_MS);
+    await waitForGridSettled(page);
 
     const bodyGridMutationBatches = await page.evaluate(({ observeMs }) => new Promise<number>((resolve) => {
       const bodyGrid = document.querySelector('.df-grid.body-grid') as HTMLElement | null;
@@ -143,7 +143,7 @@ test.describe('DfGrid — idle render-loop detection', () => {
   // system will show continuous churn; a healthy one shows near-zero.
   // ---------------------------------------------------------------------------
   test('[LOOP-3] total grid DOM churn is near-zero at idle', async ({ page }) => {
-    await page.waitForTimeout(SETTLE_MS);
+    await waitForGridSettled(page);
 
     const totalBatches = await page.evaluate(({ observeMs }) => new Promise<number>((resolve) => {
       const container = document.querySelector('.df-grid.container') as HTMLElement | null;
@@ -173,17 +173,15 @@ test.describe('DfGrid — idle render-loop detection', () => {
   // changing long after the click.
   // ---------------------------------------------------------------------------
   test('[LOOP-4] grid stabilises within 2 s after selection mode toggle', async ({ page }) => {
-    await page.waitForTimeout(SETTLE_MS);
+    await waitForGridSettled(page);
 
     // Long-press on a row to activate selection mode (simulates what the user does).
     // VitePress docs table-basic.vue uses longpress to enter selection mode.
-    const firstCard = page.locator('.df-grid.card[data-idx]').first();
-    await firstCard.dispatchEvent('pointerdown');
-    await page.waitForTimeout(800); // longpress duration
-    await firstCard.dispatchEvent('pointerup');
+    const firstCard = page.locator('.df-grid.body-grid .df-grid.card[data-idx]').first();
+    expect(await longPressUntilSelection(page, firstCard), 'long-press did not activate selection mode').toBe(true);
 
     // Give the grid 2 s to settle after the toggle.
-    await page.waitForTimeout(2_000);
+    await waitForGridSettled(page, { timeoutMs: 2_000 });
 
     // Now measure if mutations have stopped.
     const postToggleBatches = await page.evaluate(({ observeMs }) => new Promise<number>((resolve) => {
@@ -217,7 +215,7 @@ test.describe('DfGrid — idle render-loop detection', () => {
   // → updateRenderedRows loop.
   // ---------------------------------------------------------------------------
   test('[LOOP-4b] ResizeObserver callbacks stop after initial settle', async ({ page }) => {
-    await page.waitForTimeout(SETTLE_MS);
+    await waitForGridSettled(page);
 
     // Snapshot the counter at the start of the observation window.
     await page.evaluate(() => {
@@ -243,7 +241,7 @@ test.describe('DfGrid — idle render-loop detection', () => {
   // We also intercept ResizeObserver to count how many times it fires at idle.
   // ---------------------------------------------------------------------------
   test('[LOOP-5] JS event loop is not saturated at idle', async ({ page }) => {
-    await page.waitForTimeout(SETTLE_MS);
+    await waitForGridSettled(page);
 
     const result = await page.evaluate(({ observeMs }) => new Promise<{
       intervalFires: number;
@@ -300,7 +298,7 @@ test.describe('DfGrid — idle render-loop detection', () => {
   // child-removal mutations on `.df-grid.body-grid` during a selection toggle.
   // ---------------------------------------------------------------------------
   test('[LOOP-7] mounted rows not recreated on selection mode toggle', async ({ page }) => {
-    await page.waitForTimeout(SETTLE_MS);
+    await waitForGridSettled(page);
 
     await page.evaluate(() => {
       (window as any).__rowRemovals = 0;
@@ -316,11 +314,9 @@ test.describe('DfGrid — idle render-loop detection', () => {
     });
 
     // Trigger selection mode via long-press (same mechanism as [LOOP-4]).
-    const firstCard = page.locator('.df-grid.card[data-idx]').first();
-    await firstCard.dispatchEvent('pointerdown');
-    await page.waitForTimeout(800);
-    await firstCard.dispatchEvent('pointerup');
-    await page.waitForTimeout(500);
+    const firstCard = page.locator('.df-grid.body-grid .df-grid.card[data-idx]').first();
+    expect(await longPressUntilSelection(page, firstCard), 'long-press did not activate selection mode').toBe(true);
+    await waitForGridSettled(page);
 
     const removals = await page.evaluate(() => {
       (window as any).__rowObserver?.disconnect();
@@ -339,7 +335,7 @@ test.describe('DfGrid — idle render-loop detection', () => {
   // At idle, the expected rAF rate is 0 (no animation loops started).
   // ---------------------------------------------------------------------------
   test('[LOOP-6] no requestAnimationFrame loop at idle', async ({ page }) => {
-    await page.waitForTimeout(SETTLE_MS);
+    await waitForGridSettled(page);
 
     const rafCount = await page.evaluate(({ observeMs }) => new Promise<number>((resolve) => {
       let count = 0;
