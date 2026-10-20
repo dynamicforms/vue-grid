@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as the cell itself, one element less per cell. The element is stretched to the cell's grid area: the whole cell is
   the link, a click anywhere in a `file-fast` cell does not reach the row, and the `null` frame is drawn around the
   whole cell.
+- `setAllowedUrlSchemes()`, `getAllowedUrlSchemes()` and `defaultUrlSchemes`: the URL schemes a link in a cell may
+  take, for every grid; the grids render their links again when they are set. The `urlSchemes` renderer option of
+  `link`, `email`, `file` and their `-fast` variants sets them for one column. The default remains `http`, `https`,
+  `mailto` and `tel`.
 - The Built-in Renderers example shows every built-in renderer.
 
 ### Fixed

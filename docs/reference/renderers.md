@@ -17,9 +17,9 @@ Every column has a `renderer` that determines how its value is displayed. Render
 | `checkbox` | boolean | Renders a checked/unchecked indicator. |
 | `md` | string | Renders Markdown content. |
 | `color` | string | Renders a 1.25em square colour swatch, centred vertically in the cell: the value is the swatch's `background-color`, passed as the `--df-cell-color` custom property of the cell. |
-| `link` | string | Renders a hyperlink with the value as its text. A URL whose scheme is not `http`, `https`, `mailto` or `tel` renders as text. |
-| `email` | string | Renders a `mailto:` link. |
-| `file` | string | Renders a link to the file, opened in a new tab, with the file name as its text. A click on the link does not reach the row; a click beside it does. A URL whose scheme is not `http`, `https`, `mailto` or `tel` renders as text. |
+| `link` | string | Renders a hyperlink with the value as its text. A URL whose scheme is not allowed renders as text: see [URL schemes](#url-schemes-link-email-file). |
+| `email` | string | Renders a `mailto:` link. Where `mailto` is not an allowed scheme, renders the name as text. |
+| `file` | string | Renders a link to the file, opened in a new tab, with the file name as its text. A click on the link does not reach the row; a click beside it does. A URL whose scheme is not allowed renders as text. |
 | `ip4` | string | IPv4 address. |
 | `ip6` | string | IPv6 address. |
 | `ip` | string | Auto-detects IPv4 or IPv6. |
@@ -141,6 +141,34 @@ The object form of `locale` is recognised only when the object contains a `local
 `localeOptions` is ignored and the defaults apply.
 
 `int` formats the value like `float` and then cuts the fractional part off, so it truncates rather than rounds.
+
+## URL schemes (`link`, `email`, `file`)
+
+A link in a cell takes a URL whose scheme is allowed, or a URL without a scheme, which is relative. A URL with another
+scheme renders as text, without a link, so that a value such as `javascript:...` from a record is never a link.
+
+```typescript
+const defaultUrlSchemes: readonly string[];                     // ['http', 'https', 'mailto', 'tel']
+function setAllowedUrlSchemes(schemes: readonly string[]): void;
+function getAllowedUrlSchemes(): readonly string[];
+
+interface LinkOptions extends CellOptions {
+  urlSchemes?: readonly string[];  // the schemes of this column, in place of getAllowedUrlSchemes()
+}
+```
+
+`setAllowedUrlSchemes()` sets the schemes of every grid in the application, for each column whose `rendererOptions`
+name no `urlSchemes`; the grids render their links again. `getAllowedUrlSchemes()` returns them: `defaultUrlSchemes`
+until they are set. Schemes are compared without regard to case. The options apply to `link`, `email`, `file` and their
+`-fast` variants.
+
+```typescript
+import { createColumn, defaultUrlSchemes, setAllowedUrlSchemes } from '@dynamicforms/vue-grid';
+
+setAllowedUrlSchemes([...defaultUrlSchemes, 'sms']);
+
+createColumn('download', 'Download', 'file', { rendererOptions: { urlSchemes: ['https'] } });
+```
 
 ## Date/time options (`date`, `time`, `datetime`)
 

@@ -26,10 +26,12 @@ Each link has a tinted background, so its box is visible. In `link`, `email` and
 and a click beside it reaches the row. In the `-fast` variants the link is the whole cell, and a click anywhere in a
 `file-fast` cell does not reach the row. The line below the grid shows the key of the last row clicked.
 
-The third `link` value is `ftp://ftp.example.com`: a URL whose scheme is not `http`, `https`, `mailto` or `tel`
-renders as text, without a link.
+A link takes the URL schemes `http`, `https`, `mailto` and `tel` by default; a URL with another scheme renders as text,
+without a link. The schemes are set for every grid with `setAllowedUrlSchemes()`, or for one column with the
+`urlSchemes` renderer option. The input above the grid sets `urlSchemes` of its columns: with `ftp` added, the third
+`link` and `file` values render as links; with `mailto` removed, the email addresses render as text.
 
-<TableBuiltInRenderers :columns="['link', 'link-fast', 'email', 'email-fast', 'file', 'file-fast']" clicks/>
+<TableBuiltInRenderers :columns="['link', 'link-fast', 'email', 'email-fast', 'file', 'file-fast']" clicks schemes/>
 
 <script setup>
 import TableBuiltInRenderers from '../components/table-built-in-renderers.vue';

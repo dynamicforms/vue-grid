@@ -1,5 +1,6 @@
 <template>
   <div class="built-in-renderers" :style="{ '--columns': columns.length }">
+    <df-input v-if="schemes" v-model="schemesText" label="URL schemes, comma-separated" />
     <df-grid
       :columns="gridColumns"
       :records="records"
@@ -12,9 +13,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { DfInput } from '@dynamicforms/vuetify-inputs';
+import { computed, ref } from 'vue';
 
-import { createColumn, type RendererOptionsMap } from '../../src';
+import { createColumn, defaultUrlSchemes, type RendererOptionsMap } from '../../src';
 
 type NullHandler = 'null-empty' | 'null-null' | 'null-null-fast';
 type Renderer = Exclude<keyof RendererOptionsMap, 'header' | NullHandler>;
@@ -26,8 +28,8 @@ type Renderer = Exclude<keyof RendererOptionsMap, 'header' | NullHandler>;
  */
 type ColumnSpec = Renderer | `${Renderer}:${NullHandler | 'default'}`;
 
-// `clicks` shows the key of the last row clicked
-const props = defineProps<{ columns: ColumnSpec[]; clicks?: boolean }>();
+// `clicks` shows the key of the last row clicked; `schemes` shows an input for the URL schemes of the link columns
+const props = defineProps<{ columns: ColumnSpec[]; clicks?: boolean; schemes?: boolean }>();
 
 // three values for each renderer, one per row; a -fast renderer is given the values of its renderer
 const values: Record<Exclude<Renderer, `${string}-fast`>, unknown[]> = {
@@ -35,9 +37,9 @@ const values: Record<Exclude<Renderer, `${string}-fast`>, unknown[]> = {
   md: ['**bold**', '_italic_', '`code`'],
   color: ['#e53935', 'rgb(67 160 71)', 'hsl(210 80% 55%)'],
   checkbox: [true, false, null],
-  link: ['https://w3.org', 'https://vuejs.org', 'ftp://ftp.example.com'],
+  link: ['https://w3.org', 'https://vuejs.org', 'ftp://example.com'],
   email: ['ana@example.com', 'Bor Novak <bor@example.com>', 'info@example.com'],
-  file: ['/files/report.pdf', '/files/photo.jpg', '/files/archive/data.csv'],
+  file: ['/files/report.pdf', '/files/photo.jpg', 'ftp://example.com/data.csv'],
   ip4: ['192.168.0.1', '10.0.0.12', '8.8.8.8'],
   ip6: ['2001:db8::1', '::1', 'fe80::1:2'],
   ip: ['192.168.0.1', '2001:db8::1', '::ffff:10.0.0.1'],
@@ -60,14 +62,26 @@ const records = [0, 1, 2].map((row) =>
   Object.fromEntries([['id', row + 1], ...parsed.map((column) => [column.field, column.rowValues[row]])]),
 );
 
-const gridColumns = parsed.map(({ field, renderer, nullHandler }) => {
-  const label = nullHandler ? `${renderer} · ${nullHandler}` : renderer;
-  if (nullHandler === 'default') return createColumn(field, label, renderer);
-  // an empty `rendererOptions` leaves `null` to the column's own renderer, rather than to the default `null-null`
-  const rendererOptions: Record<string, unknown> = nullHandler ? { nullHandler } : {};
-  if (renderer === 'time') rendererOptions.parseISOPrefix = '2000-01-01T';
-  return createColumn(field, label, renderer, { rendererOptions });
-});
+const schemesText = ref(defaultUrlSchemes.join(', '));
+const urlSchemes = computed(() =>
+  schemesText.value
+    .split(',')
+    .map((scheme) => scheme.trim())
+    .filter(Boolean),
+);
+const linkRenderers = ['link', 'link-fast', 'email', 'email-fast', 'file', 'file-fast'];
+
+const gridColumns = computed(() =>
+  parsed.map(({ field, renderer, nullHandler }) => {
+    const label = nullHandler ? `${renderer} · ${nullHandler}` : renderer;
+    if (nullHandler === 'default') return createColumn(field, label, renderer);
+    // an empty `rendererOptions` leaves `null` to the column's own renderer, rather than to the default `null-null`
+    const rendererOptions: Record<string, unknown> = nullHandler ? { nullHandler } : {};
+    if (renderer === 'time') rendererOptions.parseISOPrefix = '2000-01-01T';
+    if (props.schemes && linkRenderers.includes(renderer)) rendererOptions.urlSchemes = urlSchemes.value;
+    return createColumn(field, label, renderer, { rendererOptions });
+  }),
+);
 
 const lastClick = ref('—');
 </script>

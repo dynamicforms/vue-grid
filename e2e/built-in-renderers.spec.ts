@@ -85,4 +85,17 @@ test.describe('built-in renderers', () => {
     await firstCell(page, 'file').click({ position: { x: (await width(firstCell(page, 'file'))) - 3, y: 5 } });
     await expect(lastClick).toHaveText('Last row click: 1');
   });
+
+  test('the URL schemes typed in the input set which values render as links', async ({ page }) => {
+    const input = grid(page, 'link').getByLabel('URL schemes, comma-separated');
+    await expect(cellAt(page, 'link', 2).locator('a')).toHaveCount(0);
+    await expect(cellAt(page, 'email', 0).locator('a')).toHaveCount(1);
+
+    await input.fill('http, https, tel, ftp');
+
+    await expect(cellAt(page, 'link', 2).locator('a')).toHaveAttribute('href', 'ftp://example.com');
+    await expect(cellAt(page, 'file', 2).locator('a')).toHaveCount(1);
+    await expect(cellAt(page, 'email', 0).locator('a')).toHaveCount(0);
+    await expect(cellAt(page, 'email', 0)).toHaveText('ana');
+  });
 });

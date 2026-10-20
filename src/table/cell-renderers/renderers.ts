@@ -38,7 +38,19 @@ import { translate } from '../translations';
 import { header, HeaderOptions } from './header-renderers';
 import { CellOptions, CellOptionsInternal, CellRendererTransformer, RowValue } from './interfaces';
 import { float, floatGridColumnCreate, floatGridDestroy, int, IntOptions } from './numbers';
-import { anchor, checkbox, color, date, DateTimeOptions, email, ip, ip4, ip6, link } from './simple-renderers';
+import {
+  anchor,
+  checkbox,
+  color,
+  date,
+  DateTimeOptions,
+  email,
+  ip,
+  ip4,
+  ip6,
+  link,
+  LinkOptions,
+} from './simple-renderers';
 
 // HTML a renderer built with every value from the record escaped
 const html = (value: string): RenderableValue => new RenderableValue(new HtmlString(value));
@@ -89,12 +101,17 @@ export const wrapWithPrePost = (
   return result;
 };
 
-const file = (value: any): RenderContentNonCallable => {
+const file = (value: any, schemes?: readonly string[]): RenderContentNonCallable => {
   if (!value) return '';
   const url = String(value).replace(/\/$/, '');
   const fileName = url.replace(/^.*[\\/]/, '');
   // a click opens the file and does not reach the row
-  return anchor(url, fileName, { target: '_blank', rel: 'noopener', onClick: (e: Event) => e.stopPropagation() });
+  return anchor(
+    url,
+    fileName,
+    { target: '_blank', rel: 'noopener', onClick: (e: Event) => e.stopPropagation() },
+    schemes,
+  );
 };
 
 export interface RendererOptionsMap {
@@ -105,13 +122,13 @@ export interface RendererOptionsMap {
   md: CellOptions;
   color: CellOptions;
   checkbox: CellOptions;
-  link: CellOptions;
-  email: CellOptions;
-  file: CellOptions;
+  link: LinkOptions;
+  email: LinkOptions;
+  file: LinkOptions;
   'null-null-fast': CellOptions;
-  'link-fast': CellOptions;
-  'email-fast': CellOptions;
-  'file-fast': CellOptions;
+  'link-fast': LinkOptions;
+  'email-fast': LinkOptions;
+  'file-fast': LinkOptions;
   ip4: CellOptions;
   ip6: CellOptions;
   ip: CellOptions;
@@ -140,23 +157,23 @@ export const DefaultRenderers: RenderersMap = {
     wrapWithPrePost(content(color(t(value, rowValue, options))), value, rowValue, options),
   checkbox: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
     wrapWithPrePost(html(checkbox(t(value, rowValue, options))), value, rowValue, options),
-  link: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(content(inCell(link(t(value, rowValue, options)))), value, rowValue, options),
-  email: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(content(inCell(email(t(value, rowValue, options)))), value, rowValue, options),
-  file: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(content(inCell(file(t(value, rowValue, options)))), value, rowValue, options),
+  link: (value: any, rowValue: RowValue, options: CellOptionsInternal<LinkOptions>) =>
+    wrapWithPrePost(content(inCell(link(t(value, rowValue, options), options.urlSchemes))), value, rowValue, options),
+  email: (value: any, rowValue: RowValue, options: CellOptionsInternal<LinkOptions>) =>
+    wrapWithPrePost(content(inCell(email(t(value, rowValue, options), options.urlSchemes))), value, rowValue, options),
+  file: (value: any, rowValue: RowValue, options: CellOptionsInternal<LinkOptions>) =>
+    wrapWithPrePost(content(inCell(file(t(value, rowValue, options), options.urlSchemes))), value, rowValue, options),
   // The -fast renderers render one element less: the `<a>` or the framed `null` is the cell itself, stretched to its
   // grid area. The `null` frame is drawn around the whole cell, the whole cell is the link, and a click anywhere in a
   // `file-fast` cell does not reach the row.
   'null-null-fast': (value, rowValue, options) =>
     wrapWithPrePost(new RenderableValue(translate('NullValue'), 'df-cell-null'), value, rowValue, options),
-  'link-fast': (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(content(link(t(value, rowValue, options))), value, rowValue, options),
-  'email-fast': (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(content(email(t(value, rowValue, options))), value, rowValue, options),
-  'file-fast': (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
-    wrapWithPrePost(content(file(t(value, rowValue, options))), value, rowValue, options),
+  'link-fast': (value: any, rowValue: RowValue, options: CellOptionsInternal<LinkOptions>) =>
+    wrapWithPrePost(content(link(t(value, rowValue, options), options.urlSchemes)), value, rowValue, options),
+  'email-fast': (value: any, rowValue: RowValue, options: CellOptionsInternal<LinkOptions>) =>
+    wrapWithPrePost(content(email(t(value, rowValue, options), options.urlSchemes)), value, rowValue, options),
+  'file-fast': (value: any, rowValue: RowValue, options: CellOptionsInternal<LinkOptions>) =>
+    wrapWithPrePost(content(file(t(value, rowValue, options), options.urlSchemes)), value, rowValue, options),
   ip4: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
     wrapWithPrePost(html(ip4(t(value, rowValue, options))), value, rowValue, options),
   ip6: (value: any, rowValue: RowValue, options: CellOptionsInternal) =>
