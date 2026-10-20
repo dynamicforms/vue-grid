@@ -5,6 +5,13 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-10-20
+
+### Changed
+
+- Peer dependencies: `@dynamicforms/vuetify-inputs` `^0.15.0` and `@dynamicforms/vue-forms` `^3.0.0-alpha.3`. Both
+  report namespaced error codes (`vuetify-inputs.<code>`, `vue-forms.<code>`); vue-grid reads no error codes itself.
+
 ## [0.7.2] - 2026-10-20
 
 ### Added
