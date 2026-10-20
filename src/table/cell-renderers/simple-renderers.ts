@@ -6,10 +6,11 @@ import { escapeHtml, safeUrl } from './safe-content';
 
 import { CellOptions, CellOptionsInternal } from '@/table/cell-renderers/interfaces';
 
-// the value is a style property set through the CSS object model: it cannot leave the property
+// The element is the grid cell itself, stretched to the row; the swatch is its ::before. The value is a
+// custom property set through the CSS object model: it cannot leave the property.
 export const color = (value: any): SimpleComponentDef => ({
   componentName: 'div',
-  componentProps: { class: 'df-cell-color', style: { backgroundColor: String(value ?? '') } },
+  componentProps: { class: 'df-cell-color', style: { '--df-cell-color': String(value ?? '') } },
 });
 
 const cbOptions = {

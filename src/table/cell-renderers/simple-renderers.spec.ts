@@ -3,9 +3,9 @@ import { color, checkbox, link, email, ip4, ip6, ip, date, DateTimeOptions } fro
 
 describe('simple-renderers.ts', () => {
   describe('color renderer', () => {
-    const swatch = (backgroundColor: string) => ({
+    const swatch = (value: string) => ({
       componentName: 'div',
-      componentProps: { class: 'df-cell-color', style: { backgroundColor } },
+      componentProps: { class: 'df-cell-color', style: { '--df-cell-color': value } },
     });
 
     it('should render color div with background style', () => {

@@ -5,6 +5,15 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - Unreleased
+
+### Fixed
+
+- `color`: the cell keeps the size of its grid area and the swatch is a 1.25em square centred vertically in it. The
+  renderer's element is the cell itself, so the swatch's size and `background-color` were applied to the whole cell:
+  it was not square and sat at the top of the row. The value is now passed as the `--df-cell-color` custom property
+  and drawn by the cell's `::before`.
+
 ## [0.7.1] - Unreleased
 
 ### Fixed

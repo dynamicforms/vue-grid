@@ -16,7 +16,7 @@ Every column has a `renderer` that determines how its value is displayed. Render
 | `datetime` | string \| Date | Formats a date+time value. |
 | `checkbox` | boolean | Renders a checked/unchecked indicator. |
 | `md` | string | Renders Markdown content. |
-| `color` | string | Renders a colour swatch: the value is the swatch's `background-color`. |
+| `color` | string | Renders a 1.25em square colour swatch, centred vertically in the cell: the value is the swatch's `background-color`, passed as the `--df-cell-color` custom property of the cell. |
 | `link` | string | Renders a hyperlink with the value as its text. A URL whose scheme is not `http`, `https`, `mailto` or `tel` renders as text. |
 | `email` | string | Renders a `mailto:` link. |
 | `file` | string | Renders a link to the file, opened in a new tab, with the file name as its text. A click on it does not reach the row. A URL whose scheme is not `http`, `https`, `mailto` or `tel` renders as text. |
