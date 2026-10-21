@@ -105,8 +105,9 @@
         </div>
       </template>
       <template v-else>
-        <slot name="statusBar" :filter-state="filterState">
+        <slot name="statusBar" :filter-state="filterState" :view="view" :record-count="recordCount">
           <div class="status-section">{{ activeFiltersText }}</div>
+          <div v-if="recordCountText" class="status-section">{{ recordCountText }}</div>
         </slot>
       </template>
     </div>
@@ -123,9 +124,11 @@ import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } f
 import { ColumnDefinition } from './columns';
 import { FilterState, getFilterConfig } from './columns-filtering';
 import { getSortConfig, type ColumnSortState, type SortState } from './columns-sorting';
+import type { GridRecordCount } from './df-grid-types';
 import { GridCard, headerRowBaseVars, useHeaderContent } from './helpers';
 import type { SelectionMode } from './selection';
 import { translate } from './translations';
+import type { GridViewState } from './use-view-change';
 
 const filterInputDensity = ref<FieldDensity>('inline');
 
@@ -141,6 +144,8 @@ export interface HeaderProps {
   showFilterRow?: boolean;
   showStatusBar?: boolean;
   filterState?: FilterState;
+  view?: GridViewState;
+  recordCount?: GridRecordCount;
   selectionMode?: SelectionMode;
   selectionKeys?: Set<any>;
   /**
@@ -159,6 +164,8 @@ export interface HeaderProps {
 const props = withDefaults(defineProps<HeaderProps>(), {
   rowsPerRecord: 1,
   filterState: undefined,
+  view: undefined,
+  recordCount: undefined,
   selectionMode: null,
   selectionKeys: undefined,
   templateColumns: undefined,
@@ -220,6 +227,17 @@ const activeFilterCount = computed(() => {
 });
 
 const activeFiltersText = computed(() => translate('ActiveFilters', { count: activeFilterCount.value }));
+
+const recordCountText = computed(() => {
+  const { recordCount, view } = props;
+  if (recordCount) {
+    if (recordCount.total == null) return translate('RecordCount', { count: recordCount.matching });
+    return translate('RecordCountOfTotal', { count: recordCount.matching, total: recordCount.total });
+  }
+  if (!view) return '';
+  if (!view.filteringLocal) return translate('RecordCount', { count: view.loadedCount });
+  return translate('RecordCountOfTotal', { count: view.shownCount, total: view.loadedCount });
+});
 
 // A settle chain (below) writes headerHeight.value on every attempt, which re-renders the
 // component (it drives the template's own `minHeight` binding) and fires onUpdated() again —

@@ -132,6 +132,19 @@ function validateSortState(
 }
 
 /**
+ * hasExternalSort reports whether sortState sorts by a column marked with sortExternal. Such a grid does not reorder
+ * records at all.
+ */
+function hasExternalSort(sortState: SortState, columns: ComputedRef<ColumnDefinition<keyof RendererOptionsMap>[]>) {
+  return sortState.some((sortCol) => {
+    const colDef = columns.value.find((c) => c.fieldName === sortCol.columnName);
+    if (!colDef) return false;
+    const sortConfig = getSortConfig(colDef.sortable);
+    return sortConfig.key === sortExternal;
+  });
+}
+
+/**
  * applySorting performs the actual sorting of records based on sortState and column configurations.
  * Returns the sorted records array.
  */
@@ -143,16 +156,8 @@ function applySorting(
   const recordsArray = unref(records);
   if (sortState.length === 0) return recordsArray;
 
-  // Check if any column uses external sorting
-  const hasExternalSort = sortState.some((sortCol) => {
-    const colDef = columns.value.find((c) => c.fieldName === sortCol.columnName);
-    if (!colDef) return false;
-    const sortConfig = getSortConfig(colDef.sortable);
-    return sortConfig.key === sortExternal;
-  });
-
   // If any column uses external sorting, don't sort locally - backend handles it
-  if (hasExternalSort) return recordsArray;
+  if (hasExternalSort(sortState, columns)) return recordsArray;
 
   // Build orderBy configuration for natural-orderby
   const identifiers: ((row: RowValue) => any)[] = [];
@@ -206,6 +211,7 @@ export function useSorting(
 
   // Sorted records
   const sortedRecords = computed(() => applySorting(inputRecords, validatedSortState.value, uColumns.columns));
+  const sortingLocal = computed(() => !hasExternalSort(validatedSortState.value, uColumns.columns));
 
   // Watch for external prop changes
   watch(
@@ -225,7 +231,7 @@ export function useSorting(
     return emit(event, ...args);
   }) as EmitFn<GridEmits>;
 
-  return { sortState, emitWrapper, sortedRecords };
+  return { sortState, validatedSortState, emitWrapper, sortedRecords, sortingLocal };
 }
 
 function cycleSort(sortConfig: SortConfig, sortColumnState: SortStateColumn): boolean {

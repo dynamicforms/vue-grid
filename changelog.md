@@ -5,6 +5,17 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-10-21
+
+### Added
+
+- `view-change` event with `GridViewChangeEvent`: emitted when the grid is created and whenever what it displays
+  changes. It carries the sort state in effect, the filter values, the number of records shown and loaded, whether
+  filtering and sorting are local, and `reasons` (`initial`, `filter`, `sort`, `records`, `columns`).
+- `recordCount` prop (`GridRecordCount`: `matching`, optional `total`) for counts known only to the backend.
+- The default status bar shows the record count next to the active filter count; new translation keys `RecordCount`
+  and `RecordCountOfTotal`. The `statusBar` slot also receives `view` (`GridViewState`) and `recordCount`.
+
 ## [0.8.0] - 2026-10-20
 
 ### Changed

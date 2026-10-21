@@ -22,6 +22,7 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `filterState` | `FilterState` | — |
 | `showFilterRow` | `boolean` | `false` |
 | `showStatusBar` | `boolean` | `false` |
+| `recordCount` | `GridRecordCount` | — |
 | `showSummaryBar` | `boolean` | `false` |
 | `loading` | `boolean` | `false` |
 | `secondaryShadowCount` | `number` | `30` |
@@ -52,8 +53,21 @@ grid filters internally.
 
 `showFilterRow` — show the filter input row below the column headers.
 
-`showStatusBar` — show the status bar below the filter row (displays the active filter count). The bar also
-appears automatically while selection mode is active, showing the selection controls instead.
+`showStatusBar` — show the status bar below the filter row (displays the active filter count and the record count).
+The bar also appears automatically while selection mode is active, showing the selection controls instead. See
+[Filtering → Status bar](./filtering#status-bar).
+
+`recordCount` — record counts known only to the backend, for a grid whose `records` the backend filters or pages:
+
+```typescript
+interface GridRecordCount {
+  matching: number;  // records that match the current filter
+  total?: number;    // records without a filter
+}
+```
+
+When set, the default status bar shows these counts instead of the ones derived from `records`. The `statusBar` slot
+receives it as `recordCount`.
 
 `showSummaryBar` — show the summary bar below the data rows. The bar also appears automatically when `loading` is
 `true` or when `records` is empty. The automatic appearance is decided from the `records` prop, before filtering,
@@ -109,6 +123,7 @@ flashes that follow within 1.5 s start progressively dimmer, down to 15 % of thi
 | `click` | `GridClickEvent` |
 | `sort` | `GridSortEvent` |
 | `filter` | `GridFilterEvent` |
+| `view-change` | `GridViewChangeEvent` |
 | `load` | `'vertical' \| 'horizontal'` |
 | `excessive-scroll` | `number` |
 | `update:activeColumns` | `string` |
@@ -126,6 +141,10 @@ those cases. Clicks on the header always fire.
 and the sort state the grid would apply. See [Sorting → User interaction model](./sorting#user-interaction-model).
 
 `filter` — fired when any filter value changes.
+
+`view-change` — fired once when the grid is created and then whenever what it displays changes. Unlike `sort` and
+`filter`, which report user input, it reports the state after the grid applied it. See
+[`GridViewChangeEvent`](#gridviewchangeevent).
 
 `load` — fired when the user scrolls within 200 px of the end of the list and the grid is not in loading state. Use
 this to fetch and append the next page. Set `:loading="true"` while fetching to suppress duplicate events.
@@ -167,6 +186,54 @@ See [Sorting → GridSortEvent](./sorting#gridsortevent).
 ### `GridFilterEvent`
 
 See [Filtering → GridFilterEvent](./filtering#gridfilterevent).
+
+### `GridViewChangeEvent`
+
+```typescript
+type GridViewChangeReason = 'initial' | 'filter' | 'sort' | 'records' | 'columns';
+
+interface GridViewState {
+  sortState: SortState;               // sort state in effect
+  filterValues: Record<string, any>;  // same map as GridFilterEvent.filterValues
+  shownCount: number;                 // records displayed
+  loadedCount: number;                // records.length
+  filteringLocal: boolean;            // false when a filterable column uses filterExternal
+  sortingLocal: boolean;              // false when sortState sorts by a sortExternal column
+}
+
+interface GridViewChangeEvent extends GridViewState {
+  reasons: GridViewChangeReason[];
+}
+```
+
+`sortState` is the `sortState` prop or internal state without the segments validation skips (see
+[Sorting → Validation](./sorting#validation)). `shownCount` is the number of `records` that pass the local filter; when
+`filteringLocal` is `false` the grid filters nothing and `shownCount` equals `loadedCount`. The number of records the
+backend holds is not part of the event; pass it to the status bar with the `recordCount` prop.
+
+`reasons` lists what changed since the previous event:
+
+| Reason | When |
+|--------|------|
+| `initial` | The event emitted when the grid is created. Carries no other reason. |
+| `filter` | `filterValues` changed. |
+| `sort` | `sortState` changed. |
+| `records` | The `records` prop was replaced or its length changed, or a record edited in place changed `shownCount`. |
+| `columns` | The active columns changed and with them `shownCount`, `filteringLocal` or `sortingLocal`. |
+
+Changes made in the same tick produce one event listing every reason. No event is emitted when none of the above
+happened, so a column layout switch that changes no count or mode, or a record edit that changes only the order,
+emits nothing. The payload is a copy: changing it does not change the grid.
+
+```vue
+<df-grid :columns="columns" :records="records" key-field="id" @view-change="onViewChange" />
+```
+
+```typescript
+function onViewChange({ shownCount, loadedCount }: GridViewChangeEvent) {
+  summary.value = `${shownCount} / ${loadedCount}`;
+}
+```
 
 ## Exposed methods
 
@@ -217,7 +284,7 @@ async function onRecordsReplaced() {
 | `toolbar-start` | — | Rendered at the left side of the toolbar bar above the header. The toolbar wrapper (`div.df-grid-toolbar`) is only rendered when at least one toolbar slot is provided. |
 | `toolbar-end` | — | Rendered at the right side of the toolbar. |
 | `header` | `{ item }` | Replaces the entire header row. `item` is a `{ fieldName: label }` map of the active columns. Forwarded to `<DfGridHeader>`. |
-| `statusBar` | `{ filterState }` | Overrides the default status bar content (filter count). Only visible when `showStatusBar` is `true` and selection mode is inactive. |
+| `statusBar` | `{ filterState, view, recordCount }` | Overrides the default status bar content (filter count and record count). `view` is the current `GridViewState`, `recordCount` the `recordCount` prop. Only visible when `showStatusBar` is `true` and selection mode is inactive. |
 | `groupActions` | — | Rendered on the right side of the selection status bar. Only visible while selection mode is active. Use it for batch actions (delete, export, …). |
 | `item` | `{ item, index, active }` | Replaces the default `<GridCard>` row rendering. `item` is the raw row object, `index` its 0-based position in the filtered and sorted list, `active` is always `true`. |
 | `summary-bar` | — | Replaces the entire summary bar content. The summary bar is visible when `showSummaryBar` is `true`, `loading` is `true`, or `records` is empty. |

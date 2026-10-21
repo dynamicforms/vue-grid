@@ -6,6 +6,8 @@ import type { ColumnDefinition } from './columns';
 import { createFilterState, type FilterState } from './columns-filtering';
 import type { SortState } from './columns-sorting';
 import DfGridHeader from './df-grid-header.vue';
+import type { GridRecordCount } from './df-grid-types';
+import type { GridViewState } from './use-view-change';
 
 // Mock dependencies
 vi.mock('@dynamicforms/vuetify-inputs', () => ({
@@ -367,6 +369,58 @@ describe('DfGridHeader.vue', () => {
 
       expect(wrapper.find('.custom-status').exists()).toBe(true);
       expect(wrapper.find('.custom-status').text()).toBe('Custom Status');
+    });
+  });
+
+  describe('status bar record count', () => {
+    const view = (overrides: Partial<GridViewState> = {}): GridViewState => ({
+      sortState: [],
+      filterValues: {},
+      shownCount: 3,
+      loadedCount: 7,
+      filteringLocal: true,
+      sortingLocal: true,
+      ...overrides,
+    });
+    const mountWith = (props: { view?: GridViewState; recordCount?: GridRecordCount }, slots = {}) =>
+      mount(DfGridHeader, {
+        props: { columns: mockColumns, gridId, gridClass: 'test-class', sortState, showStatusBar: true, ...props },
+        slots,
+      });
+
+    it('should show the filtered count of the loaded records when filtering locally', () => {
+      expect(mountWith({ view: view() }).find('.df-status-bar').text()).toContain('3 of 7 records');
+    });
+
+    it('should show the loaded count when filtering is external', () => {
+      const text = mountWith({ view: view({ filteringLocal: false, shownCount: 7 }) })
+        .find('.df-status-bar')
+        .text();
+      expect(text).toContain('7 records');
+      expect(text).not.toContain(' of ');
+    });
+
+    it('should show recordCount instead of the counts derived from records', () => {
+      const withTotal = mountWith({ view: view(), recordCount: { matching: 120, total: 900 } });
+      expect(withTotal.find('.df-status-bar').text()).toContain('120 of 900 records');
+      const withoutTotal = mountWith({ view: view(), recordCount: { matching: 120 } });
+      expect(withoutTotal.find('.df-status-bar').text()).toContain('120 records');
+    });
+
+    it('should show no record count without a view', () => {
+      expect(mountWith({}).find('.df-status-bar').text()).not.toContain('records');
+    });
+
+    it('should pass view and recordCount to the statusBar slot', () => {
+      const wrapper = mountWith(
+        { view: view(), recordCount: { matching: 5 } },
+        {
+          statusBar: `<template #statusBar="{ view, recordCount }">
+            <span class="custom">{{ view.shownCount }}/{{ recordCount.matching }}</span>
+          </template>`,
+        },
+      );
+      expect(wrapper.find('.custom').text()).toBe('3/5');
     });
   });
 

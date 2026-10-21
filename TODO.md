@@ -26,7 +26,7 @@
 
 Named `showStatusBar` / `statusBar` slot. When selection mode is active it switches to the selection
 bar (cancel · count · invert · `#groupActions` slot). Otherwise shows the `statusBar` slot content
-(default: active filter count, which is only a sample).
+(default: active filter count and record count).
 
 ---
 

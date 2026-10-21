@@ -5,6 +5,7 @@ import { GridSortEvent, SortState } from './columns-sorting';
 import { GridClickEvent } from './df-grid-mouse-events';
 import { SelectionEmits, SelectionProps } from './selection';
 import { UseRecentlyAdded } from './use-recently-added';
+import { GridViewChangeEvent } from './use-view-change';
 
 export interface GridProps extends SelectionProps {
   /**
@@ -64,10 +65,18 @@ export interface GridProps extends SelectionProps {
   showFilterRow?: boolean;
 
   /**
-   * Show the status bar below the filter row (displays active filter count).
+   * Show the status bar below the filter row (displays the active filter count and the record count).
    * @default false
    */
   showStatusBar?: boolean;
+
+  /**
+   * Record counts known only to the backend, for a grid whose `records` the backend filters or pages. `matching` is
+   * the number of records that match the current filter, `total` the number of records without a filter. When set,
+   * the default status bar shows these counts instead of the ones derived from `records`; the status bar slot receives
+   * it as `recordCount`.
+   */
+  recordCount?: GridRecordCount;
 
   /**
    * Show the summary bar below the data rows. The bar also appears automatically when `loading` is
@@ -137,6 +146,11 @@ export interface GridProps extends SelectionProps {
 
 export type RowIndex = number | 'header';
 
+export interface GridRecordCount {
+  matching: number;
+  total?: number;
+}
+
 export interface GridEmits extends SelectionEmits {
   /**
    * Fired on a single click on a data row **when selection mode is inactive**. Not fired while
@@ -164,6 +178,14 @@ export interface GridEmits extends SelectionEmits {
    * On columns marked with `filterExternal`, the grid never applies a local predicate regardless.
    */
   filter: [data: GridFilterEvent];
+
+  /**
+   * Fired once when the grid is created and then whenever what it displays changes: the filter values, the sort state
+   * in effect, the `records` prop (replaced or a different length) or the number of records that pass the filter.
+   * Changes made in the same tick produce one event. `reasons` lists what changed. Unlike `sort` and `filter`, which
+   * report user input, this event reports the state after the grid applied it.
+   */
+  'view-change': [data: GridViewChangeEvent];
 
   /**
    * Fired when the user scrolls within 200px of the end of the list **and** `loading` is

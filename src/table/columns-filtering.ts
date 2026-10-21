@@ -93,6 +93,22 @@ export interface GridFilterEvent {
 }
 
 /**
+ * hasExternalFilter reports whether a field of filterState belongs to a column marked with filterExternal. Such a
+ * grid applies no local predicate at all.
+ */
+function hasExternalFilter(
+  filterState: FilterState,
+  columns: ComputedRef<ColumnDefinition<keyof RendererOptionsMap>[]>,
+): boolean {
+  return Object.keys(filterState.value).some((fieldName) => {
+    const colDef = columns.value.find((c) => c.fieldName === fieldName);
+    if (!colDef) return false;
+    const filterConfig = getFilterConfig((colDef as any).filterable);
+    return filterConfig.key === filterExternal;
+  });
+}
+
+/**
  * applyFiltering performs the actual filtering of records based on filterState.
  * Returns the filtered records array.
  */
@@ -104,18 +120,10 @@ function applyFiltering(
   const recordsArray = unref(records);
   if (!filterState) return recordsArray;
 
-  const filterValues = filterState.value;
-
-  // Check if any column uses external filtering
-  const hasExternalFilter = Object.keys(filterValues).some((fieldName) => {
-    const colDef = columns.value.find((c) => c.fieldName === fieldName);
-    if (!colDef) return false;
-    const filterConfig = getFilterConfig((colDef as any).filterable);
-    return filterConfig.key === filterExternal;
-  });
-
   // If any column uses external filtering, don't filter locally - backend handles it
-  if (hasExternalFilter) return recordsArray;
+  if (hasExternalFilter(filterState, columns)) return recordsArray;
+
+  const filterValues = filterState.value;
 
   // Apply local filtering
   return recordsArray.filter((record) =>
@@ -224,6 +232,7 @@ export function useFiltering(
 
   // Apply filtering
   const filteredRecords = computed(() => applyFiltering(inputRecords, filterState.value, uColumns.columns));
+  const filteringLocal = computed(() => !hasExternalFilter(filterState.value, uColumns.columns));
 
   // Watch for external prop changes
   watch(
@@ -253,5 +262,5 @@ export function useFiltering(
     return emit(event, ...args);
   };
 
-  return { filterState, emitWrapper, filteredRecords };
+  return { filterState, emitWrapper, filteredRecords, filteringLocal };
 }

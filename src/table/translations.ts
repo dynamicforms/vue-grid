@@ -9,5 +9,7 @@ export const { translate, translateStrings } = createTranslatable({
   SelectionCountSelected: '{count} items selected',
   SelectionCountExcluded: '{count} items excluded',
   ActiveFilters: 'Active filters: {count}',
+  RecordCount: '{count} records',
+  RecordCountOfTotal: '{count} of {total} records',
   NullValue: 'null',
 });
