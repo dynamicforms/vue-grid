@@ -140,6 +140,18 @@ async function onFilter({ filterValues }: GridFilterEvent) {
 
 Setting `showStatusBar` to `true` displays a bar below the filter row showing the number of active filters — every
 filter value that is not `null`, `undefined` or an empty string, so an emptied multi-select still counts. A filter field
-that is `'disabled'` or `'disabled-null'` does not count. Override the content with the `#statusBar` slot, which
-receives `filterState` as a slot prop. While selection mode is active the same bar is shown regardless of
-`showStatusBar` and carries the selection controls instead; see [Selection](./selection).
+that is `'disabled'` or `'disabled-null'` does not count.
+
+The bar also shows the record count:
+
+| Condition | Text |
+|-----------|------|
+| `recordCount` prop with `total` | `{matching} of {total} records` |
+| `recordCount` prop without `total` | `{matching} records` |
+| local filtering | `{shownCount} of {loadedCount} records` |
+| a column uses `filterExternal` | `{loadedCount} records` |
+
+Override the content with the `#statusBar` slot, which receives `filterState`, `view` (the current
+[`GridViewState`](./df-grid#gridviewchangeevent)) and `recordCount` as slot props. While selection mode is active the
+same bar is shown regardless of `showStatusBar` and carries the selection controls instead; see
+[Selection](./selection).

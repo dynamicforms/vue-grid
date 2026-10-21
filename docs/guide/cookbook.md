@@ -399,3 +399,6 @@ inside `onFilter` when each change should start a request. `@load` fires when th
 end **and** `loading` is `false`; keeping `:loading="true"` for the duration of each fetch is what suppresses
 duplicate `@load` events while a page is in flight, so `reload()` and `loadNextPage()` don't need to guard against
 re-entrancy themselves.
+
+The grid only knows the records it has. To show the backend's counts in the status bar, pass them with
+`recordCount`, e.g. `:record-count="{ matching: response.count }"` together with `show-status-bar`.

@@ -30,6 +30,8 @@
       :show-filter-row="showFilterRow"
       :show-status-bar="showStatusBar"
       :filter-state="filterState"
+      :view="view"
+      :record-count="recordCount"
       :selection-mode="uSelection.selectionMode.value"
       :selection-keys="uSelection.selectionKeys.value"
       @cancel-selection="uSelection.clearSelection()"
@@ -249,6 +251,7 @@ import { useSelection } from './selection';
 import { translate } from './translations';
 import { useExcessiveScroll } from './use-excessive-scroll';
 import { useGridWindowing } from './use-grid-windowing';
+import { useViewChange } from './use-view-change';
 
 const props = withDefaults(defineProps<GridProps>(), {
   secondaryShadowCount: 30,
@@ -271,16 +274,29 @@ const templateColumns = ref('');
 const uColumns = useColumns(props, gridId);
 
 // Processing pipeline: records → filter → sort → display
+const records = toRef(props, 'records');
 const {
   filterState,
   emitWrapper: filterEmitWrapper,
   filteredRecords,
-} = useFiltering(props, emit, uColumns, toRef(props, 'records'));
+  filteringLocal,
+} = useFiltering(props, emit, uColumns, records);
 const {
   sortState,
+  validatedSortState,
   emitWrapper: sortEmitWrapper,
   sortedRecords,
+  sortingLocal,
 } = useSorting(props, filterEmitWrapper, uColumns, filteredRecords);
+const { view } = useViewChange(emit, {
+  records,
+  filteredRecords,
+  filterState,
+  filteringLocal,
+  sortState: validatedSortState,
+  sortingLocal,
+  columns: uColumns.columns,
+});
 
 const headerRef = ref();
 const shadowMeasurements = reactive<Record<string, number>>({});

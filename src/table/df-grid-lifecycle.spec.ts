@@ -12,6 +12,8 @@
  *  - **windowed row placement** — `--row-base` and the windowing spacers' `grid-row` stay small
  *    regardless of dataset size; see use-row-placement.ts.
  *  - **teardown** — the resize observers are disconnected, so a detached grid stops reacting.
+ *  - **view-change** — the grid emits the view it displays when created and when `records` changes;
+ *    the change detection itself is covered by use-view-change.spec.ts.
  */
 
 import { flushPromises, mount } from '@vue/test-utils';
@@ -352,6 +354,21 @@ describe('DfGrid — lifecycle', () => {
       await settle();
 
       expect(wrapper.find('.df-summary-bar').classes()).not.toContain('df-summary-bar-empty');
+    });
+  });
+
+  describe('view-change event', () => {
+    it('emits the initial view and a view for replaced records', async () => {
+      const wrapper = mountGrid();
+      await settle();
+
+      await wrapper.setProps({ records: records.slice(0, 2) });
+      await settle();
+
+      const events = wrapper.emitted('view-change')!.map(([e]: any) => e);
+      expect(events).toHaveLength(2);
+      expect(events[0]).toMatchObject({ reasons: ['initial'], shownCount: 5, loadedCount: 5 });
+      expect(events[1]).toMatchObject({ reasons: ['records'], shownCount: 2, loadedCount: 2 });
     });
   });
 });

@@ -115,6 +115,8 @@ object passed to `createTranslatable` there is the whole catalogue:
 | `SelectionCountSelected` | `{count} items selected` | Selection status bar, in `'selection'` mode |
 | `SelectionCountExcluded` | `{count} items excluded` | Selection status bar, in `'exclusion'` mode |
 | `ActiveFilters` | `Active filters: {count}` | Status bar's default `statusBar` slot content |
+| `RecordCount` | `{count} records` | Status bar's default `statusBar` slot content, when the total is unknown |
+| `RecordCountOfTotal` | `{count} of {total} records` | Status bar's default `statusBar` slot content |
 | `NullValue` | `null` | A cell's content when its value is `null`/`undefined` and no `nullHandler` says otherwise |
 
 With vue-i18n:
