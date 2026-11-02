@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A grid wider than its container scrolls horizontally as a whole (`.df-grid.container` is the horizontal scroller).
   The body scrolled horizontally on its own, leaving the header in place above the wrong columns.
+- A container narrower than every responsive layout selects the layout with the smallest recorded width. The grid
+  kept the active layout, so a grid mounted or resized below every layout stayed on the widest one.
 
 ## [0.8.1] - 2026-10-21
 

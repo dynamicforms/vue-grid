@@ -242,7 +242,7 @@ Access these through a template ref on `<df-grid>`.
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `reMeasure()` | `Promise<void>` | Re-reads the body grid's own natively-resolved column widths and republishes them onto the header. |
-| `reMeasureLayouts()` | `Promise<void>` | Measures the width every responsive layout needs again and selects the widest layout that fits. |
+| `reMeasureLayouts()` | `Promise<void>` | Measures the width every responsive layout needs again and selects the widest layout that fits, or the narrowest when none fits. |
 
 `reMeasure()` — forces the same header re-sync a container resize triggers automatically, for
 layout changes the grid has no way to detect on its own — for example a column's rendered content
@@ -250,7 +250,8 @@ changing width without the container itself resizing. The returned promise resol
 widths have actually reached the header, not merely once they were read.
 
 `reMeasureLayouts()` — discards the width recorded for each [responsive layout](./columns#responsive-layouts) and
-measures every layout again from the records sampled now, then selects the widest layout that fits the container.
+measures every layout again from the records sampled now, then selects the widest layout that fits the container,
+or the narrowest one when none fits.
 The grid does this by itself only when more records become available to sample; call it when the sampled records
 change without growing in number — for example records replaced by wider ones, or a font that finished loading
 after the first measurement. While a layout is being measured, its previous width keeps driving the layout choice.

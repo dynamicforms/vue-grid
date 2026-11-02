@@ -224,7 +224,7 @@
 </template>
 
 <script setup lang="ts">
-import { keys, maxBy, pickBy, throttle } from 'lodash-es';
+import { keys, maxBy, minBy, pickBy, throttle } from 'lodash-es';
 import { computed, h, nextTick, onMounted, onUnmounted, onUpdated, reactive, ref, toRef, watch } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
 
@@ -359,7 +359,8 @@ watch(availableShadowSample, remeasureUndersampledLayouts);
 const containerWidth = ref(0);
 function selectResponsiveLayout(width: number) {
   const filtered = pickBy(shadowMeasurements, (config) => config <= width);
-  const bestLayout = maxBy(keys(filtered), (key) => filtered[key]);
+  const bestLayout =
+    maxBy(keys(filtered), (key) => filtered[key]) ?? minBy(keys(shadowMeasurements), (key) => shadowMeasurements[key]);
   if (bestLayout != null && bestLayout !== props.activeColumns) {
     templateColumns.value = '';
     emit('update:activeColumns', <string>bestLayout);

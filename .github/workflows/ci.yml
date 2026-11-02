@@ -33,7 +33,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Lint
         run: npm run lint
@@ -79,7 +79,7 @@ jobs:
           node-version: 'lts/*'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps ${{ matrix.browser }}
@@ -88,7 +88,7 @@ jobs:
         run: npm run test:e2e -- --project=${{ matrix.browser }}
 
       - name: Upload traces
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-traces-${{ matrix.browser }}
           path: test-results/

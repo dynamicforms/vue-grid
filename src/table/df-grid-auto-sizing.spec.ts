@@ -327,6 +327,24 @@ describe('DfGrid — column auto-sizing', () => {
       expect(wrapper.emitted('update:activeColumns')).toBeUndefined();
     });
 
+    it('asks for the narrowest layout when no layout fits', async () => {
+      const wrapper = mountGrid();
+      await settle();
+
+      await resizeContainer(wrapper, 150); // narrower than `narrow` (200px)
+
+      expect(wrapper.emitted('update:activeColumns')?.at(-1)).toEqual(['narrow']);
+    });
+
+    it('stays on the narrowest layout when no layout fits', async () => {
+      const wrapper = mountGrid({ activeColumns: 'narrow' });
+      await settle();
+
+      await resizeContainer(wrapper, 150);
+
+      expect(wrapper.emitted('update:activeColumns')).toBeUndefined();
+    });
+
     it('re-selects once shadow measurements land after an early resize, without a later resize', async () => {
       const wrapper = mountGrid({ activeColumns: 'narrow' });
       // Fire the container resize before the shadow grids' own queued measurement (still pending

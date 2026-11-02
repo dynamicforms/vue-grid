@@ -116,7 +116,7 @@ was recorded from, so a grid that starts empty and receives its first page later
 from its header alone. Records that change without growing the sample keep the recorded width;
 [`reMeasureLayouts()`](/reference/df-grid#exposed-methods) measures every layout again. When the container is resized or
 a recorded width changes, the grid emits `update:activeColumns` with the *name* of the widest layout whose recorded
-width still fits the container. If no layout fits, the active layout stays as it is.
+width still fits the container. If no layout fits, it emits the layout with the smallest recorded width.
 
 The value of `activeColumns` is matched against the layout name — `name` when given, otherwise `cssClass`. When
 `activeColumns` is unset, or names no existing layout, the first layout in the array is used. A flat column list is
