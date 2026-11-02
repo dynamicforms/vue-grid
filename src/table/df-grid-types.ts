@@ -211,8 +211,8 @@ export interface GridEmits extends SelectionEmits {
   'excessive-scroll': [amount: number];
 
   /**
-   * Fired when the grid's `ResizeObserver` determines that a different responsive column layout
-   * fits the available width. Use with `v-model:activeColumns`.
+   * Fired when the grid's `ResizeObserver` selects a different responsive column layout: the widest one that fits the
+   * available width, or the narrowest one when none fits. Use with `v-model:activeColumns`.
    */
   'update:activeColumns': [newValue: string];
 
