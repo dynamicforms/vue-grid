@@ -83,6 +83,9 @@ collapses to zero height instead, with nothing left to window rows against; `<df
 this happens, but the fix is still on your side of the boundary — give it height.
 :::
 
+A grid whose columns cannot shrink to the container's width scrolls horizontally as a whole: the header, the filter
+row, the status bar and the body move together, and the body scrolls only vertically.
+
 ## Card layout CSS
 
 The grid's own layout comes from your own stylesheet, as set above — make `.df-record-grid` a grid and give it a

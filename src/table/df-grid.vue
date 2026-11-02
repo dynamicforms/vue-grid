@@ -724,6 +724,17 @@ defineExpose({
    * wrong for the container they're actually meant to describe.
    */
   position: relative;
+  /*
+   * The only horizontal scroller: a grid wider than the container scrolls as a whole, so the
+   * header stays above its body columns. The header and the body are never narrower than their
+   * columns can shrink to.
+   */
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.df-grid.container > .df-grid.header-container,
+.df-grid.container > .df-grid-body {
+  min-width: min-content;
 }
 .df-grid-toolbar,
 .df-grid-footer {
@@ -756,6 +767,7 @@ defineExpose({
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
+  overflow-x: hidden;
   overflow-y: scroll;
   /* Containing block for the row-anchor's `position: absolute`, keeping its grid-area based
      sizing resolved against this grid specifically rather than a further-up positioned ancestor.
