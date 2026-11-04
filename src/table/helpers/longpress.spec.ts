@@ -14,10 +14,14 @@
  *    `mousedown` (using fake timers so tests don't take a real second).
  *
  * 2. **Cancelled by early release** — callback is NOT invoked when:
+ *      - `mouseup` fires before the timeout
  *      - `mouseout` fires before the timeout
  *      - `click` fires before the timeout (the user released the button)
  *      - `touchend` fires before the timeout
  *      - `touchcancel` fires before the timeout
+ *
+ * 2a. **Compatibility mouse events after a tap** — a `mousedown` shortly after `touchend` does not start
+ *     the timer, even when the tap's `click` never reaches the element.
  *
  * 3. **Custom duration** — the directive `arg` overrides the default 1 000 ms threshold.
  *
@@ -32,7 +36,7 @@
  */
 import { vi } from 'vitest';
 
-import { longpress } from './longpress';
+import { COMPAT_MOUSE_MS, longpress } from './longpress';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -160,6 +164,47 @@ describe('longpress directive', () => {
       vi.advanceTimersByTime(600);
 
       expect(cb).not.toHaveBeenCalled();
+    });
+
+    it('cancels on mouseup before timeout elapses (the click may not reach the element)', () => {
+      const cb = vi.fn();
+      const el = mountDirective(cb);
+
+      fireMouseDown(el);
+      vi.advanceTimersByTime(300);
+      el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      vi.advanceTimersByTime(1000);
+
+      expect(cb).not.toHaveBeenCalled();
+    });
+
+    it("ignores the tap's compatibility mousedown when a child stops the click", () => {
+      const cb = vi.fn();
+      const el = mountDirective(cb);
+      const icon = document.createElement('span');
+      el.appendChild(icon);
+      icon.addEventListener('click', (e) => e.stopPropagation());
+
+      fireTouchStart(icon);
+      icon.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+      fireMouseDown(icon);
+      icon.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      vi.advanceTimersByTime(1500);
+
+      expect(cb).not.toHaveBeenCalled();
+    });
+
+    it('starts the timer on a mousedown well after the last touchend', () => {
+      const cb = vi.fn();
+      const el = mountDirective(cb);
+
+      fireTouchStart(el);
+      el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+      vi.advanceTimersByTime(COMPAT_MOUSE_MS + 1);
+      fireMouseDown(el);
+      vi.advanceTimersByTime(1000);
+
+      expect(cb).toHaveBeenCalledTimes(1);
     });
 
     it('cancels on touchcancel before timeout elapses', () => {

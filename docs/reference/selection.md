@@ -34,6 +34,10 @@ Users activate selection mode without any prop wiring:
 
 In `'non-select'` mode neither gesture changes the selection.
 
+A long-press is a primary button or a touch held for 1 000 ms. Releasing the button (`mouseup`, `click`, `touchend`),
+leaving the row (`mouseout`) or a cancelled touch ends it. The `mousedown` a browser sends after a tap is not a new
+press, so a tap on an element inside the row that stops its `click` does not enter selection mode.
+
 Long-press relies on the `v-longpress` directive, which the grid does not register itself — it comes from installing the
 plugin: `app.use(DynamicFormsVueGrid)`, which registers it by default. When `<DfGrid>` is imported and used directly
 without that call, the directive is missing and long-press does nothing; shift+click remains the way to enter selection
