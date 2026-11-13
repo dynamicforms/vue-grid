@@ -181,17 +181,21 @@ no shared container between them, so nothing coordinates the spacing of more tha
 built specifically to lay out a group of actions. It takes an `Action` per action, each holding an icon, a label and
 an `ExecuteAction` that runs on click. The `Action` of `@dynamicforms/vuetify-inputs` adds render options to the one of
 `@dynamicforms/vue-forms`; `showLabel: false` draws an icon-only button, and `DfActions` (≥ 0.15.7) gives it the label
-as its `aria-label` and `title`:
+as its `aria-label` and `title`. A label given as a getter over the application's translation function follows the
+locale:
 
 ```typescript
 import { ExecuteAction } from '@dynamicforms/vue-forms';
 import { Action, RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 import { createColumn } from '@dynamicforms/vue-grid';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 function actionsFor(row: RowValue): Action[] {
   const actions = [
     new Action({
-      value: { icon: 'mdi-delete', label: 'Delete', showLabel: false },
+      value: { icon: 'mdi-delete', label: () => t('actions.delete'), showLabel: false },
       actions: [new ExecuteAction(() => deleteRow(row.id))],
     }),
   ];
@@ -200,7 +204,7 @@ function actionsFor(row: RowValue): Action[] {
     actions.push(new Action({
       value: {
         icon: selected ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
-        label: selected ? 'Deselect' : 'Select',
+        label: () => t(selected ? 'actions.deselect' : 'actions.select'),
         showLabel: false,
       },
       actions: [new ExecuteAction(() => toggleSelection(row.id))],
