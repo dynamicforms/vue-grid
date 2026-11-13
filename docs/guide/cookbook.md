@@ -178,24 +178,35 @@ several of them, rather than reaching for `preRender`/`postRender` — those are
 no shared container between them, so nothing coordinates the spacing of more than one small icon on either side.
 
 `DfActions` (from `@dynamicforms/vuetify-inputs`, already a peer dependency of this package) is one such component,
-built specifically to lay out a group of actions. It takes an `Action` (from `@dynamicforms/vue-forms`) per action,
-each holding an icon/label and an `ExecuteAction` that runs on click:
+built specifically to lay out a group of actions. It takes an `Action` per action, each holding an icon, a label and
+an `ExecuteAction` that runs on click. The `Action` of `@dynamicforms/vuetify-inputs` adds render options to the one of
+`@dynamicforms/vue-forms`; `showLabel: false` draws an icon-only button, and `DfActions` (≥ 0.15.7) gives it the label
+as its `aria-label` and `title`. A label given as a getter over the application's translation function follows the
+locale:
 
 ```typescript
-import { Action, ExecuteAction } from '@dynamicforms/vue-forms';
-import { RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
+import { ExecuteAction } from '@dynamicforms/vue-forms';
+import { Action, RenderableValue, SimpleComponentDef } from '@dynamicforms/vuetify-inputs';
 import { createColumn } from '@dynamicforms/vue-grid';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 function actionsFor(row: RowValue): Action[] {
   const actions = [
     new Action({
-      value: { icon: 'mdi-delete' },
+      value: { icon: 'mdi-delete', label: () => t('actions.delete'), showLabel: false },
       actions: [new ExecuteAction(() => deleteRow(row.id))],
     }),
   ];
   if (selectionMode.value !== null) {
+    const selected = isSelected(row.id);
     actions.push(new Action({
-      value: { icon: isSelected(row.id) ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline' },
+      value: {
+        icon: selected ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline',
+        label: () => t(selected ? 'actions.deselect' : 'actions.select'),
+        showLabel: false,
+      },
       actions: [new ExecuteAction(() => toggleSelection(row.id))],
     }));
   }
