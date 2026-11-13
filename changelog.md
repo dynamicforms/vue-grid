@@ -5,6 +5,17 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-11-13
+
+### Changed
+
+- **Breaking:** a column label (`ColumnDefinition.label`, the `label` parameter of `createColumn()`) is `RenderContent`
+  from `@dynamicforms/vuetify-inputs`: a string, an `MdString`, an `HtmlString`, a `SimpleComponentDef` or a function
+  returning one of them. The header cell renders markdown, HTML and components; a string renders as text. A function
+  label is re-read when the reactive state it reads changes, so `() => t('columns.name')` follows a locale switch.
+  The filter row's default placeholder takes the label's text (`renderContentText()`). The `header` slot's `item`
+  holds the labels with function labels called. Code that reads `column.label` as a string: see the migration guide.
+
 ## [0.8.3] - 2026-11-04
 
 ### Fixed

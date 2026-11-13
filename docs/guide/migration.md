@@ -1,5 +1,28 @@
 # Migration guide
 
+## 0.8.x → 0.9.0: column labels are render content
+
+`ColumnDefinition.label` and the `label` parameter of `createColumn()` are `RenderContent` from
+`@dynamicforms/vuetify-inputs`. A string label renders as before. Code that reads `column.label` as a string reads its
+text with `renderContentText()`, after calling a function label:
+
+```typescript
+import { isCallableFunction, renderContentText } from '@dynamicforms/vuetify-inputs';
+
+// before
+const text: string = column.label;
+
+// after
+const text = renderContentText(isCallableFunction(column.label) ? column.label() : column.label);
+```
+
+The `header` slot's `item` holds the labels as `RenderContentNonCallable`. A slot that interpolates a label as text
+renders it with `MessagesWidget` instead when labels are not plain strings:
+
+```vue
+<messages-widget :message="[new RenderableValue(item.name)]" />
+```
+
 ## 0.6.x → 0.7.0: vue-forms 3.0
 
 0.7.0 requires `@dynamicforms/vue-forms` 3.0.0, `@dynamicforms/vuetify-inputs` 0.14.1 and

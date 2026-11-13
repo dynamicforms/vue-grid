@@ -284,7 +284,7 @@ async function onRecordsReplaced() {
 |------|-------|-------------|
 | `toolbar-start` | — | Rendered at the left side of the toolbar bar above the header. The toolbar wrapper (`div.df-grid-toolbar`) is only rendered when at least one toolbar slot is provided. |
 | `toolbar-end` | — | Rendered at the right side of the toolbar. |
-| `header` | `{ item }` | Replaces the entire header row. `item` is a `{ fieldName: label }` map of the active columns. Forwarded to `<DfGridHeader>`. |
+| `header` | `{ item }` | Replaces the entire header row. `item` is a `{ fieldName: label }` map of the active columns, each label a `RenderContentNonCallable` (a function label is called). Forwarded to `<DfGridHeader>`. |
 | `statusBar` | `{ filterState, view, recordCount }` | Overrides the default status bar content (filter count and record count). `view` is the current `GridViewState`, `recordCount` the `recordCount` prop. Only visible when `showStatusBar` is `true` and selection mode is inactive. |
 | `groupActions` | — | Rendered on the right side of the selection status bar. Only visible while selection mode is active. Use it for batch actions (delete, export, …). |
 | `item` | `{ item, index, active }` | Replaces the default `<GridCard>` row rendering. `item` is the raw row object, `index` its 0-based position in the filtered and sorted list, `active` is always `true`. |
