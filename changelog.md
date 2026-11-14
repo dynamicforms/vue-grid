@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Requires `@dynamicforms/vuetify-inputs` 0.16.0.
 - **Breaking:** a column label (`ColumnDefinition.label`, the `label` parameter of `createColumn()`) is `RenderContent`
   from `@dynamicforms/vuetify-inputs`: a string, an `MdString`, an `HtmlString`, a `SimpleComponentDef` or a function
   returning one of them. The header cell renders markdown, HTML and components; a string renders as text. A function

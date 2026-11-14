@@ -180,8 +180,8 @@ no shared container between them, so nothing coordinates the spacing of more tha
 `DfActions` (from `@dynamicforms/vuetify-inputs`, already a peer dependency of this package) is one such component,
 built specifically to lay out a group of actions. It takes an `Action` per action, each holding an icon, a label and
 an `ExecuteAction` that runs on click. The `Action` of `@dynamicforms/vuetify-inputs` adds render options to the one of
-`@dynamicforms/vue-forms`; `showLabel: false` draws an icon-only button, and `DfActions` (≥ 0.15.7) gives it the label
-as its `aria-label` and `title`. A label given as a getter over the application's translation function follows the
+`@dynamicforms/vue-forms`; `showLabel: false` draws an icon-only button, and `DfActions` gives it the label as its
+`aria-label` and `title`. A label given as a getter over the application's translation function follows the
 locale:
 
 ```typescript
@@ -215,9 +215,12 @@ function actionsFor(row: RowValue): Action[] {
 
 const combinedActionsCol = createColumn('actions', 'Actions', (_value, row) => new RenderableValue({
   componentName: 'DfActions',
-  componentProps: { actions: actionsFor(row) },
+  componentProps: { actions: actionsFor(row), simple: true },
 } as SimpleComponentDef), { filterable: false, sortable: false, rendererOptions: {} });
 ```
+
+`simple: true` renders each action as one native `<button>` instead of a `v-btn`: the smallest DOM, for a column
+that repeats on every row.
 
 As above, the empty `rendererOptions: {}` is required to opt out of the default `nullHandler: 'null-null'` — without
 it, the `actions` field name (which names no real data) always resolves to `null`, and the renderer function is
