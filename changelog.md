@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `useRecentlyAdded` tracks recently updated records: `addRecentlyUpdated(pks, timeout?)` (default 250 ms) and
   `isPendingUpdate(pk)`. With the `recentlyAdded` prop the grid sets `state-updated` on the row card of a pending
   record. An update raises no `isAdding` and flashes no arc.
+- `row-click:body` and `row-click:header` events on `df-grid`, emitted together with `click`. `row-click:body` fires
+  for a data row with the clicked record and the `GridClickEvent`, `row-click:header` for the header row with the
+  `GridClickEvent`.
 
 ### Changed
 
