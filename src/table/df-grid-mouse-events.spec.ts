@@ -773,6 +773,23 @@ describe('df-grid-mouse-events.ts', () => {
         document.body.removeChild(card);
       });
 
+      it("treats a data row whose key is 'header' as a data row", () => {
+        const headerKeyed = { id: 'header', title: 'Header-keyed' };
+        mockDisplayedRecords = computed(() => [headerKeyed, ...mockRecords]);
+        const processMouse = setup();
+        const { cell, card } = createRow('0');
+
+        processMouse('click', click(cell));
+
+        expect(mockEmit).toHaveBeenCalledWith(
+          'row-click:body',
+          headerKeyed,
+          expect.objectContaining({ rowId: 0, key: 'header', rowData: headerKeyed }),
+        );
+        expect(emittedNames()).toEqual(['click', 'row-click:body']);
+        document.body.removeChild(card);
+      });
+
       it('does not emit row-click:body for a row without a record', () => {
         const processMouse = setup();
         const { cell, card } = createRow('-1');

@@ -72,7 +72,7 @@ export function useGridMouseEvents(
 
     if (!row) return; // click outside any row card within an interactive section
 
-    if (key === 'header') {
+    if (rowId === 'header') {
       const doSort = (eType === 'click' && !longPress.value) || eType === 'longpress';
       if (doSort) {
         processSortEvent(emit, sortState.value, headerRef, uColumns, rowData, columnClasses, eType, event, columnName);
