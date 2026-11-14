@@ -121,7 +121,7 @@ import { CachedIcon } from 'vue-cached-icon';
 
 import { DefaultRenderers, gridColumnCreate, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
-import { ColumnDefinition } from './columns';
+import { ColumnDefinition, columnLabel, columnLabelText, type ColumnLabels } from './columns';
 import { FilterState, getFilterConfig } from './columns-filtering';
 import { getSortConfig, type ColumnSortState, type SortState } from './columns-sorting';
 import type { GridRecordCount } from './df-grid-types';
@@ -172,9 +172,14 @@ const props = withDefaults(defineProps<HeaderProps>(), {
 });
 const emit = defineEmits<{ 'cancel-selection': []; 'invert-selection': [] }>();
 
-const headerItem = computed(() => Object.fromEntries(props.columns.map((column) => [column.fieldName, column.label])));
+// a function label is called here, so a change of what it reads renders the header again
+const headerItem = computed((): ColumnLabels =>
+  Object.fromEntries(props.columns.map((column) => [column.fieldName, columnLabel(column)])),
+);
 
-const headerOptions = computed(() =>
+type HeaderColumn = ColumnDefinition<keyof RendererOptionsMap> & { sortState: ColumnSortState };
+
+const headerOptions = computed((): HeaderColumn[] =>
   props.columns.map((column) => {
     const srtIdx = props.sortState.findIndex((ssi) => ssi.columnName === column.fieldName);
     const srt = srtIdx === -1 ? null : props.sortState[srtIdx];
@@ -210,7 +215,7 @@ function getFilterableConfig(column: ColumnDefinition<keyof RendererOptionsMap>)
 }
 
 function filterPlaceholder(column: ColumnDefinition<keyof RendererOptionsMap>) {
-  return translate('FilterColumn', { column: column.label });
+  return translate('FilterColumn', { column: columnLabelText(column) });
 }
 
 const isSelectionActive = computed(() => props.selectionMode != null && props.selectionMode !== 'non-select');

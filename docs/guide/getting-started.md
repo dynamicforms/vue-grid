@@ -155,6 +155,25 @@ status bar or summary with the grid's strings.
 The [`@dynamicforms/translatable` readme](https://github.com/dynamicforms/translatable#readme) describes the
 translation function, the resolution order and a translation function written without an i18n library.
 
+### Column labels
+
+A column label is the application's own text. A function label is re-read when the reactive state it reads changes,
+so a label over vue-i18n's `t` follows a locale switch:
+
+```typescript
+import { createColumn } from '@dynamicforms/vue-grid';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
+const columns = [
+  createColumn('name',  () => t('columns.name'),  'plain'),
+  createColumn('email', () => t('columns.email'), 'email'),
+];
+```
+
+See [Labels](/reference/columns#labels) for the forms a label takes.
+
 ## Next steps
 
 The example above covers a plain, read-only grid. From here:

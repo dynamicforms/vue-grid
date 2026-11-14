@@ -9,6 +9,7 @@
  *    function that owns the cell's entire main content, for columns whose content isn't a formatted
  *    field value (an actions column, say) — see `useFormattedData` for how the two are dispatched.
  *  - `createColumn()` — convenience factory that builds a ColumnDefinition with safe defaults
+ *  - `columnLabel()` / `columnLabelText()` — a column's label as it reads now, as content and as text
  *  - `filterColumns()` — selects a subset of columns by numeric index, field name string, or
  *    `{ fieldName: n }` object (nth occurrence of a repeated field)
  *  - `ResponsiveColumnDefinitions` — union type for flat or responsive (breakpoint-based)
@@ -17,6 +18,12 @@
  *    column array, attaches internal renderer state via `gridColumnCreate` for each column,
  *    and exposes computed refs for the active name, CSS class, and column list
  */
+import {
+  isCallableFunction,
+  type RenderContent,
+  type RenderContentNonCallable,
+  renderContentText,
+} from '@dynamicforms/vuetify-inputs';
 import { filter, find, isArray, isEmpty, isNumber, isObject, isString } from 'lodash-es';
 import { computed } from 'vue';
 
@@ -27,12 +34,19 @@ import { Sortable } from './columns-sorting';
 import { GridProps } from './df-grid-types';
 
 export interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> {
+  /** Property of the row read for the cell value; also a CSS class on the column's cells. */
   fieldName: string;
-  label: string;
+  /** Header content; a function label is re-read when reactive state it reads changes (e.g. the locale). */
+  label: RenderContent;
+  /** Name of a registered renderer, or a function that renders the cell's main content. Default `'plain'`. */
   renderer?: R | CellRendererTransformer;
+  /** Options of the named renderer. */
   rendererOptions?: RendererOptionsMap[R];
+  /** Whether and how the column sorts. */
   sortable?: Sortable;
+  /** Whether and how the column filters. */
   filterable?: Filterable;
+  /** Additional CSS class(es) on the column's header and body cells. */
   cssClass?: string | undefined;
 }
 
@@ -42,7 +56,7 @@ export type AnyColumnDefinition = {
 
 export function createColumn<R extends keyof RendererOptionsMap = 'plain'>(
   fieldName: string,
-  label: string,
+  label: RenderContent,
   renderer?: R | CellRendererTransformer,
   otherOptions?: Omit<ColumnDefinition<R>, 'fieldName' | 'label' | 'renderer'>,
 ): ColumnDefinition<R> {
@@ -57,6 +71,19 @@ export function createColumn<R extends keyof RendererOptionsMap = 'plain'>(
 
   return result as ColumnDefinition<R>;
 }
+
+/** The column's label as it reads now: a function label called. */
+export function columnLabel(column: Pick<ColumnDefinition<any>, 'label'>): RenderContentNonCallable {
+  return isCallableFunction(column.label) ? column.label() : column.label;
+}
+
+/** The text of the column's label, for an attribute or a placeholder. */
+export function columnLabelText(column: Pick<ColumnDefinition<any>, 'label'>): string {
+  return renderContentText(columnLabel(column) ?? '');
+}
+
+/** Labels of the columns as they read now, by field name. */
+export type ColumnLabels = Record<string, RenderContentNonCallable>;
 
 export type ColumnFilterSelectors = (number | string | { [key: string]: number })[];
 export type ColumnDefinitionsList = ColumnDefinition<keyof RendererOptionsMap>[];

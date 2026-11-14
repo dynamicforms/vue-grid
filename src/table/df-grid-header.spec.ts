@@ -10,7 +10,8 @@ import type { GridRecordCount } from './df-grid-types';
 import type { GridViewState } from './use-view-change';
 
 // Mock dependencies
-vi.mock('@dynamicforms/vuetify-inputs', () => ({
+vi.mock('@dynamicforms/vuetify-inputs', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@dynamicforms/vuetify-inputs')>()),
   DfInput: { name: 'DfInput', template: '<input />' },
   DfSelect: { name: 'DfSelect', template: '<select />' },
   DfCheckbox: { name: 'DfCheckbox', template: '<input type="checkbox" />' },

@@ -8,7 +8,7 @@ Columns are defined using `createColumn()` and passed to `<DfGrid>` via the `col
 ```typescript
 function createColumn<R extends keyof RendererOptionsMap>(
   fieldName: string,
-  label: string,
+  label: RenderContent,
   renderer?: R,
   otherOptions?: Omit<ColumnDefinition<R>, 'fieldName' | 'label' | 'renderer'>,
 ): ColumnDefinition<R>
@@ -17,7 +17,7 @@ function createColumn<R extends keyof RendererOptionsMap>(
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `fieldName` | `string` | Property name on the row data object, read as a direct property access — dotted paths are not resolved. Also used as a CSS class on cells. |
-| `label` | `string` | Column header label. |
+| `label` | `RenderContent` | Column header label. See [Labels](#labels). |
 | `renderer` | `keyof RendererOptionsMap` | Cell renderer to use. Defaults to `'plain'`. See [Cell Renderers](./renderers). |
 | `otherOptions` | `object` | Additional column options (see `ColumnDefinition` below). |
 
@@ -26,7 +26,7 @@ function createColumn<R extends keyof RendererOptionsMap>(
 ```typescript
 interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> {
   fieldName: string;
-  label: string;
+  label: RenderContent;                    // see Labels
   renderer?: R;
   rendererOptions?: RendererOptionsMap[R]; // renderer-specific options
   sortable?: Sortable;                     // see Sorting
@@ -42,6 +42,24 @@ sorted.
 `cssClass` is set on the column's header cell as well as its body cells. A header cell lays out its label and
 sorting indicator as a flex row, so `text-align` does not move them; the classes `text-right`, `text-end` and
 `text-center` align them to the end or the centre of the header cell.
+
+### Labels
+
+`label` is a `RenderContent` from `@dynamicforms/vuetify-inputs`: a string, an `MdString`, an `HtmlString`, a
+`SimpleComponentDef`, or a function returning one of them. The header cell renders it the way vuetify-inputs renders
+content: a string as text, an `MdString` as markdown, an `HtmlString` as HTML and a `SimpleComponentDef` as its
+component. Markup in a string is shown as written.
+
+A function label is re-read when the reactive state it reads changes, so the header follows it without the columns
+being created again. A label over non-reactive state does not update. A translated label is a function over the
+application's translation function; see [Column labels](/guide/getting-started#column-labels).
+
+Where the grid takes only text from a label, such as the filter row's default placeholder (`FilterColumn`), it reads
+the label with `renderContentText()` from `@dynamicforms/vuetify-inputs`: an `HtmlString` without its tags, a
+component as the text of its children, a string and an `MdString` as written. The column-width measurement measures
+the rendered header cells.
+
+The `header` slot of `<DfGrid>` receives the labels with function labels called.
 
 ### Example
 
