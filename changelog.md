@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `addRecentlyAdded` for a pk that is still pending restarts its timeout; the pk no longer expires at the earlier
   add's timeout. Expiry timers are cleared when the component unmounts.
 
+### Fixed
+
+- A click on a data row whose `keyField` value is the string `'header'` is handled as a data-row click: it emits
+  `row-click:body`, starts or toggles selection, and no longer sorts the grid or emits `row-click:header`.
+
 ## [0.8.3] - 2026-11-04
 
 ### Fixed
