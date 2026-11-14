@@ -1,6 +1,8 @@
 # Migration guide
 
-## 0.8.x → 0.9.0: column labels are render content
+## 0.8.x → 0.9.0
+
+### Column labels are render content
 
 `ColumnDefinition.label` and the `label` parameter of `createColumn()` are `RenderContent` from
 `@dynamicforms/vuetify-inputs`. A string label renders as before. Code that reads `column.label` as a string reads its
@@ -22,6 +24,23 @@ renders it with `MessagesWidget` instead when labels are not plain strings:
 ```vue
 <messages-widget :message="[new RenderableValue(item.name)]" />
 ```
+
+### Every row card has `even` / `odd`
+
+The grid sets `even` or `odd` on every row card, by its 0-based index, whether or not `rowClass` is given. `rowClass`
+returns only the extra classes:
+
+```vue
+<!-- before -->
+<df-grid :row-class="(item, index) => [index % 2 === 0 ? 'even' : 'odd', { negative: item.amount < 0 }]" />
+
+<!-- after -->
+<df-grid :row-class="(item) => ({ negative: item.amount < 0 })" />
+```
+
+A `rowClass` that returned no `even` / `odd` to keep rows unstriped now gets them on its rows. CSS that styles
+`.df-grid.card.even` / `.df-grid.card.odd` applies to those rows; an application that wants other row styling styles
+its own classes instead.
 
 ## 0.6.x → 0.7.0: vue-forms 3.0
 

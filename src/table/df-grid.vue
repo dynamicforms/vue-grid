@@ -106,6 +106,7 @@
               class="df-grid card"
               :class="[
                 uColumns.cssClass.value,
+                index % 2 === 0 ? 'even' : 'odd',
                 props.rowClass?.(item, index),
                 isSelectionActive ? (uSelection.isSelected(item[props.keyField]) ? 'selected' : 'unselected') : null,
                 props.recentlyAdded?.isPendingAdd(item[props.keyField]) ? 'state-adding' : null,
@@ -228,7 +229,7 @@ import { keys, maxBy, minBy, pickBy, throttle } from 'lodash-es';
 import { computed, h, nextTick, onMounted, onUnmounted, onUpdated, reactive, ref, toRef, watch } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
 
-import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap, RowValue } from './cell-renderers';
+import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { useColumns } from './columns';
 import { useFiltering } from './columns-filtering';
@@ -260,7 +261,6 @@ const props = withDefaults(defineProps<GridProps>(), {
   showStatusBar: false,
   showSummaryBar: false,
   loading: false,
-  rowClass: (_item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
   selectionMode: null,
   estimatedRowHeight: 30,
   minRenderedRows: 100,

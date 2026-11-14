@@ -5,7 +5,7 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.0] - 2026-11-13
+## [0.9.0] - 2026-11-14
 
 ### Changed
 
@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   label is re-read when the reactive state it reads changes, so `() => t('columns.name')` follows a locale switch.
   The filter row's default placeholder takes the label's text (`renderContentText()`). The `header` slot's `item`
   holds the labels with function labels called. Code that reads `column.label` as a string: see the migration guide.
+- **Breaking:** every row card has the class `even` or `odd` by its index, also with a custom `rowClass`. `rowClass`
+  has no default and its classes are added next to `even` / `odd`. A `rowClass` that left out `even` / `odd` to
+  drop the stripe: see the migration guide.
 
 ## [0.8.3] - 2026-11-04
 

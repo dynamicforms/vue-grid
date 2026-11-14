@@ -16,7 +16,6 @@
       :recently-added="recentlyAdded"
       class="incoming-demo-grid"
       key-field="id"
-      :row-class="rowClass"
     />
   </div>
 </template>
@@ -34,11 +33,6 @@ const records = reactive(generateMusicLibrary(50)) as any[];
 let nextId = records.reduce((max: number, r: any) => Math.max(max, r.id as number), 0) + 1;
 
 const recentlyAdded = useRecentlyAdded(ref(records), 'id');
-
-function rowClass(item: any, index: number): string {
-  const stripe = index % 2 === 0 ? 'even' : 'odd';
-  return recentlyAdded.isPendingAdd(item.id) ? `${stripe} state-adding` : stripe;
-}
 
 function addRecords(position: 'start' | 'end' | 'random' | 'visible') {
   const count = 1; //Math.floor(Math.random() * 2) + 1;

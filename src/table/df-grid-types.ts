@@ -93,15 +93,14 @@ export interface GridProps extends SelectionProps {
   loading?: boolean;
 
   /**
-   * Returns CSS classes applied to each data row card. Receives the row data object and its 0-based index.
+   * Returns extra CSS classes applied to each data row card. Receives the row data object and its 0-based index.
    * Return type matches Vue's `:class` binding — a string, an array of strings, or an object `{ className: boolean }`.
    *
-   * When omitted, defaults to zebra striping: even rows get `'even'`, odd rows get `'odd'`.
-   * Providing your own function replaces the default entirely.
+   * The grid always adds `'even'` or `'odd'` by the row's index; the classes returned here are added next to them.
    *
    * @example
-   * // Highlight negative amounts, keep zebra striping elsewhere
-   * :row-class="(item, index) => item.amount < 0 ? 'negative' : (index % 2 === 0 ? 'even' : 'odd')"
+   * // Highlight negative amounts
+   * :row-class="(item) => ({ negative: item.amount < 0 })"
    *
    * @example
    * // Data-driven class stored in the record

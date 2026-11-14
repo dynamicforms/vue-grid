@@ -16,8 +16,8 @@ filtering work out of the box — locally or delegated to a backend.
 - Responsive column layouts — define multiple column sets, the grid activates the best fit based on container width
 - Built-in sorting — local multi-column sort with `natural-orderby`; external (server-side) sort supported
 - Built-in filtering — local filtering with string/number/boolean/date inputs; external filtering supported
-- Per-row CSS classes via `rowClass` callback — data-driven styling or conditional highlighting; defaults to zebra
-  striping
+- Per-row CSS classes via `rowClass` callback — data-driven styling or conditional highlighting, next to the `even` /
+  `odd` classes every row card has
 - Flexible cell renderers — plain text, markdown, numbers, dates, links, checkboxes, colors, IP addresses, and more
 - `preRender` / `postRender` hooks for adding prefix/suffix content to any cell. Custom cell renderers support
 - Toolbar and footer slots for adding UI above and below the grid
