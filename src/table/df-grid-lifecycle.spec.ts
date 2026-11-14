@@ -374,15 +374,15 @@ describe('DfGrid — lifecycle', () => {
   });
 
   describe('click events', () => {
-    it('emits click and row-click:body with the record for a click on a data row', async () => {
+    it('emits click and click:body with the record for a click on a data row', async () => {
       const wrapper = mountGrid();
       await settle();
 
       await wrapper.find('[data-section="body"] [data-idx="1"]').trigger('click');
 
       expect(wrapper.emitted('click')?.[0]?.[0]).toMatchObject({ rowId: 1, key: 1 });
-      expect(wrapper.emitted('row-click:body')?.[0]).toEqual([records[1], expect.objectContaining({ rowId: 1 })]);
-      expect(wrapper.emitted('row-click:header')).toBeUndefined();
+      expect(wrapper.emitted('click:body')?.[0]).toEqual([records[1], expect.objectContaining({ rowId: 1 })]);
+      expect(wrapper.emitted('click:header')).toBeUndefined();
     });
   });
 });

@@ -168,12 +168,12 @@ export interface GridEmits extends SelectionEmits {
    * Fired together with `click` on a click on a data row, under the same conditions. Not fired for header clicks or
    * for a click that resolves to no record. `row` is the clicked record, the same object as `event.rowData`.
    */
-  'row-click:body': [row: RowValue, event: GridClickEvent];
+  'click:body': [row: RowValue, event: GridClickEvent];
 
   /**
    * Fired together with `click` on a click on the header row. Not fired for data rows.
    */
-  'row-click:header': [event: GridClickEvent];
+  'click:header': [event: GridClickEvent];
 
   /**
    * Fired when the user interacts with a sortable column header (single or shift-click).

@@ -6,7 +6,7 @@
       :records="records"
       key-field="id"
       style="height: 10em"
-      @row-click:body="(row: RowValue) => (lastClick = String(row.id))"
+      @click:body="(row: RowValue) => (lastClick = String(row.id))"
     />
     <p v-if="clicks" class="last-click">Last row click: {{ lastClick }}</p>
   </div>

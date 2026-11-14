@@ -371,7 +371,7 @@ describe('df-grid-mouse-events.ts', () => {
 
         // Should only emit the click events, not update:sortState
         expect(mockEmit).toHaveBeenCalledWith('click', expect.any(Object));
-        expect(mockEmit).toHaveBeenCalledWith('row-click:header', expect.any(Object));
+        expect(mockEmit).toHaveBeenCalledWith('click:header', expect.any(Object));
         expect(mockEmit).toHaveBeenCalledTimes(2);
 
         document.body.removeChild(card);
@@ -744,32 +744,32 @@ describe('df-grid-mouse-events.ts', () => {
         ).processMouse;
       }
 
-      it('emits row-click:body with the record for a data row, and no row-click:header', () => {
+      it('emits click:body with the record for a data row, and no click:header', () => {
         const processMouse = setup();
         const { cell, card } = createRow('1');
 
         processMouse('click', click(cell));
 
         expect(mockEmit).toHaveBeenCalledWith(
-          'row-click:body',
+          'click:body',
           mockRecords[1],
           expect.objectContaining({ rowId: 1, key: 2, rowData: mockRecords[1], columnName: 'title' }),
         );
-        expect(emittedNames()).toEqual(['click', 'row-click:body']);
+        expect(emittedNames()).toEqual(['click', 'click:body']);
         document.body.removeChild(card);
       });
 
-      it('emits row-click:header for the header, and no row-click:body', () => {
+      it('emits click:header for the header, and no click:body', () => {
         const processMouse = setup();
         const { cell, card } = createRow('header');
 
         processMouse('click', click(cell));
 
         expect(mockEmit).toHaveBeenCalledWith(
-          'row-click:header',
+          'click:header',
           expect.objectContaining({ rowId: 'header', key: 'header', columnName: 'title' }),
         );
-        expect(emittedNames()).not.toContain('row-click:body');
+        expect(emittedNames()).not.toContain('click:body');
         document.body.removeChild(card);
       });
 
@@ -782,15 +782,15 @@ describe('df-grid-mouse-events.ts', () => {
         processMouse('click', click(cell));
 
         expect(mockEmit).toHaveBeenCalledWith(
-          'row-click:body',
+          'click:body',
           headerKeyed,
           expect.objectContaining({ rowId: 0, key: 'header', rowData: headerKeyed }),
         );
-        expect(emittedNames()).toEqual(['click', 'row-click:body']);
+        expect(emittedNames()).toEqual(['click', 'click:body']);
         document.body.removeChild(card);
       });
 
-      it('does not emit row-click:body for a row without a record', () => {
+      it('does not emit click:body for a row without a record', () => {
         const processMouse = setup();
         const { cell, card } = createRow('-1');
 
@@ -800,7 +800,7 @@ describe('df-grid-mouse-events.ts', () => {
         document.body.removeChild(card);
       });
 
-      it('does not emit row-click:body while selection mode is active', () => {
+      it('does not emit click:body while selection mode is active', () => {
         const uSelection = { selectionMode: { value: 'selection' }, startSelection: vi.fn(), toggleKey: vi.fn() };
         const processMouse = setup(uSelection);
         const { cell, card } = createRow('0');
@@ -812,7 +812,7 @@ describe('df-grid-mouse-events.ts', () => {
         document.body.removeChild(card);
       });
 
-      it('does not emit row-click:body on shift+click', () => {
+      it('does not emit click:body on shift+click', () => {
         const uSelection = { selectionMode: { value: null }, startSelection: vi.fn(), toggleKey: vi.fn() };
         const processMouse = setup(uSelection);
         const { cell, card } = createRow('0');
@@ -844,8 +844,8 @@ describe('df-grid-mouse-events.ts', () => {
 
         processMouse('longpress', click(cell));
 
-        expect(emittedNames()).not.toContain('row-click:body');
-        expect(emittedNames()).not.toContain('row-click:header');
+        expect(emittedNames()).not.toContain('click:body');
+        expect(emittedNames()).not.toContain('click:header');
         document.body.removeChild(card);
       });
     });
