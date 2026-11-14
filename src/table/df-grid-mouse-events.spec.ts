@@ -369,9 +369,10 @@ describe('df-grid-mouse-events.ts', () => {
 
         processMouse('click', clickEvent);
 
-        // Should only emit click, not update:sortState
+        // Should only emit the click events, not update:sortState
         expect(mockEmit).toHaveBeenCalledWith('click', expect.any(Object));
-        expect(mockEmit).toHaveBeenCalledTimes(1);
+        expect(mockEmit).toHaveBeenCalledWith('row-click:header', expect.any(Object));
+        expect(mockEmit).toHaveBeenCalledTimes(2);
 
         document.body.removeChild(card);
       });
@@ -706,6 +707,146 @@ describe('df-grid-mouse-events.ts', () => {
         clickRow(processMouse, '2');
 
         expect(mockUSelection.toggleKey).toHaveBeenCalledWith(1);
+      });
+    });
+
+    describe('per-section click events', () => {
+      function createRow(dataIdx: string) {
+        const cell = document.createElement('div');
+        cell.className = 'df-grid cell title';
+        const card = document.createElement('div');
+        card.className = 'df-grid card';
+        card.setAttribute('data-idx', dataIdx);
+        card.appendChild(cell);
+        document.body.appendChild(card);
+        return { cell, card };
+      }
+
+      function click(cell: HTMLElement, init: MouseEventInit = {}) {
+        const event = new MouseEvent('click', { bubbles: true, cancelable: true, ...init });
+        Object.defineProperty(event, 'target', { value: cell, writable: false });
+        return event;
+      }
+
+      function emittedNames() {
+        return mockEmit.mock.calls.map((call: unknown[]) => call[0]);
+      }
+
+      function setup(uSelection?: any) {
+        return useGridMouseEvents(
+          mockEmit,
+          mockProps,
+          mockDisplayedRecords,
+          mockSortState,
+          mockHeaderRef,
+          mockUColumns,
+          uSelection,
+        ).processMouse;
+      }
+
+      it('emits row-click:body with the record for a data row, and no row-click:header', () => {
+        const processMouse = setup();
+        const { cell, card } = createRow('1');
+
+        processMouse('click', click(cell));
+
+        expect(mockEmit).toHaveBeenCalledWith(
+          'row-click:body',
+          mockRecords[1],
+          expect.objectContaining({ rowId: 1, key: 2, rowData: mockRecords[1], columnName: 'title' }),
+        );
+        expect(emittedNames()).toEqual(['click', 'row-click:body']);
+        document.body.removeChild(card);
+      });
+
+      it('emits row-click:header for the header, and no row-click:body', () => {
+        const processMouse = setup();
+        const { cell, card } = createRow('header');
+
+        processMouse('click', click(cell));
+
+        expect(mockEmit).toHaveBeenCalledWith(
+          'row-click:header',
+          expect.objectContaining({ rowId: 'header', key: 'header', columnName: 'title' }),
+        );
+        expect(emittedNames()).not.toContain('row-click:body');
+        document.body.removeChild(card);
+      });
+
+      it("treats a data row whose key is 'header' as a data row", () => {
+        const headerKeyed = { id: 'header', title: 'Header-keyed' };
+        mockDisplayedRecords = computed(() => [headerKeyed, ...mockRecords]);
+        const processMouse = setup();
+        const { cell, card } = createRow('0');
+
+        processMouse('click', click(cell));
+
+        expect(mockEmit).toHaveBeenCalledWith(
+          'row-click:body',
+          headerKeyed,
+          expect.objectContaining({ rowId: 0, key: 'header', rowData: headerKeyed }),
+        );
+        expect(emittedNames()).toEqual(['click', 'row-click:body']);
+        document.body.removeChild(card);
+      });
+
+      it('does not emit row-click:body for a row without a record', () => {
+        const processMouse = setup();
+        const { cell, card } = createRow('-1');
+
+        processMouse('click', click(cell));
+
+        expect(emittedNames()).toEqual(['click']);
+        document.body.removeChild(card);
+      });
+
+      it('does not emit row-click:body while selection mode is active', () => {
+        const uSelection = { selectionMode: { value: 'selection' }, startSelection: vi.fn(), toggleKey: vi.fn() };
+        const processMouse = setup(uSelection);
+        const { cell, card } = createRow('0');
+
+        processMouse('click', click(cell));
+
+        expect(uSelection.toggleKey).toHaveBeenCalledWith(1);
+        expect(mockEmit).not.toHaveBeenCalled();
+        document.body.removeChild(card);
+      });
+
+      it('does not emit row-click:body on shift+click', () => {
+        const uSelection = { selectionMode: { value: null }, startSelection: vi.fn(), toggleKey: vi.fn() };
+        const processMouse = setup(uSelection);
+        const { cell, card } = createRow('0');
+
+        processMouse('click', click(cell, { shiftKey: true }));
+
+        expect(uSelection.startSelection).toHaveBeenCalledWith(1);
+        expect(mockEmit).not.toHaveBeenCalled();
+        document.body.removeChild(card);
+      });
+
+      it('emits neither event while a recently added row is arriving', () => {
+        mockProps = { ...mockProps, recentlyAdded: { isAdding: ref(true) } as any };
+        const processMouse = setup();
+        const { cell: bodyCell, card: bodyCard } = createRow('0');
+        const { cell: headerCell, card: headerCard } = createRow('header');
+
+        processMouse('click', click(bodyCell));
+        processMouse('click', click(headerCell));
+
+        expect(mockEmit).not.toHaveBeenCalled();
+        document.body.removeChild(bodyCard);
+        document.body.removeChild(headerCard);
+      });
+
+      it('does not emit either event on a long-press', () => {
+        const processMouse = setup();
+        const { cell, card } = createRow('0');
+
+        processMouse('longpress', click(cell));
+
+        expect(emittedNames()).not.toContain('row-click:body');
+        expect(emittedNames()).not.toContain('row-click:header');
+        document.body.removeChild(card);
       });
     });
   });

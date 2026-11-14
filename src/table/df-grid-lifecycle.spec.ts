@@ -371,4 +371,17 @@ describe('DfGrid — lifecycle', () => {
       expect(events[1]).toMatchObject({ reasons: ['records'], shownCount: 2, loadedCount: 2 });
     });
   });
+
+  describe('click events', () => {
+    it('emits click and row-click:body with the record for a click on a data row', async () => {
+      const wrapper = mountGrid();
+      await settle();
+
+      await wrapper.find('[data-section="body"] [data-idx="1"]').trigger('click');
+
+      expect(wrapper.emitted('click')?.[0]?.[0]).toMatchObject({ rowId: 1, key: 1 });
+      expect(wrapper.emitted('row-click:body')?.[0]).toEqual([records[1], expect.objectContaining({ rowId: 1 })]);
+      expect(wrapper.emitted('row-click:header')).toBeUndefined();
+    });
+  });
 });

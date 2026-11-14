@@ -5,7 +5,13 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.0] - 2026-11-13
+## [0.9.0] - 2026-11-14
+
+### Added
+
+- `row-click:body` and `row-click:header` events on `df-grid`, emitted together with `click`. `row-click:body` fires
+  for a data row with the clicked record and the `GridClickEvent`, `row-click:header` for the header row with the
+  `GridClickEvent`.
 
 ### Changed
 
@@ -15,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   label is re-read when the reactive state it reads changes, so `() => t('columns.name')` follows a locale switch.
   The filter row's default placeholder takes the label's text (`renderContentText()`). The `header` slot's `item`
   holds the labels with function labels called. Code that reads `column.label` as a string: see the migration guide.
+
+### Fixed
+
+- A click on a data row whose `keyField` value is the string `'header'` is handled as a data-row click: it emits
+  `row-click:body`, starts or toggles selection, and no longer sorts the grid or emits `row-click:header`.
 
 ## [0.8.3] - 2026-11-04
 
