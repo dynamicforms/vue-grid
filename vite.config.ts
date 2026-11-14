@@ -13,7 +13,8 @@ export default defineConfig({
     dts({
       tsconfigPath: './tsconfig.build.json',
       rollupTypes: true,
-      // a type imported through a node_modules path does not resolve in a consumer's installation
+      // fails the build when the bundled declarations import a type by a relative node_modules path,
+      // which does not resolve in a consumer's installation
       afterBuild: () => {
         const declarations = readFileSync(resolve(import.meta.dirname, 'dist/index.d.ts'), 'utf-8');
         const paths = declarations.match(/from '[^']*node_modules[^']*'/g);

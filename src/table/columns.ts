@@ -34,16 +34,19 @@ import { Sortable } from './columns-sorting';
 import { GridProps } from './df-grid-types';
 
 export interface ColumnDefinition<R extends keyof RendererOptionsMap = 'plain'> {
+  /** Property of the row read for the cell value; also a CSS class on the column's cells. */
   fieldName: string;
-  /**
-   * Header content. A function label is re-read when the reactive state it reads changes, so
-   * `() => t('columns.name')` follows a locale switch.
-   */
+  /** Header content; a function label is re-read when reactive state it reads changes (e.g. the locale). */
   label: RenderContent;
+  /** Name of a registered renderer, or a function that renders the cell's main content. Default `'plain'`. */
   renderer?: R | CellRendererTransformer;
+  /** Options of the named renderer. */
   rendererOptions?: RendererOptionsMap[R];
+  /** Whether and how the column sorts. */
   sortable?: Sortable;
+  /** Whether and how the column filters. */
   filterable?: Filterable;
+  /** Additional CSS class(es) on the column's header and body cells. */
   cssClass?: string | undefined;
 }
 
