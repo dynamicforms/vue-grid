@@ -82,6 +82,7 @@ export function useGridMouseEvents(
       if (eType === 'click') {
         const p: GridClickEvent = { rowId, key, rowData, columnClasses, event, columnName };
         emit(eType as 'click', p); // typecast needed to unconfuse TS about what event we're calling
+        emit('row-click:header', p);
       }
       return;
     }
@@ -107,6 +108,7 @@ export function useGridMouseEvents(
       }
       const p: GridClickEvent = { rowId, key, rowData, columnClasses, event, columnName };
       emit(eType as 'click', p); // typecast needed to unconfuse TS about what event we're calling
+      if (rowData !== undefined) emit('row-click:body', rowData, p);
     }
   }
 

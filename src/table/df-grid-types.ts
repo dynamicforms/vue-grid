@@ -165,6 +165,17 @@ export interface GridEmits extends SelectionEmits {
   dblclick: [data: GridClickEvent];
 
   /**
+   * Fired together with `click` on a click on a data row, under the same conditions. Not fired for header clicks or
+   * for a click that resolves to no record. `row` is the clicked record, the same object as `event.rowData`.
+   */
+  'row-click:body': [row: RowValue, event: GridClickEvent];
+
+  /**
+   * Fired together with `click` on a click on the header row. Not fired for data rows.
+   */
+  'row-click:header': [event: GridClickEvent];
+
+  /**
    * Fired when the user interacts with a sortable column header (single or shift-click).
    * `suggestedSort` is the sort state the grid would apply if sorting locally — use it as-is or
    * modify it before storing (e.g. to enforce a fixed primary sort key).
