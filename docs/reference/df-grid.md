@@ -121,6 +121,8 @@ flashes that follow within 1.5 s start progressively dimmer, down to 15 % of thi
 | Event | Payload |
 |-------|---------|
 | `click` | `GridClickEvent` |
+| `row-click:body` | `RowValue, GridClickEvent` |
+| `row-click:header` | `GridClickEvent` |
 | `sort` | `GridSortEvent` |
 | `filter` | `GridFilterEvent` |
 | `view-change` | `GridViewChangeEvent` |
@@ -136,6 +138,25 @@ flashes that follow within 1.5 s start progressively dimmer, down to 15 % of thi
 a data row when `selectionMode` is `'non-select'`. In `'selection'` and `'exclusion'` mode the click toggles the row
 instead, as does Shift+click while `selectionMode` is anything other than `'non-select'`; no event is emitted in
 those cases. Clicks on the header always fire.
+
+`row-click:body` — fired together with `click` on a click on a data row, under the same conditions. The first argument
+is the clicked record, the second the `GridClickEvent`. Header clicks do not fire it, so a handler needs no check for
+`key === 'header'`:
+
+```vue
+<df-grid :columns="columns" :records="records" key-field="id" @row-click:body="openRecord" />
+```
+
+```typescript
+function openRecord(row: RowValue, event: GridClickEvent) {
+  router.push(`/records/${row.id}`);
+}
+```
+
+`row-click:header` — fired together with `click` on a click on the header row, with the `GridClickEvent`. Data-row
+clicks do not fire it.
+
+The event name includes the section: a `@row-click` listener receives neither event.
 
 `sort` — fired when the user clicks or long-presses a column header cell. The payload carries the clicked column
 and the sort state the grid would apply. See [Sorting → User interaction model](./sorting#user-interaction-model).

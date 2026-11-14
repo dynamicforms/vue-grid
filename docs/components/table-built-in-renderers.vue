@@ -6,7 +6,7 @@
       :records="records"
       key-field="id"
       style="height: 10em"
-      @click="lastClick = String($event.key)"
+      @row-click:body="(row: RowValue) => (lastClick = String(row.id))"
     />
     <p v-if="clicks" class="last-click">Last row click: {{ lastClick }}</p>
   </div>
@@ -16,7 +16,7 @@
 import { DfInput } from '@dynamicforms/vuetify-inputs';
 import { computed, ref } from 'vue';
 
-import { createColumn, defaultUrlSchemes, type RendererOptionsMap } from '../../src';
+import { createColumn, defaultUrlSchemes, type RendererOptionsMap, type RowValue } from '../../src';
 
 type NullHandler = 'null-empty' | 'null-null' | 'null-null-fast';
 type Renderer = Exclude<keyof RendererOptionsMap, 'header' | NullHandler>;
