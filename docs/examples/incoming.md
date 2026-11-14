@@ -1,6 +1,7 @@
 # Incoming Records Indicator
 
-Demonstrates the `useRecentlyAdded` composable and the arc overlay for notifying users of newly arrived records.
+Demonstrates the `useRecentlyAdded` composable and the arc overlay for notifying users of newly arrived records, and
+the `state-updated` class for records that just changed.
 
 ## How it works
 
@@ -13,6 +14,13 @@ When you call `addRecentlyAdded(pks, timeout?)`:
 - If any pk maps to a row **above** the current viewport, a flash arc appears at the **top** of the body.
 - If any pk maps to a row **below** the current viewport, a flash arc appears at the **bottom**.
 - After `timeout` ms (default 250) each pk is automatically removed from the list.
+
+When you call `addRecentlyUpdated(pks, timeout?)`:
+
+- Each pk is added to the recently-updated list.
+- The grid applies the `state-updated` CSS class to rows whose pk is in the list.
+- After `timeout` ms (default 250) each pk is automatically removed from the list.
+- No arc flashes and `isAdding` is not raised.
 
 The arc flashes at `incomingArcMaxOpacity` (default 1) on the first trigger and then fades linearly to zero over
 800 ms. If triggered again within 1.5 s, each successive flash starts a further 15 % of `incomingArcMaxOpacity` lower
@@ -42,6 +50,18 @@ the element's layout box, so it doesn't perturb the row's own height.
 }
 ```
 
+Style `.df-grid.card.state-updated` the same way to mark a changed row, for example with a short outline flash:
+
+```css
+@keyframes df-row-updated {
+  0%, 100% { box-shadow: inset 0 0 0 0 transparent; }
+  30%      { box-shadow: inset 0 0 0 2px rgb(var(--v-theme-primary)); }
+}
+.df-grid.card.state-updated {
+  animation: df-row-updated 0.6s ease-in-out;
+}
+```
+
 ## API
 
 ```typescript
@@ -51,12 +71,18 @@ const recentlyAdded = useRecentlyAdded(records, 'id')
 // Add pks. timeout (ms) controls how long the class stays on the row.
 recentlyAdded.addRecentlyAdded([1, 2, 3], 600)
 
-// Reactive: true while pk is in the list — use in rowClass or custom #item slot.
+// Reactive: true while pk is in the list — use in rowClass or a custom #item slot.
 recentlyAdded.isPendingAdd(pk)
 
 // Reactive (rAF-ticked): ms elapsed since pk was added, or null if not pending.
 // Use when you need a JS animation keyed to exact elapsed time.
 recentlyAdded.timeSinceAdded(pk)
+
+// Add pks of records that changed. timeout (ms) controls how long state-updated stays on the row.
+recentlyAdded.addRecentlyUpdated([4], 600)
+
+// Reactive: true while pk is in the recently-updated list.
+recentlyAdded.isPendingUpdate(pk)
 
 // The row index range the grid currently shows; start is inclusive, end exclusive.
 // The grid keeps it up to date and the arc detection compares new rows against it.
@@ -97,7 +123,8 @@ Replace the default arc with your own content via named slots:
 
 Scroll the grid to the middle, then press **Add at top** or **Add at bottom** to see the arc
 flash without row animation. **Add in visible range** inserts a record inside the viewport, where
-the row animation plays and no arc fires. **Add random** and **Start auto-add** mix both effects.
+the row animation plays and no arc fires. **Add random** and **Start auto-add** mix both effects. **Update in visible
+range** changes the rating of a record on screen and marks it with `state-updated`.
 
 <table-incoming/>
 

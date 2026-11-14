@@ -111,6 +111,7 @@ export interface GridProps extends SelectionProps {
   /**
    * Composable instance returned by `useRecentlyAdded`. When provided, the grid:
    * - applies a `state-adding` CSS class to rows whose pk is in the recently-added list,
+   * - applies a `state-updated` CSS class to rows whose pk is in the recently-updated list,
    * - renders flash arc overlays at the top/bottom edge of the body when newly added records
    *   are outside the visible viewport.
    *

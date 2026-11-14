@@ -4,13 +4,17 @@
  * Tests the classes df-grid.vue sets on each row anchor:
  *
  *  - **zebra** — `even` / `odd` by index, with and without a custom `rowClass`.
+ *  - **record states** — `state-adding` / `state-updated` while `recentlyAdded` reports the pk as pending.
  */
 
 import { flushPromises, mount } from '@vue/test-utils';
+import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ref } from 'vue';
+import { defineComponent, h, ref } from 'vue';
 
 import DfGrid from './df-grid.vue';
+import { useRecentlyAdded } from './use-recently-added';
+import type { UseRecentlyAdded } from './use-recently-added';
 
 vi.mock('vue-cached-icon', () => ({ CachedIcon: { name: 'CachedIcon', template: '<i/>' } }));
 vi.mock('./df-grid-header.vue', () => ({ default: { name: 'DfGridHeader', template: '<div/>' } }));
@@ -62,7 +66,7 @@ async function settle(rounds = 5) {
 }
 
 /** The row-anchor element of the record with `pk`. */
-function anchor(wrapper: ReturnType<typeof mountGrid>, pk: number) {
+function anchor(wrapper: VueWrapper<any>, pk: number) {
   return wrapper.find(`.df-anchored > .df-grid.card[data-pk="${pk}"]`);
 }
 
@@ -93,6 +97,64 @@ describe('DfGrid — row classes', () => {
       expect(anchor(wrapper, 0).classes()).toContain('even');
       expect(anchor(wrapper, 0).classes()).not.toContain('custom');
       expect(anchor(wrapper, 1).classes()).toEqual(expect.arrayContaining(['odd', 'custom']));
+    });
+  });
+
+  describe('record states', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+      vi.stubGlobal('requestAnimationFrame', () => 0);
+      vi.stubGlobal('cancelAnimationFrame', () => {});
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    });
+
+    /** Mounts the grid in a host that owns the useRecentlyAdded instance. */
+    function mountWithStates() {
+      let states: UseRecentlyAdded;
+      const wrapper = mount(
+        defineComponent({
+          setup() {
+            states = useRecentlyAdded(ref(records), 'id');
+            return () => h(DfGrid, { columns, records, keyField: 'id', recentlyAdded: states });
+          },
+        }),
+        { global: { directives: { longpress: { mounted: () => {}, unmounted: () => {} } } } },
+      );
+      return { wrapper, states: states! };
+    }
+
+    it('sets state-updated while the pk is pending and removes it after the timeout', async () => {
+      const { wrapper, states } = mountWithStates();
+      await settle();
+      expect(anchor(wrapper, 1).classes()).not.toContain('state-updated');
+
+      states.addRecentlyUpdated([1]);
+      await settle();
+      expect(anchor(wrapper, 1).classes()).toContain('state-updated');
+      expect(anchor(wrapper, 1).classes()).not.toContain('state-adding');
+      expect(anchor(wrapper, 0).classes()).not.toContain('state-updated');
+
+      vi.advanceTimersByTime(250);
+      await settle();
+      expect(anchor(wrapper, 1).classes()).not.toContain('state-updated');
+    });
+
+    it('sets state-adding while the pk is pending and removes it after the timeout', async () => {
+      const { wrapper, states } = mountWithStates();
+      await settle();
+
+      states.addRecentlyAdded([2]);
+      await settle();
+      expect(anchor(wrapper, 2).classes()).toContain('state-adding');
+      expect(anchor(wrapper, 2).classes()).not.toContain('state-updated');
+
+      vi.advanceTimersByTime(250);
+      await settle();
+      expect(anchor(wrapper, 2).classes()).not.toContain('state-adding');
     });
   });
 });

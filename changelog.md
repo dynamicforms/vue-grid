@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.9.0] - 2026-11-14
 
+### Added
+
+- `useRecentlyAdded` tracks recently updated records: `addRecentlyUpdated(pks, timeout?)` (default 250 ms) and
+  `isPendingUpdate(pk)`. With the `recentlyAdded` prop the grid sets `state-updated` on the row card of a pending
+  record. An update raises no `isAdding` and flashes no arc.
+
 ### Changed
 
 - **Breaking:** a column label (`ColumnDefinition.label`, the `label` parameter of `createColumn()`) is `RenderContent`

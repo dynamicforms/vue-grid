@@ -109,7 +109,7 @@
                 index % 2 === 0 ? 'even' : 'odd',
                 props.rowClass?.(item, index),
                 isSelectionActive ? (uSelection.isSelected(item[props.keyField]) ? 'selected' : 'unselected') : null,
-                props.recentlyAdded?.isPendingAdd(item[props.keyField]) ? 'state-adding' : null,
+                rowStateClasses(item[props.keyField]),
               ]"
               :data-pk="item[keyField]"
               :data-idx="index"
@@ -507,6 +507,13 @@ const isSelectionActive = computed(() => {
   const mode = uSelection.selectionMode.value;
   return mode !== null && mode !== 'non-select';
 });
+
+/** Row-anchor classes for the record states tracked by `recentlyAdded`. */
+function rowStateClasses(pk: any): Record<string, boolean> | null {
+  const states = props.recentlyAdded;
+  if (!states) return null;
+  return { 'state-adding': states.isPendingAdd(pk), 'state-updated': states.isPendingUpdate(pk) };
+}
 
 watch(uColumns.active, () => {
   // Drop the stale widths now; `onUpdated` re-syncs once the body grid has actually

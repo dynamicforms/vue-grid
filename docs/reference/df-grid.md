@@ -103,12 +103,12 @@ the `even` / `odd` class the grid always sets. See [Row CSS classes](#row-css-cl
 [Selection](./selection).
 
 `recentlyAdded` — composable instance returned by `useRecentlyAdded`. Rows whose key is in the recently-added list
-get the `state-adding` CSS class, and flash arc overlays are rendered at the top/bottom edge of the body when newly
-added records land outside the visible viewport. The grid keeps the composable's visible range up to date as the
-viewport scrolls. When records land *above* the viewport, the grid also shifts `scrollTop` by their height so the
-rows already on screen stay in place instead of visually sliding down — first using `estimatedRowHeight` (the
-inserted rows are never mounted, so nothing more is known yet), then corrected by the difference if one of them is
-later measured. See [Incoming Records Indicator](/examples/incoming).
+get the `state-adding` CSS class, rows whose key is in the recently-updated list get the `state-updated` CSS class, and
+flash arc overlays are rendered at the top/bottom edge of the body when newly added records land outside the visible
+viewport. The grid keeps the composable's visible range up to date as the viewport scrolls. When records land *above*
+the viewport, the grid also shifts `scrollTop` by their height so the rows already on screen stay in place instead of
+visually sliding down — first using `estimatedRowHeight` (the inserted rows are never mounted, so nothing more is
+known yet), then corrected by the difference if one of them is later measured. See [Incoming Records Indicator](/examples/incoming).
 
 `incomingArcMaxOpacity` — peak opacity (0–1) of the incoming-records arc overlay. Applies to the first flash;
 flashes that follow within 1.5 s start progressively dimmer, down to 15 % of this peak.
@@ -483,6 +483,10 @@ Read from your own rules; only `--row-base` isn't set on the grid container itse
 Every data row card has the class `even` or `odd`, by its 0-based index in the displayed records (index 0 is `even`).
 The grid sets them on every row; there is no option to leave them out. An application that wants a different row
 styling uses its own classes and CSS instead of styling `even` / `odd`.
+
+The grid also sets `selected` / `unselected` while selection is active (see [Selection](./selection)), and, with the
+`recentlyAdded` prop, `state-adding` / `state-updated` while the record's key is in the recently-added /
+recently-updated list (see [Incoming Records Indicator](/examples/incoming)).
 
 The `rowClass` prop adds per-row CSS classes based on row data or position. It receives the raw row object and its
 0-based index, and its return value is passed to Vue's `:class` binding next to `even` / `odd`.
