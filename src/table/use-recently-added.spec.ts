@@ -20,6 +20,9 @@
  *  - **whether a click should be believed** (`isAdding`), which suppresses taps for 300 ms
  *    while the content shifts under the user's finger.
  *
+ * It also tracks **which rows were just updated** (`isPendingUpdate`), on the same timed set as the
+ * added rows but without `isAdding` and arc flashes.
+ *
  * Timers and requestAnimationFrame are faked: the composable's whole contract is about when
  * things happen, and a real 250 ms would be 250 ms of test.
  */
@@ -151,6 +154,20 @@ describe('useRecentlyAdded', () => {
       vi.advanceTimersByTime(150); // 250ms for pk 1, only 150ms for pk 2
       expect(api.isPendingAdd(1)).toBe(false);
       expect(api.isPendingAdd(2)).toBe(true);
+    });
+
+    it('restarts the timeout when the same pk is added again', () => {
+      const { api } = mountComposable(rows(3));
+      api.addRecentlyAdded([1]);
+
+      vi.advanceTimersByTime(200);
+      api.addRecentlyAdded([1]);
+      vi.advanceTimersByTime(100); // past the first add's expiry
+
+      expect(api.isPendingAdd(1)).toBe(true);
+      expect(api.timeSinceAdded(1)).toBe(100);
+      vi.advanceTimersByTime(150);
+      expect(api.isPendingAdd(1)).toBe(false);
     });
   });
 
@@ -410,6 +427,92 @@ describe('useRecentlyAdded', () => {
   });
 
   // -------------------------------------------------------------------------
+  describe('recently updated', () => {
+    it('marks updated pks as pending until the default timeout', () => {
+      const { api } = mountComposable(rows(3));
+
+      expect(api.isPendingUpdate(1)).toBe(false);
+      api.addRecentlyUpdated([1]);
+      expect(api.isPendingUpdate(1)).toBe(true);
+
+      vi.advanceTimersByTime(249);
+      expect(api.isPendingUpdate(1)).toBe(true);
+      vi.advanceTimersByTime(1);
+      expect(api.isPendingUpdate(1)).toBe(false);
+    });
+
+    it('honours a custom timeout', () => {
+      const { api } = mountComposable(rows(3));
+      api.addRecentlyUpdated([1], 1_000);
+
+      vi.advanceTimersByTime(999);
+      expect(api.isPendingUpdate(1)).toBe(true);
+      vi.advanceTimersByTime(1);
+      expect(api.isPendingUpdate(1)).toBe(false);
+    });
+
+    it('is reactive in a computed', () => {
+      const { api } = mountComposable(rows(3));
+      const pending = computed(() => api.isPendingUpdate(1));
+
+      expect(pending.value).toBe(false);
+      api.addRecentlyUpdated([1]);
+      expect(pending.value).toBe(true);
+    });
+
+    it('is tracked apart from the added pks', () => {
+      const { api } = mountComposable(rows(3));
+      api.addRecentlyUpdated([1]);
+      api.addRecentlyAdded([2]);
+
+      expect(api.isPendingAdd(1)).toBe(false);
+      expect(api.timeSinceAdded(1)).toBeNull();
+      expect(api.isPendingUpdate(2)).toBe(false);
+    });
+
+    it('restarts the timeout when the same pk is updated again', () => {
+      const { api } = mountComposable(rows(3));
+      api.addRecentlyUpdated([1], 600);
+
+      vi.advanceTimersByTime(500);
+      api.addRecentlyUpdated([1], 600);
+      vi.advanceTimersByTime(200); // past the first update's expiry
+
+      expect(api.isPendingUpdate(1)).toBe(true);
+      vi.advanceTimersByTime(399);
+      expect(api.isPendingUpdate(1)).toBe(true);
+      vi.advanceTimersByTime(1);
+      expect(api.isPendingUpdate(1)).toBe(false);
+    });
+
+    it('schedules no animation frame', () => {
+      const { api } = mountComposable(rows(3));
+      api.addRecentlyUpdated([1]);
+
+      expect(rafQueue.size).toBe(0);
+    });
+
+    it('does not raise isAdding', () => {
+      const { api } = mountComposable(rows(3));
+      api.addRecentlyUpdated([1]);
+
+      expect(api.isAdding.value).toBe(false);
+    });
+
+    it('flashes no arc for a record outside the viewport', async () => {
+      const { api } = mountComposable(rows(10));
+      api.setVisibleRange({ start: 4, end: 8 });
+
+      api.addRecentlyUpdated([1, 9]);
+      await nextTick();
+
+      expect(api.topArcFlashTick.value).toBe(0);
+      expect(api.bottomArcFlashTick.value).toBe(0);
+      expect(api.topInsertedPks.value).toEqual([]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   describe('manual triggers', () => {
     it('triggerTopArc / triggerBottomArc flash without any records changing', () => {
       const { api } = mountComposable(rows(3));
@@ -452,6 +555,18 @@ describe('useRecentlyAdded', () => {
 
       // The timer never fired: isAdding is still raised rather than having been reset.
       expect(api.isAdding.value).toBe(true);
+    });
+
+    it('drops the expiry timers on unmount', () => {
+      const { api, unmount } = mountComposable(rows(3));
+      api.addRecentlyAdded([1]);
+      api.addRecentlyUpdated([2]);
+
+      unmount();
+      vi.advanceTimersByTime(250);
+
+      expect(api.isPendingAdd(1)).toBe(true);
+      expect(api.isPendingUpdate(2)).toBe(true);
     });
 
     it('unmounts cleanly when nothing was ever added', () => {

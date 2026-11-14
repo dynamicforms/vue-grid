@@ -28,7 +28,7 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `secondaryShadowCount` | `number` | `30` |
 | `estimatedRowHeight` | `number` | `30` |
 | `minRenderedRows` | `number` | `100` |
-| `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | zebra striping (`'even'`/`'odd'`) |
+| `rowClass` | `(item: RowValue, index: number) => string \| string[] \| Record<string, boolean>` | — |
 | `selectionMode` | `SelectionMode` | `null` |
 | `selectionKeys` | `Set<any>` | — |
 | `recentlyAdded` | `UseRecentlyAdded` | — |
@@ -92,9 +92,9 @@ scrolled past.
 buffer above and below the viewport). Smooths scrolling, and keeps enough real rows mounted for the shared grid's
 native column auto-sizing to have a representative sample to size columns from.
 
-`rowClass` — returns CSS classes applied to each data row card. Receives the row data object and its 0-based index.
-Return type matches Vue's `:class` binding — a string, an array, or an object. Overriding this prop replaces the
-default even/odd zebra striping entirely; include the logic yourself if you still want it.
+`rowClass` — returns extra CSS classes applied to each data row card. Receives the row data object and its 0-based
+index. Return type matches Vue's `:class` binding — a string, an array, or an object. The classes are added next to
+the `even` / `odd` class the grid always sets. See [Row CSS classes](#row-css-classes).
 
 `selectionMode` — active selection mode (`null`, `'selection'`, `'exclusion'`, or `'non-select'`). Use with
 `v-model:selectionMode` for controlled selection. See [Selection](./selection).
@@ -103,12 +103,12 @@ default even/odd zebra striping entirely; include the logic yourself if you stil
 [Selection](./selection).
 
 `recentlyAdded` — composable instance returned by `useRecentlyAdded`. Rows whose key is in the recently-added list
-get the `state-adding` CSS class, and flash arc overlays are rendered at the top/bottom edge of the body when newly
-added records land outside the visible viewport. The grid keeps the composable's visible range up to date as the
-viewport scrolls. When records land *above* the viewport, the grid also shifts `scrollTop` by their height so the
-rows already on screen stay in place instead of visually sliding down — first using `estimatedRowHeight` (the
-inserted rows are never mounted, so nothing more is known yet), then corrected by the difference if one of them is
-later measured. See [Incoming Records Indicator](/examples/incoming).
+get the `state-adding` CSS class, rows whose key is in the recently-updated list get the `state-updated` CSS class, and
+flash arc overlays are rendered at the top/bottom edge of the body when newly added records land outside the visible
+viewport. The grid keeps the composable's visible range up to date as the viewport scrolls. When records land *above*
+the viewport, the grid also shifts `scrollTop` by their height so the rows already on screen stay in place instead of
+visually sliding down — first using `estimatedRowHeight` (the inserted rows are never mounted, so nothing more is
+known yet), then corrected by the difference if one of them is later measured. See [Incoming Records Indicator](/examples/incoming).
 
 `incomingArcMaxOpacity` — peak opacity (0–1) of the incoming-records arc overlay. Applies to the first flash;
 flashes that follow within 1.5 s start progressively dimmer, down to 15 % of this peak.
@@ -480,16 +480,24 @@ Read from your own rules; only `--row-base` isn't set on the grid container itse
 
 ## Row CSS classes
 
-The `rowClass` prop lets you attach per-row CSS classes based on row data or position. It receives the raw row object
-and its 0-based index, and its return value is passed directly to Vue's `:class` binding.
+Every data row card has the class `even` or `odd`, by its 0-based index in the displayed records (index 0 is `even`).
+The grid sets them on every row; there is no option to leave them out. An application that wants a different row
+styling uses its own classes and CSS instead of styling `even` / `odd`.
+
+The grid also sets `selected` / `unselected` while selection is active (see [Selection](./selection)), and, with the
+`recentlyAdded` prop, `state-adding` / `state-updated` while the record's key is in the recently-added /
+recently-updated list (see [Incoming Records Indicator](/examples/incoming)).
+
+The `rowClass` prop adds per-row CSS classes based on row data or position. It receives the raw row object and its
+0-based index, and its return value is passed to Vue's `:class` binding next to `even` / `odd`.
 
 ```vue
-<!-- Highlight negative amounts in red, keep zebra striping for the rest -->
+<!-- Highlight negative amounts in red -->
 <df-grid
   :columns="columns"
   :records="records"
   key-field="id"
-  :row-class="(item, index) => item.amount < 0 ? 'negative' : (index % 2 === 0 ? 'even' : 'odd')"
+  :row-class="(item) => ({ negative: item.amount < 0 })"
 />
 ```
 
@@ -502,9 +510,6 @@ and its 0-based index, and its return value is passed directly to Vue's `:class`
   :row-class="(item) => item.cssClass"
 />
 ```
-
-When `rowClass` is omitted the default is `(item, index) => index % 2 === 0 ? 'even' : 'odd'`, which produces the
-standard zebra striping. Providing your own function replaces this default entirely.
 
 ## Pull to refresh
 

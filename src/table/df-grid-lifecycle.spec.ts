@@ -75,6 +75,7 @@ function makeRecentlyAdded() {
   return {
     isAdding: ref(false),
     isPendingAdd: vi.fn(() => false),
+    isPendingUpdate: vi.fn(() => false),
     setVisibleRange: vi.fn(),
     topArcFlashTick: ref(0),
     bottomArcFlashTick: ref(0),

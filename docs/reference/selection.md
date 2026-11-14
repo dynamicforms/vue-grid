@@ -190,7 +190,7 @@ These classes are added to each row card **only while selection mode is active**
 }
 ```
 
-The default `rowClass` prop already adds `even` and `odd` alternating row classes regardless of selection state.
+Every row card also has the `even` or `odd` class, regardless of selection state.
 
 An explicit selection checkbox, as its own column rather than a row-card style change, is also possible — combining
 `postRender` with the CSS classes above. See [A dedicated selection checkbox

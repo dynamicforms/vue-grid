@@ -106,9 +106,10 @@
               class="df-grid card"
               :class="[
                 uColumns.cssClass.value,
+                index % 2 === 0 ? 'even' : 'odd',
                 props.rowClass?.(item, index),
                 isSelectionActive ? (uSelection.isSelected(item[props.keyField]) ? 'selected' : 'unselected') : null,
-                props.recentlyAdded?.isPendingAdd(item[props.keyField]) ? 'state-adding' : null,
+                rowStateClasses(item[props.keyField]),
               ]"
               :data-pk="item[keyField]"
               :data-idx="index"
@@ -228,7 +229,7 @@ import { keys, maxBy, minBy, pickBy, throttle } from 'lodash-es';
 import { computed, h, nextTick, onMounted, onUnmounted, onUpdated, reactive, ref, toRef, watch } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
 
-import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap, RowValue } from './cell-renderers';
+import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap } from './cell-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { useColumns } from './columns';
 import { useFiltering } from './columns-filtering';
@@ -260,7 +261,6 @@ const props = withDefaults(defineProps<GridProps>(), {
   showStatusBar: false,
   showSummaryBar: false,
   loading: false,
-  rowClass: (_item: RowValue, index: number) => (index % 2 === 0 ? 'even' : 'odd'),
   selectionMode: null,
   estimatedRowHeight: 30,
   minRenderedRows: 100,
@@ -507,6 +507,13 @@ const isSelectionActive = computed(() => {
   const mode = uSelection.selectionMode.value;
   return mode !== null && mode !== 'non-select';
 });
+
+/** Row-anchor classes for the record states tracked by `recentlyAdded`. */
+function rowStateClasses(pk: any): Record<string, boolean> | null {
+  const states = props.recentlyAdded;
+  if (!states) return null;
+  return { 'state-adding': states.isPendingAdd(pk), 'state-updated': states.isPendingUpdate(pk) };
+}
 
 watch(uColumns.active, () => {
   // Drop the stale widths now; `onUpdated` re-syncs once the body grid has actually

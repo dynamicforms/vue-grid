@@ -5,6 +5,7 @@
       <v-btn color="secondary" @click="addRecords('start')">Add at top</v-btn>
       <v-btn color="success" @click="addRecords('random')">Add random</v-btn>
       <v-btn color="error" @click="addRecords('visible')">Add in visible range</v-btn>
+      <v-btn color="purple" @click="updateVisibleRecord">Update in visible range</v-btn>
       <v-btn :color="autoActive ? 'warning' : 'info'" @click="toggleAuto">
         {{ autoActive ? 'Pause auto-add' : 'Start auto-add' }}
       </v-btn>
@@ -16,7 +17,6 @@
       :recently-added="recentlyAdded"
       class="incoming-demo-grid"
       key-field="id"
-      :row-class="rowClass"
     />
   </div>
 </template>
@@ -34,11 +34,6 @@ const records = reactive(generateMusicLibrary(50)) as any[];
 let nextId = records.reduce((max: number, r: any) => Math.max(max, r.id as number), 0) + 1;
 
 const recentlyAdded = useRecentlyAdded(ref(records), 'id');
-
-function rowClass(item: any, index: number): string {
-  const stripe = index % 2 === 0 ? 'even' : 'odd';
-  return recentlyAdded.isPendingAdd(item.id) ? `${stripe} state-adding` : stripe;
-}
 
 function addRecords(position: 'start' | 'end' | 'random' | 'visible') {
   const count = 1; //Math.floor(Math.random() * 2) + 1;
@@ -63,6 +58,15 @@ function addRecords(position: 'start' | 'end' | 'random' | 'visible') {
     records.splice(pos, 0, ...newOnes);
     recentlyAdded.addRecentlyAdded(pks, 600);
   }
+}
+
+function updateVisibleRecord() {
+  const { start, end } = recentlyAdded.visibleRange.value;
+  const rangeSize = Math.max(0, end - start);
+  if (rangeSize === 0) return;
+  const record = records[start + Math.floor(Math.random() * rangeSize)];
+  record.rating = (record.rating % 5) + 1;
+  recentlyAdded.addRecentlyUpdated([record.id], 600);
 }
 
 const autoActive = ref(false);
@@ -149,6 +153,20 @@ const columns = [
   animation:
     df-row-scale-in 0.25s ease-out,
     df-row-wink 0.4s 0.25s ease-in-out both;
+}
+
+@keyframes df-row-updated {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 0 transparent;
+  }
+  30% {
+    box-shadow: inset 0 0 0 2px rgb(var(--v-theme-primary));
+  }
+}
+
+.incoming-demo-grid .df-grid.card.state-updated {
+  animation: df-row-updated 0.6s ease-in-out;
 }
 
 /* ---------- 2-row card layout -------------------------------------------- */
