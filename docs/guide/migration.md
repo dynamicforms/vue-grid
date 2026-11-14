@@ -42,6 +42,21 @@ A `rowClass` that returned no `even` / `odd` to keep rows unstriped now gets the
 `.df-grid.card.even` / `.df-grid.card.odd` applies to those rows; an application that wants other row styling styles
 its own classes instead.
 
+### `UseRecentlyAdded` has `addRecentlyUpdated` and `isPendingUpdate`
+
+The `UseRecentlyAdded` interface has two more required members, `addRecentlyUpdated(pks, timeout?)` and
+`isPendingUpdate(pk)`, and the grid calls `isPendingUpdate(pk)` for every row when `recentlyAdded` is set. An object
+built by `useRecentlyAdded()` has them. An object of another origin passed as `recentlyAdded` (a wrapper, an adapter
+or a test double) adds them:
+
+```typescript
+const recentlyAdded: UseRecentlyAdded = {
+  ...ownImplementation,
+  addRecentlyUpdated: () => {},
+  isPendingUpdate: () => false,
+};
+```
+
 ## 0.6.x → 0.7.0: vue-forms 3.0
 
 0.7.0 requires `@dynamicforms/vue-forms` 3.0.0, `@dynamicforms/vuetify-inputs` 0.14.1 and

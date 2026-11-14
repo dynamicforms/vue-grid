@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking:** every row card has the class `even` or `odd` by its index, also with a custom `rowClass`. `rowClass`
   has no default and its classes are added next to `even` / `odd`. A `rowClass` that left out `even` / `odd` to
   drop the stripe: see the migration guide.
+- **Breaking:** the `UseRecentlyAdded` interface has the required members `addRecentlyUpdated` and `isPendingUpdate`,
+  and the grid calls `isPendingUpdate` for every row. An object passed as `recentlyAdded` that is not built by
+  `useRecentlyAdded()`: see the migration guide.
 
 ### Fixed
 
