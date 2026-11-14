@@ -53,9 +53,10 @@ export interface UseRecentlyAdded {
 const DEFAULT_TIMEOUT = 250;
 
 /**
- * A reactive set of pks, each removed `timeout` ms after its latest add, with a rAF ticker while it is not empty.
+ * A reactive set of pks, each removed `timeout` ms after its latest add. With `rafTicker`, a rAF ticker keeps `since()`
+ * reactive while the set is not empty.
  */
-function useTimedSet() {
+function useTimedSet({ rafTicker }: { rafTicker: boolean }) {
   // pk → addedAt timestamp. Vue 3 reactive() wraps Maps with full reactivity.
   const entries = reactive(new Map<any, number>());
   // Drives since() reactivity while entries are pending.
@@ -97,7 +98,7 @@ function useTimedSet() {
         }, timeout),
       );
     });
-    startTicker();
+    if (rafTicker) startTicker();
   }
 
   function has(pk: any): boolean {
@@ -120,8 +121,8 @@ function useTimedSet() {
  * @param keyField - the field name used as pk (matches the grid's `keyField` prop)
  */
 export function useRecentlyAdded(records: Ref<RowValue[]>, keyField: MaybeRef<string>): UseRecentlyAdded {
-  const added = useTimedSet();
-  const updated = useTimedSet();
+  const added = useTimedSet({ rafTicker: true });
+  const updated = useTimedSet({ rafTicker: false });
   const visibleRange = ref<{ start: number; end: number }>({ start: 0, end: 0 });
   const isAdding = ref(false);
   let isAddingTimer: ReturnType<typeof setTimeout> | null = null;

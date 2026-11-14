@@ -485,6 +485,13 @@ describe('useRecentlyAdded', () => {
       expect(api.isPendingUpdate(1)).toBe(false);
     });
 
+    it('schedules no animation frame', () => {
+      const { api } = mountComposable(rows(3));
+      api.addRecentlyUpdated([1]);
+
+      expect(rafQueue.size).toBe(0);
+    });
+
     it('does not raise isAdding', () => {
       const { api } = mountComposable(rows(3));
       api.addRecentlyUpdated([1]);
