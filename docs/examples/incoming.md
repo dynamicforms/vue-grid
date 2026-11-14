@@ -13,13 +13,16 @@ When you call `addRecentlyAdded(pks, timeout?)`:
 - The grid applies the `state-adding` CSS class to rows whose pk is in the list.
 - If any pk maps to a row **above** the current viewport, a flash arc appears at the **top** of the body.
 - If any pk maps to a row **below** the current viewport, a flash arc appears at the **bottom**.
-- After `timeout` ms (default 250) each pk is automatically removed from the list.
+- Each pk is removed from the list `timeout` ms (default 250) after its latest add. Adding a pk that is still in the
+  list restarts its timeout and its `timeSinceAdded`.
 
 When you call `addRecentlyUpdated(pks, timeout?)`:
 
 - Each pk is added to the recently-updated list.
 - The grid applies the `state-updated` CSS class to rows whose pk is in the list.
-- After `timeout` ms (default 250) each pk is automatically removed from the list.
+- Each pk is removed from the list `timeout` ms (default 250) after its latest update. Updating a pk that is still in
+  the list restarts its timeout; the class stays on the row in between, so a CSS animation on `.state-updated` does
+  not start again.
 - No arc flashes and `isAdding` is not raised.
 
 The arc flashes at `incomingArcMaxOpacity` (default 1) on the first trigger and then fades linearly to zero over

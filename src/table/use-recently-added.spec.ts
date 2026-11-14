@@ -155,6 +155,20 @@ describe('useRecentlyAdded', () => {
       expect(api.isPendingAdd(1)).toBe(false);
       expect(api.isPendingAdd(2)).toBe(true);
     });
+
+    it('restarts the timeout when the same pk is added again', () => {
+      const { api } = mountComposable(rows(3));
+      api.addRecentlyAdded([1]);
+
+      vi.advanceTimersByTime(200);
+      api.addRecentlyAdded([1]);
+      vi.advanceTimersByTime(100); // past the first add's expiry
+
+      expect(api.isPendingAdd(1)).toBe(true);
+      expect(api.timeSinceAdded(1)).toBe(100);
+      vi.advanceTimersByTime(150);
+      expect(api.isPendingAdd(1)).toBe(false);
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -456,6 +470,21 @@ describe('useRecentlyAdded', () => {
       expect(api.isPendingUpdate(2)).toBe(false);
     });
 
+    it('restarts the timeout when the same pk is updated again', () => {
+      const { api } = mountComposable(rows(3));
+      api.addRecentlyUpdated([1], 600);
+
+      vi.advanceTimersByTime(500);
+      api.addRecentlyUpdated([1], 600);
+      vi.advanceTimersByTime(200); // past the first update's expiry
+
+      expect(api.isPendingUpdate(1)).toBe(true);
+      vi.advanceTimersByTime(399);
+      expect(api.isPendingUpdate(1)).toBe(true);
+      vi.advanceTimersByTime(1);
+      expect(api.isPendingUpdate(1)).toBe(false);
+    });
+
     it('does not raise isAdding', () => {
       const { api } = mountComposable(rows(3));
       api.addRecentlyUpdated([1]);
@@ -519,6 +548,18 @@ describe('useRecentlyAdded', () => {
 
       // The timer never fired: isAdding is still raised rather than having been reset.
       expect(api.isAdding.value).toBe(true);
+    });
+
+    it('drops the expiry timers on unmount', () => {
+      const { api, unmount } = mountComposable(rows(3));
+      api.addRecentlyAdded([1]);
+      api.addRecentlyUpdated([2]);
+
+      unmount();
+      vi.advanceTimersByTime(250);
+
+      expect(api.isPendingAdd(1)).toBe(true);
+      expect(api.isPendingUpdate(2)).toBe(true);
     });
 
     it('unmounts cleanly when nothing was ever added', () => {

@@ -4,15 +4,18 @@ import type { MaybeRef, Ref } from 'vue';
 import type { RowValue } from './cell-renderers';
 
 export interface UseRecentlyAdded {
-  /** Add pks to the recently-added list. Removed automatically after `timeout` ms (default 250). */
+  /**
+   * Add pks to the recently-added list. Each is removed `timeout` ms (default 250) after its latest add; adding a pk
+   * that is still listed restarts its timeout.
+   */
   addRecentlyAdded(pks: any[], timeout?: number): void;
   /** Returns true while a pk is in the recently-added list. Reactive. */
   isPendingAdd(pk: any): boolean;
   /** Returns ms elapsed since the pk was added, or null if not in the list. Reactive (rAF-ticked). */
   timeSinceAdded(pk: any): number | null;
   /**
-   * Add pks to the recently-updated list. Removed automatically after `timeout` ms (default 250).
-   * Sets neither `isAdding` nor an arc flash.
+   * Add pks to the recently-updated list. Each is removed `timeout` ms (default 250) after its latest update; updating
+   * a pk that is still listed restarts its timeout. Sets neither `isAdding` nor an arc flash.
    */
   addRecentlyUpdated(pks: any[], timeout?: number): void;
   /** Returns true while a pk is in the recently-updated list. Reactive. */
@@ -49,7 +52,9 @@ export interface UseRecentlyAdded {
 
 const DEFAULT_TIMEOUT = 250;
 
-/** A reactive set of pks, each removed `timeout` ms after it was added, with a rAF ticker while it is not empty. */
+/**
+ * A reactive set of pks, each removed `timeout` ms after its latest add, with a rAF ticker while it is not empty.
+ */
 function useTimedSet() {
   // pk → addedAt timestamp. Vue 3 reactive() wraps Maps with full reactivity.
   const entries = reactive(new Map<any, number>());
@@ -70,15 +75,27 @@ function useTimedSet() {
     rafId = requestAnimationFrame(tick);
   }
 
+  // pk → expiry timer; a repeated add replaces the pk's timer.
+  const timers = new Map<any, ReturnType<typeof setTimeout>>();
+
   onUnmounted(() => {
     if (rafId !== null) cancelAnimationFrame(rafId);
+    timers.forEach((timer) => clearTimeout(timer));
+    timers.clear();
   });
 
   function add(pks: any[], timeout = DEFAULT_TIMEOUT) {
     const now = Date.now();
     pks.forEach((pk) => {
       entries.set(pk, now);
-      setTimeout(() => entries.delete(pk), timeout);
+      clearTimeout(timers.get(pk));
+      timers.set(
+        pk,
+        setTimeout(() => {
+          entries.delete(pk);
+          timers.delete(pk);
+        }, timeout),
+      );
     });
     startTicker();
   }

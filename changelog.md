@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   has no default and its classes are added next to `even` / `odd`. A `rowClass` that left out `even` / `odd` to
   drop the stripe: see the migration guide.
 
+### Fixed
+
+- `addRecentlyAdded` for a pk that is still pending restarts its timeout; the pk no longer expires at the earlier
+  add's timeout. Expiry timers are cleared when the component unmounts.
+
 ## [0.8.3] - 2026-11-04
 
 ### Fixed
