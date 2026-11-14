@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import vue from '@vitejs/plugin-vue';
-import { readFileSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
@@ -13,12 +13,14 @@ export default defineConfig({
     dts({
       tsconfigPath: './tsconfig.build.json',
       rollupTypes: true,
-      // fails the build when the bundled declarations import a type by a relative node_modules path,
+      // fails the build when the generated declarations import a type by a node_modules path,
       // which does not resolve in a consumer's installation
       afterBuild: () => {
-        const declarations = readFileSync(resolve(import.meta.dirname, 'dist/index.d.ts'), 'utf-8');
-        const paths = declarations.match(/from '[^']*node_modules[^']*'/g);
-        if (paths) throw new Error(`dist/index.d.ts imports from node_modules paths: ${paths.join(', ')}`);
+        const dist = resolve(import.meta.dirname, 'dist');
+        const paths = readdirSync(dist, { recursive: true, encoding: 'utf-8' })
+          .filter((file) => file.endsWith('.d.ts'))
+          .flatMap((file) => readFileSync(resolve(dist, file), 'utf-8').match(/(?:from |import\()['"][^'"]*node_modules[^'"]*['"]/g) ?? []);
+        if (paths.length) throw new Error(`declarations import from node_modules paths: ${paths.join(', ')}`);
       },
     }),
     visualizer({
