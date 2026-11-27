@@ -313,6 +313,8 @@ async function onRecordsReplaced() {
 
 ## Slots
 
+The slots and their scopes are typed by the exported `GridSlots` interface.
+
 | Slot | Scope | Description |
 |------|-------|-------------|
 | `toolbar-start` | — | Rendered at the left side of the toolbar bar above the header. The toolbar wrapper (`div.df-grid-toolbar`) is only rendered when at least one toolbar slot is provided. |

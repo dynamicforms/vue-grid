@@ -1,11 +1,12 @@
 import { RowValue } from './cell-renderers';
-import { type ResponsiveColumnDefinitions } from './columns';
+import { type ColumnLabels, type ResponsiveColumnDefinitions } from './columns';
 import { FilterState, GridFilterEvent } from './columns-filtering';
 import { GridSortEvent, SortState } from './columns-sorting';
 import { GridClickEvent } from './df-grid-mouse-events';
+import type { CellAttrs } from './helpers/aria';
 import { SelectionEmits, SelectionProps } from './selection';
 import { UseRecentlyAdded } from './use-recently-added';
-import { GridViewChangeEvent } from './use-view-change';
+import { GridViewChangeEvent, type GridViewState } from './use-view-change';
 
 export interface GridProps extends SelectionProps {
   /**
@@ -161,6 +162,32 @@ export type RowIndex = number | 'header';
 export interface GridRecordCount {
   matching: number;
   total?: number;
+}
+
+/** Slots of `df-grid` and their scopes. */
+export interface GridSlots {
+  'toolbar-start'?(props: Record<string, never>): any;
+  'toolbar-end'?(props: Record<string, never>): any;
+  /** Replaces the header row; `rowAttrs` go on the row element, `cellAttrs` on each header cell. */
+  header?(props: {
+    item: ColumnLabels;
+    rowAttrs: { id: string | undefined; role: string; 'aria-rowindex': number };
+    cellAttrs: Readonly<CellAttrs>;
+  }): any;
+  /** Replaces the status bar content. */
+  statusBar?(props: { filterState?: FilterState; view?: GridViewState; recordCount?: GridRecordCount }): any;
+  /** Batch actions shown while selection mode is active. */
+  groupActions?(props: Record<string, never>): any;
+  /** Replaces one record's rendering; `cellAttrs` go on each cell element. */
+  item?(props: { item: RowValue; index: number; active: boolean; cellAttrs: Readonly<CellAttrs> }): any;
+  /** Replaces the summary bar content; a single element root gets `cellAttrs`. */
+  'summary-bar'?(props: { cellAttrs: CellAttrs }): any;
+  loading?(props: Record<string, never>): any;
+  'no-data'?(props: Record<string, never>): any;
+  'incoming-arc-top'?(props: Record<string, never>): any;
+  'incoming-arc-bottom'?(props: Record<string, never>): any;
+  'footer-start'?(props: Record<string, never>): any;
+  'footer-end'?(props: Record<string, never>): any;
 }
 
 export interface GridEmits extends SelectionEmits {
