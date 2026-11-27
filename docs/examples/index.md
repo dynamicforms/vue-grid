@@ -27,3 +27,8 @@ Every built-in renderer side by side, including the `-fast` variants.
 ## [Incoming Records Indicator](./incoming)
 
 `useRecentlyAdded` composable — arc flash overlay and row reveal animation when new records arrive.
+
+## [Accessibility](./a11y)
+
+Table semantics for screen readers: accessible name, row positions, keyboard sorting and the status bar as a live
+region.

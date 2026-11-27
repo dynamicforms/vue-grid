@@ -1,7 +1,14 @@
 <template>
-  <div v-if="sortable" class="df-grid-sorting-indicator-wrapper">
+  <div
+    v-if="sortable"
+    class="df-grid-sorting-indicator-wrapper"
+    role="button"
+    tabindex="0"
+    :aria-label="ariaLabel"
+    @keydown="onKeydown"
+  >
     &nbsp;
-    <svg :viewBox="viewBox" stroke="currentColor" fill="currentColor">
+    <svg aria-hidden="true" :viewBox="viewBox" stroke="currentColor" fill="currentColor">
       <path v-if="direction !== 'desc'" data-sort="asc" d="M16,0l-16 20 16 -6 16 6Z" />
       <g
         v-if="index"
@@ -23,8 +30,32 @@
 import { computed } from 'vue';
 
 import { type ColumnSortState } from '../columns-sorting';
+import { translate } from '../translations';
 
-const props = withDefaults(defineProps<ColumnSortState>(), { direction: undefined, index: undefined, sortable: true });
+interface SortingIndicatorProps extends ColumnSortState {
+  /** The column label as plain text, for the button's accessible name. */
+  columnText?: string;
+}
+
+const props = withDefaults(defineProps<SortingIndicatorProps>(), {
+  direction: undefined,
+  index: undefined,
+  sortable: true,
+  columnText: '',
+});
+
+const ariaLabel = computed(() =>
+  props.columnText ? translate('SortByColumn', { column: props.columnText }) : translate('Sort'),
+);
+
+/** Enter and Space click the indicator, Shift with them Shift+clicks it; the click sorts through the grid's handler. */
+function onKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  if (event.repeat) return;
+  const target = event.currentTarget as HTMLElement;
+  target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: event.shiftKey }));
+}
 
 const viewBox = computed(
   () => `0 ${props.direction === 'desc' ? '16' : '0'} 32 ${props.direction === 'asc' ? '52' : '68'}`,

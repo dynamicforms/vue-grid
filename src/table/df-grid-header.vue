@@ -9,11 +9,13 @@
     }"
   >
     <!-- Header row -->
-    <slot name="header" :item="headerItem">
+    <slot name="header" :item="headerItem" :row-attrs="headerRowAttrs" :cell-attrs="columnHeaderCellAttrs">
       <grid-card
+        v-bind="headerRowAttrs"
         :item="headerItem"
         :columns="headerOptions"
         :renderers="DefaultRenderers"
+        :cell-attrs="columnHeaderCellAttrs"
         :class="['df-grid', 'card', 'header', 'df-record-grid', 'df-unanchored', gridClass]"
         :style="headerRowBaseVars(rowsPerRecord)"
         data-pk="header"
@@ -24,7 +26,10 @@
     <!-- Filter row -->
     <div
       v-if="showFilterRow"
+      :id="domId ? filterRowDomId(domId) : undefined"
       class="df-grid card filter-row df-record-grid df-unanchored"
+      role="row"
+      aria-rowindex="2"
       data-section="filter"
       :class="gridClass"
       :style="headerRowBaseVars(rowsPerRecord)"
@@ -33,6 +38,7 @@
         v-for="column in columns"
         :key="column.fieldName"
         :class="['df-grid', 'cell', 'filter-cell', column.fieldName, column.cssClass ?? '']"
+        role="cell"
       >
         <template v-if="getFilterableConfig(column)">
           <!-- df-select for choices -->
@@ -45,6 +51,7 @@
             :allow-null="true"
             :multiple="true"
             :density="filterInputDensity"
+            :passthrough-attrs="filterAttrs[column.fieldName]"
             @focusout="calcHeaderHeight()"
           />
           <!-- df-datetime for date type -->
@@ -55,6 +62,7 @@
             :clearable="true"
             input-type="date"
             :density="filterInputDensity"
+            :passthrough-attrs="filterAttrs[column.fieldName]"
           />
           <!-- df-checkbox for boolean type -->
           <df-checkbox
@@ -63,6 +71,7 @@
             :label="getFilterableConfig(column)?.placeholder ?? ''"
             :allow-null="true"
             :density="filterInputDensity"
+            :passthrough-attrs="filterAttrs[column.fieldName]"
           />
           <!-- df-input for other types (string, number) -->
           <df-input
@@ -71,7 +80,7 @@
             :placeholder="getFilterableConfig(column)?.placeholder ?? filterPlaceholder(column)"
             :input-type="getFilterableConfig(column)!.fieldType === 'number' ? 'number' : 'text'"
             :density="filterInputDensity"
-            :passthrough-attrs="getFilterableConfig(column)!.fieldType === 'number' ? { controlVariant: 'hidden' } : {}"
+            :passthrough-attrs="filterAttrs[column.fieldName]"
           />
         </template>
       </div>
@@ -82,6 +91,9 @@
       v-if="showStatusBar || isSelectionActive"
       class="df-status-bar"
       data-section="status-bar"
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
       :class="{ 'selection-bar': isSelectionActive }"
     >
       <template v-if="isSelectionActive">
@@ -89,15 +101,23 @@
           <cached-icon
             name="mdi-close"
             class="selection-icon"
+            role="button"
+            tabindex="0"
             :title="translate('CancelSelectionMode')"
+            :aria-label="translate('CancelSelectionMode')"
             @click="emit('cancel-selection')"
+            @keydown.enter.space.prevent="(e: KeyboardEvent) => !e.repeat && emit('cancel-selection')"
           />
           <span class="selection-count">{{ selectionCountText }}</span>
           <cached-icon
             name="mdi-shuffle"
             class="selection-icon"
+            role="button"
+            tabindex="0"
             :title="translate('InvertSelection')"
+            :aria-label="translate('InvertSelection')"
             @click="emit('invert-selection')"
+            @keydown.enter.space.prevent="(e: KeyboardEvent) => !e.repeat && emit('invert-selection')"
           />
         </div>
         <div class="selection-group-actions">
@@ -120,12 +140,14 @@ import { computed, onMounted, onUpdated, ref, watch } from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
 
 import { DefaultRenderers, gridColumnCreate, RendererOptionsMap } from './cell-renderers';
+import { ariaSortStateOption } from './cell-renderers/header-renderers';
 import { CellOptionsInternal, columnIdOption, columnNameOption, gridIdOption } from './cell-renderers/internal-exports';
 import { ColumnDefinition, columnLabel, columnLabelText, type ColumnLabels } from './columns';
 import { FilterState, getFilterConfig } from './columns-filtering';
 import { getSortConfig, type ColumnSortState, type SortState } from './columns-sorting';
 import type { GridRecordCount } from './df-grid-types';
 import { GridCard, headerRowBaseVars, useHeaderContent } from './helpers';
+import { columnHeaderCellAttrs, filterRowDomId, headerRowDomId } from './helpers/aria';
 import type { SelectionMode } from './selection';
 import { translate } from './translations';
 import type { GridViewState } from './use-view-change';
@@ -159,6 +181,8 @@ export interface HeaderProps {
    * measured then.
    */
   templateColumns?: string;
+  /** Prefix of the header row's and the filter row's element ids, which the grid's table refers to in `aria-owns`. */
+  domId?: string;
 }
 
 const props = withDefaults(defineProps<HeaderProps>(), {
@@ -169,6 +193,7 @@ const props = withDefaults(defineProps<HeaderProps>(), {
   selectionMode: null,
   selectionKeys: undefined,
   templateColumns: undefined,
+  domId: undefined,
 });
 const emit = defineEmits<{ 'cancel-selection': []; 'invert-selection': [] }>();
 
@@ -177,23 +202,41 @@ const headerItem = computed((): ColumnLabels =>
   Object.fromEntries(props.columns.map((column) => [column.fieldName, columnLabel(column)])),
 );
 
+const headerRowAttrs = computed(() => ({
+  id: props.domId ? headerRowDomId(props.domId) : undefined,
+  role: 'row',
+  'aria-rowindex': 1,
+}));
+
 type HeaderColumn = ColumnDefinition<keyof RendererOptionsMap> & { sortState: ColumnSortState };
+
+function columnSortState(sort: SortState, column: ColumnDefinition<keyof RendererOptionsMap>): ColumnSortState {
+  const srtIdx = sort.findIndex((ssi) => ssi.columnName === column.fieldName);
+  return {
+    index: srtIdx === -1 ? undefined : srtIdx + (sort.length === 1 ? 0 : 1),
+    sortable: getSortConfig(column.sortable).direction != null,
+    direction: srtIdx === -1 ? undefined : sort[srtIdx].direction,
+  };
+}
+
+// the sort entries the grid applies: those naming a sortable column in a direction the column allows
+const appliedSortState = computed((): SortState =>
+  props.sortState.filter((ssi) => {
+    const column = props.columns.find((c) => c.fieldName === ssi.columnName);
+    const direction = column ? getSortConfig(column.sortable).direction : undefined;
+    return direction != null && (direction === 'both' || direction === ssi.direction);
+  }),
+);
 
 const headerOptions = computed((): HeaderColumn[] =>
   props.columns.map((column) => {
-    const srtIdx = props.sortState.findIndex((ssi) => ssi.columnName === column.fieldName);
-    const srt = srtIdx === -1 ? null : props.sortState[srtIdx];
-    const singleSegment = props.sortState.length === 1;
-    const sortState: ColumnSortState = {
-      index: srtIdx === -1 ? undefined : srtIdx + (singleSegment ? 0 : 1),
-      sortable: getSortConfig(column.sortable).direction != null,
-      direction: srt?.direction,
-    };
+    const sortState = columnSortState(props.sortState, column);
 
     const opt: CellOptionsInternal = {
       nullHandler: 'null-null',
       redrawColumn: () => null,
       sortState,
+      [ariaSortStateOption]: columnSortState(appliedSortState.value, column),
       [gridIdOption]: props.gridId,
       [columnNameOption]: column.fieldName,
       [columnIdOption]: Symbol('grid-column-header'),
@@ -213,6 +256,30 @@ function getFilterableConfig(column: ColumnDefinition<keyof RendererOptionsMap>)
   const config = getFilterConfig((column as any).filterable);
   return config.fieldType || config.choices ? config : null;
 }
+
+/**
+ * The passthrough attrs of each column's filter input, by field name: the accessible name, with `aria-labelledby`
+ * cleared so the name is not taken from the input's (empty) field label, and hidden controls of a number input.
+ * Each object keeps its identity until a column or the locale changes, so the filter inputs do not re-render with
+ * the header.
+ */
+const filterAttrs = computed((): Record<string, Readonly<Record<string, unknown>>> =>
+  Object.fromEntries(
+    props.columns.map((column) => {
+      const config = getFilterableConfig(column);
+      const numberInput = !config?.choices && config?.fieldType === 'number';
+      const filterName = translate('FilterColumnName', { column: columnLabelText(column) });
+      // the checkbox shows the placeholder as its visible label: the name starts with it (WCAG 2.5.3)
+      const visibleLabel = !config?.choices && config?.fieldType === 'boolean' ? config.placeholder : undefined;
+      const attrs = {
+        'aria-label': visibleLabel ? `${visibleLabel}, ${filterName}` : filterName,
+        'aria-labelledby': undefined,
+        ...(numberInput ? { controlVariant: 'hidden' } : {}),
+      };
+      return [column.fieldName, Object.freeze(attrs)];
+    }),
+  ),
+);
 
 function filterPlaceholder(column: ColumnDefinition<keyof RendererOptionsMap>) {
   return translate('FilterColumn', { column: columnLabelText(column) });
@@ -369,6 +436,12 @@ defineExpose({ headerItem, headerOptions, headerHeight });
     background-color 0.15s,
     opacity 0.15s;
   margin-top: -0.4em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selection-icon {
+    transition: none;
+  }
 }
 
 .selection-icon:hover {

@@ -117,8 +117,11 @@ object passed to `createTranslatable` there is the whole catalogue:
 | `Loading` | `Loading…` | Summary bar, while `loading` is `true` |
 | `NoData` | `No data` | Summary bar, when `records` is empty |
 | `FilterColumn` | `Filter {column}...` | Filter row's default placeholder, when a filterable column has none of its own |
-| `CancelSelectionMode` | `Cancel selection mode` | Selection status bar's cancel icon tooltip |
-| `InvertSelection` | `Invert selection` | Selection status bar's invert icon tooltip |
+| `FilterColumnName` | `Filter {column}` | Accessible name of a column's filter input |
+| `SortByColumn` | `Sort by {column}` | Accessible name of a sortable column's sort button |
+| `Sort` | `Sort` | Accessible name of the sort button when the column label has no text |
+| `CancelSelectionMode` | `Cancel selection mode` | Tooltip and accessible name of the selection status bar's cancel button |
+| `InvertSelection` | `Invert selection` | Tooltip and accessible name of the selection status bar's invert button |
 | `SelectionCountSelected` | `{count} items selected` | Selection status bar, in `'selection'` mode |
 | `SelectionCountExcluded` | `{count} items excluded` | Selection status bar, in `'exclusion'` mode |
 | `ActiveFilters` | `Active filters: {count}` | Status bar's default `statusBar` slot content |
