@@ -142,6 +142,18 @@ export interface GridProps extends SelectionProps {
    * pull-to-load-more patterns.
    */
   excessiveScrollThreshold?: number;
+
+  /**
+   * Accessible name of the grid's table, rendered as `aria-label`. A grid needs `ariaLabel` or `ariaLabelledby` to be
+   * accessible.
+   */
+  ariaLabel?: string;
+
+  /** Id(s) of the element(s) that name the grid's table, rendered as `aria-labelledby`. */
+  ariaLabelledby?: string;
+
+  /** Id(s) of the element(s) that describe the grid's table, rendered as `aria-describedby`. */
+  ariaDescribedby?: string;
 }
 
 export type RowIndex = number | 'header';

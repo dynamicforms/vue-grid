@@ -102,4 +102,10 @@ onUnmounted(cancelDecay);
   height: 100%;
   background: radial-gradient(ellipse 70% 100% at 50% 100%, rgba(64, 100, 220, 0.9) 0%, transparent 100%);
 }
+/* the fallback wave is a fading flash: with reduced motion it is not shown */
+@media (prefers-reduced-motion: reduce) {
+  .df-incoming-arc__wave {
+    display: none;
+  }
+}
 </style>

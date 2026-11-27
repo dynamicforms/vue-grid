@@ -2,6 +2,7 @@
   <div
     v-if="height > 0"
     class="df-excessive-scroll"
+    aria-hidden="true"
     :class="`df-excessive-scroll--${direction}`"
     :style="{ height: `${height}px` }"
   />

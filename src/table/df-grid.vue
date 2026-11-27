@@ -23,6 +23,7 @@
       data-section="header"
       :columns="uColumns.columns.value"
       :grid-id="gridId"
+      :dom-id="domId"
       :template-columns="templateColumns"
       :grid-class="uColumns.cssClass.value"
       :rows-per-record="uColumns.rowsPerRecord.value"
@@ -41,11 +42,22 @@
       <template #statusBar="statusBarProps"><slot name="statusBar" v-bind="statusBarProps" /></template>
       <template #groupActions><slot name="groupActions" /></template>
     </df-grid-header>
-    <div class="df-grid-body">
+    <div
+      class="df-grid-body"
+      role="table"
+      :aria-label="ariaLabel"
+      :aria-labelledby="ariaLabelledby"
+      :aria-describedby="ariaDescribedby"
+      :aria-rowcount="ariaRowCount()"
+      :aria-owns="ariaOwns()"
+    >
       <excessive-scroll :height="-excessiveScrollAmount" direction="top" />
       <div
+        :id="bodyRowGroupDomId(domId)"
         ref="bodyGridRef"
         class="df-grid body-grid df-record-grid"
+        role="rowgroup"
+        tabindex="0"
         :class="uColumns.cssClass.value"
         :style="bodyGridStyle"
         data-section="body"
@@ -77,6 +89,7 @@
         <div
           v-if="windowing.start.value > 0"
           class="df-grid-row-spacer"
+          aria-hidden="true"
           :style="{
             gridColumn: '1 / -1',
             gridRow: topSpacerGridRow,
@@ -99,11 +112,15 @@
           :style="rowBaseVars(windowIndex, uColumns.rowsPerRecord.value, topSpacerRowOffset)"
           :data-pk="item[keyField]"
           :data-idx="index"
+          role="row"
+          :aria-rowindex="index + 1 + headerRowCount"
+          :aria-selected="isSelectionActive ? (uSelection.isSelected(item[keyField]) ? 'true' : 'false') : undefined"
         >
-          <slot name="item" :item="item" :index="index" :active="true">
+          <slot name="item" :item="item" :index="index" :active="true" :cell-attrs="bodyCellAttrs">
             <div
               :ref="(el) => handleRowAnchorRef(el as Element | null, item[keyField])"
               class="df-grid card"
+              role="none"
               :class="[
                 uColumns.cssClass.value,
                 index % 2 === 0 ? 'even' : 'odd',
@@ -119,12 +136,14 @@
               :columns="columnRendererOptionsInternal"
               :renderers="DefaultRenderers"
               :no-wrapper-item="true"
+              :cell-attrs="bodyCellAttrs"
             />
           </slot>
         </div>
         <div
           v-if="windowing.end.value < sortedRecords.length"
           class="df-grid-row-spacer"
+          aria-hidden="true"
           :style="{
             gridColumn: '1 / -1',
             gridRow: bottomSpacerGridRow,
@@ -133,25 +152,29 @@
         />
       </div>
       <div
-        v-if="showSummaryBar || loading || !props.records.length"
+        v-if="summaryBarShown"
+        :id="summaryRowDomId(domId)"
         class="df-summary-bar"
         :class="{ 'df-summary-bar-empty': !props.records.length }"
+        :role="summaryIsRow() ? 'row' : undefined"
+        :aria-rowindex="summaryIsRow() ? ariaRowCount() : undefined"
         data-section="summary-bar"
       >
-        <slot name="summary-bar">
-          <div v-if="loading" class="df-summary-loading">
+        <component :is="summarySlotView().content" v-if="$slots['summary-bar']" />
+        <template v-else>
+          <div v-if="loading" class="df-summary-loading" v-bind="summaryCellAttrs">
             <slot name="loading">
               <cached-icon name="mdi-loading" class="df-summary-spin" />
               <span>{{ translate('Loading') }}</span>
             </slot>
           </div>
-          <div v-else-if="!props.records.length" class="df-summary-no-data">
+          <div v-else-if="!props.records.length" class="df-summary-no-data" v-bind="summaryCellAttrs">
             <slot name="no-data">
               <cached-icon name="mdi-database-off" />
               <span>{{ translate('NoData') }}</span>
             </slot>
           </div>
-        </slot>
+        </template>
       </div>
       <excessive-scroll :height="excessiveScrollAmount" direction="bottom" />
       <template v-if="props.recentlyAdded">
@@ -226,7 +249,25 @@
 
 <script setup lang="ts">
 import { keys, maxBy, minBy, pickBy, throttle } from 'lodash-es';
-import { computed, h, nextTick, onMounted, onUnmounted, onUpdated, reactive, ref, toRef, watch } from 'vue';
+import {
+  cloneVNode,
+  computed,
+  Fragment,
+  h,
+  nextTick,
+  onBeforeMount,
+  onBeforeUpdate,
+  onMounted,
+  onUnmounted,
+  onUpdated,
+  reactive,
+  ref,
+  toRef,
+  useId,
+  useSlots,
+  type VNode,
+  watch,
+} from 'vue';
 import { CachedIcon } from 'vue-cached-icon';
 
 import { DefaultRenderers, gridColumnCreate, gridDestroy, RendererOptionsMap } from './cell-renderers';
@@ -246,6 +287,14 @@ import {
   ShadowGridMeasurements,
   useHeaderContent,
 } from './helpers';
+import {
+  bodyCellAttrs,
+  bodyRowGroupDomId,
+  filterRowDomId,
+  headerRowDomId,
+  singleElementRoot,
+  summaryRowDomId,
+} from './helpers/aria';
 import { computeLayoutTargetWidth } from './helpers/shadow-metrics';
 import IncomingArc from './incoming-arc.vue';
 import { useSelection } from './selection';
@@ -268,6 +317,8 @@ const props = withDefaults(defineProps<GridProps>(), {
 const emit = defineEmits<GridEmits>();
 
 const gridId = Symbol('df-grid');
+// prefix of the ids the table's aria-owns refers to
+const domId = `df-grid-${useId()}`;
 const secondaryShadowOffset = ref(0);
 const templateColumns = ref('');
 
@@ -507,6 +558,62 @@ const isSelectionActive = computed(() => {
   const mode = uSelection.selectionMode.value;
   return mode !== null && mode !== 'non-select';
 });
+
+const slots = useSlots();
+const summaryBarShown = computed(() => props.showSummaryBar || props.loading || !props.records.length);
+const summaryCellAttrs = computed(() => ({ role: 'cell', 'aria-colspan': uColumns.columns.value.length }));
+
+interface SummarySlotView {
+  content: VNode;
+  hasCell: boolean;
+}
+// the summary-bar slot's output of the current render: the slot runs once per render
+let summarySlotCache: SummarySlotView | undefined;
+onBeforeMount(() => (summarySlotCache = undefined));
+onBeforeUpdate(() => (summarySlotCache = undefined));
+
+/** The summary-bar slot's content: a single element root is the summary cell and gets `cellAttrs`. */
+function summarySlotView(): SummarySlotView {
+  if (summarySlotCache) return summarySlotCache;
+  const nodes = slots['summary-bar']?.({ cellAttrs: summaryCellAttrs.value }) ?? [];
+  const root = singleElementRoot(nodes);
+  summarySlotCache = root
+    ? { content: cloneVNode(root, summaryCellAttrs.value), hasCell: true }
+    : { content: h(Fragment, nodes), hasCell: false };
+  return summarySlotCache;
+}
+
+// the summary bar is a row only while it holds a cell: the loading or no-data indicator, or the summary-bar slot's
+// single element root; a function, since slots are not reactive
+function summaryHasCell(): boolean {
+  if (slots['summary-bar']) return summarySlotView().hasCell;
+  return props.loading || !props.records.length;
+}
+function summaryIsRow(): boolean {
+  return summaryBarShown.value && summaryHasCell();
+}
+const headerRowCount = computed(() => (props.showFilterRow ? 2 : 1));
+// the record count the status bar shows
+const ariaRecordCount = computed(() => {
+  if (props.recordCount) return props.recordCount.matching;
+  return view.value.filteringLocal ? view.value.shownCount : view.value.loadedCount;
+});
+const recordRowCount = computed(() => headerRowCount.value + ariaRecordCount.value);
+// header rows, records and the summary row; the summary row's aria-rowindex is the last one
+function ariaRowCount(): number {
+  return recordRowCount.value + (summaryIsRow() ? 1 : 0);
+}
+// reading order of the table: header row, filter row, body rowgroup, summary row
+function ariaOwns(): string {
+  return [
+    headerRowDomId(domId),
+    props.showFilterRow ? filterRowDomId(domId) : null,
+    bodyRowGroupDomId(domId),
+    summaryIsRow() ? summaryRowDomId(domId) : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
 
 /** Row-anchor classes for the record states tracked by `recentlyAdded`. */
 function rowStateClasses(pk: any): Record<string, boolean> | null {
@@ -837,6 +944,11 @@ defineExpose({
 }
 .df-summary-spin {
   animation: df-grid-spin 1s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .df-summary-spin {
+    animation: none;
+  }
 }
 .df-grid.container .df-grid.card.header,
 .df-grid.container .df-grid.card.filter-row {
