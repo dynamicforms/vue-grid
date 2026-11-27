@@ -5,6 +5,34 @@ All notable changes to `@dynamicforms/vue-grid` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-11-27
+
+### Added
+
+- Table semantics for screen readers: `df-grid` is a table (`role="table"`) with a header row, an optional filter row,
+  one row per record and a summary row, in that reading order (`aria-owns`). Cells are announced with their column
+  header in every responsive layout. Decorative elements (row anchors, windowing spacers, incoming arcs) are out of
+  the accessibility tree.
+- `aria-rowcount` on the table and `aria-rowindex` on every rendered row, counted over the whole data set (header rows,
+  the record count the status bar shows and the summary row), also while windowing renders only part of the records.
+- Props `ariaLabel`, `ariaLabelledby` and `ariaDescribedby` give the grid its accessible name and description.
+- `aria-sort` on the primary sort column's header and `aria-sort="none"` on the other sortable headers;
+  `aria-selected` on record rows while selection mode is active.
+- Keyboard sorting: the sort indicator of a sortable column is a focusable button ("Sort by &lt;column&gt;"). Enter and
+  Space sort as a click does, Shift+Enter and Shift+Space add the column to a multi-column sort.
+- The status bar is a live region (`role="status"`). The selection bar's "cancel selection" and "invert selection"
+  controls are buttons activated by Enter and Space. Filter inputs are named after their column.
+- The record list (the body's scroll container) is focusable and scrolls from the keyboard.
+- The summary bar (loading, no data) is a table row with one cell spanning all columns.
+- Slot props: `#item` gets `cellAttrs`, `#header` gets `rowAttrs` and `cellAttrs`, for the elements a custom slot
+  renders.
+- The incoming arcs, the loading spinner and the header's transitions respect `prefers-reduced-motion: reduce`.
+- Guide page [Accessibility](https://docs.velis.si/dynamicforms/vue-grid/guide/accessibility.html).
+
+### Changed
+
+- Requires `@dynamicforms/vuetify-inputs` 0.16.5.
+
 ## [0.9.0] - 2026-11-14
 
 ### Added

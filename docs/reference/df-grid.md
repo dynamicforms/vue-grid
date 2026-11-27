@@ -34,6 +34,9 @@ The main grid component. Handles column layout, virtual scrolling, sorting, and 
 | `recentlyAdded` | `UseRecentlyAdded` | — |
 | `incomingArcMaxOpacity` | `number` | `1` |
 | `excessiveScrollThreshold` | `number` | — |
+| `ariaLabel` | `string` | — |
+| `ariaLabelledby` | `string` | — |
+| `ariaDescribedby` | `string` | — |
 
 `columns` — column layout definitions. Can be a flat list or a responsive array. See [Column Definitions](./columns).
 
@@ -115,6 +118,15 @@ flashes that follow within 1.5 s start progressively dimmer, down to 15 % of thi
 
 `excessiveScrollThreshold` — percentage (0–100) of the maximum overscroll displacement (60 px) at which the
 `excessive-scroll` event fires. When omitted the event is never emitted. See [Pull to refresh](#pull-to-refresh).
+
+`ariaLabel` — accessible name of the grid's table, rendered as `aria-label` on the element with `role="table"`
+(`div.df-grid-body`). A grid needs `ariaLabel` or `ariaLabelledby` to be accessible. See
+[Accessibility](/guide/accessibility).
+
+`ariaLabelledby` — id(s) of the element(s) that name the grid's table (usually a visible heading), rendered as
+`aria-labelledby`.
+
+`ariaDescribedby` — id(s) of the element(s) that describe the grid's table, rendered as `aria-describedby`.
 
 ## Emits
 
@@ -305,11 +317,11 @@ async function onRecordsReplaced() {
 |------|-------|-------------|
 | `toolbar-start` | — | Rendered at the left side of the toolbar bar above the header. The toolbar wrapper (`div.df-grid-toolbar`) is only rendered when at least one toolbar slot is provided. |
 | `toolbar-end` | — | Rendered at the right side of the toolbar. |
-| `header` | `{ item }` | Replaces the entire header row. `item` is a `{ fieldName: label }` map of the active columns, each label a `RenderContentNonCallable` (a function label is called). Forwarded to `<DfGridHeader>`. |
+| `header` | `{ item, rowAttrs, cellAttrs }` | Replaces the entire header row. `item` is a `{ fieldName: label }` map of the active columns, each label a `RenderContentNonCallable` (a function label is called). `rowAttrs` (`id`, `role: 'row'`, `aria-rowindex`) goes on the slot's row element: the table refers to the header row by this `id` in `aria-owns`. `cellAttrs` (`{ role: 'columnheader' }`) goes on each header cell element. Forwarded to `<DfGridHeader>`. |
 | `statusBar` | `{ filterState, view, recordCount }` | Overrides the default status bar content (filter count and record count). `view` is the current `GridViewState`, `recordCount` the `recordCount` prop. Only visible when `showStatusBar` is `true` and selection mode is inactive. |
 | `groupActions` | — | Rendered on the right side of the selection status bar. Only visible while selection mode is active. Use it for batch actions (delete, export, …). |
-| `item` | `{ item, index, active }` | Replaces the default `<GridCard>` row rendering. `item` is the raw row object, `index` its 0-based position in the filtered and sorted list, `active` is always `true`. |
-| `summary-bar` | — | Replaces the entire summary bar content. The summary bar is visible when `showSummaryBar` is `true`, `loading` is `true`, or `records` is empty. |
+| `item` | `{ item, index, active, cellAttrs }` | Replaces the default `<GridCard>` row rendering. `item` is the raw row object, `index` its 0-based position in the filtered and sorted list, `active` is always `true`. The record wrapper around the slot keeps `role="row"`, `aria-rowindex` and `aria-selected`; `cellAttrs` (`{ role: 'cell' }`) goes on each cell element the slot renders. |
+| `summary-bar` | `{ cellAttrs }` | Replaces the entire summary bar content. The summary bar is visible when `showSummaryBar` is `true`, `loading` is `true`, or `records` is empty. When the slot renders a single html element, the summary bar is a table row and that element its cell: it gets `cellAttrs` (`{ role: 'cell', 'aria-colspan': <column count> }`) without the slot binding them. Other slot output (several elements, text only, a component root, nothing) leaves the summary bar out of the table rows. |
 | `loading` | — | Replaces the default loading indicator (spinning icon + "Loading…" text) inside the summary bar. Only rendered when `loading` is `true`. |
 | `no-data` | — | Replaces the default no-data indicator (database-off icon + "No data" text) inside the summary bar. Only rendered when `loading` is `false` and `records` is empty. |
 | `incoming-arc-top` | — | Replaces the default wave of the top incoming-records arc. Rendered only when the `recentlyAdded` prop is supplied. |
@@ -391,6 +403,34 @@ The grid's mouse event handler reads `data-idx` off the nearest ancestor that ca
 children of a wrapper element, not of the row card itself — see below) to work out which row was clicked. The same
 attributes on the row card itself let you address a row from CSS or find its element from your own code, for
 example `grid.querySelector('.df-grid.card[data-pk="42"]')`.
+
+### ARIA roles
+
+The grid exposes a table to assistive technology. Rows and cells carry these attributes:
+
+| Element | Attributes |
+|---------|------------|
+| `div.df-grid-body` | `role="table"`, `aria-label` / `aria-labelledby` / `aria-describedby` from the props, `aria-rowcount`, `aria-owns` |
+| Header row (`.df-grid.card.header`) | `role="row"`, `aria-rowindex="1"`, `id`; its cells `role="columnheader"` |
+| Header cell (default header) | `aria-label`: the column text; `aria-sort`: the direction on the primary sort column (the first `sortState` entry the grid applies), `none` on the unsorted sortable columns |
+| `.df-grid-sorting-indicator-wrapper` | `role="button"`, `tabindex="0"`, `aria-label` (`Sort by {column}`) |
+| Filter row (`.df-grid.card.filter-row`) | `role="row"`, `aria-rowindex="2"`, `id`; its cells `role="cell"` |
+| `div.df-grid.body-grid` | `role="rowgroup"`, `id` |
+| Record wrapper (`.df-anchored`) | `role="row"`, `aria-rowindex`, `aria-selected` while selection mode is active; its cells `role="cell"` |
+| Row card inside a record | `role="none"` |
+| `div.df-summary-bar` | `role="row"`, `id`, `aria-rowindex` (the last row), while it holds the loading or no-data indicator or a `summary-bar` slot that renders a single html element; that element `role="cell"` with `aria-colspan` set to the column count |
+| `div.df-status-bar` | `role="status"`, `aria-live="polite"`, `aria-atomic="false"` |
+| Selection bar icons | `role="button"`, `tabindex="0"`, `aria-label` |
+| Windowing spacers, `excessive-scroll`, incoming arcs | `aria-hidden="true"` |
+
+`aria-owns` lists the header row, the filter row (when shown), the body rowgroup and the summary row (when it is a row),
+in that order. `aria-rowcount` is the number of header rows (1, or 2 with the filter row) plus the record count the
+status bar shows: `recordCount.matching` when `recordCount` is set, otherwise the records left after local filtering,
+otherwise the loaded records, plus 1 while the summary bar is a row.
+`aria-rowindex` of a record is its 0-based index in the filtered and sorted list plus 1 plus the number of header
+rows, also for records rendered while windowing leaves the ones before them unmounted. The summary row's
+`aria-rowindex` equals `aria-rowcount`. The ids are generated with Vue's `useId()`; grids in different Vue
+applications on one page need different `app.config.idPrefix` values to keep them unique.
 
 ## Card layout CSS
 
