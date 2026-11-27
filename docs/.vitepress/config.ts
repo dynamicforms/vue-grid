@@ -25,6 +25,7 @@ export default defineConfig({
             { text: 'Installation', link: '/guide/getting-started#installation' },
             { text: 'Basic Usage', link: '/guide/getting-started#basic-usage' },
             { text: 'Cookbook', link: '/guide/cookbook' },
+            { text: 'Accessibility', link: '/guide/accessibility' },
           ]
         },
         {
@@ -58,6 +59,7 @@ export default defineConfig({
             { text: 'Cell Renderers',                  link: '/examples/renderers' },
             { text: 'Built-in Renderers',              link: '/examples/built-in-renderers' },
             { text: 'Incoming Records Indicator',      link: '/examples/incoming' },
+            { text: 'Accessibility',                   link: '/examples/a11y' },
           ]
         }
       ]
