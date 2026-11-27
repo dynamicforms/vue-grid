@@ -264,7 +264,6 @@ import {
   ref,
   toRef,
   useId,
-  useSlots,
   type VNode,
   watch,
 } from 'vue';
@@ -277,7 +276,7 @@ import { useFiltering } from './columns-filtering';
 import { useSorting } from './columns-sorting';
 import DfGridHeader from './df-grid-header.vue';
 import { useGridMouseEvents } from './df-grid-mouse-events';
-import type { GridEmits, GridProps } from './df-grid-types';
+import type { GridEmits, GridProps, GridSlots } from './df-grid-types';
 import ExcessiveScroll from './excessive-scroll.vue';
 import {
   GridCard,
@@ -559,7 +558,7 @@ const isSelectionActive = computed(() => {
   return mode !== null && mode !== 'non-select';
 });
 
-const slots = useSlots();
+const slots = defineSlots<GridSlots>();
 const summaryBarShown = computed(() => props.showSummaryBar || props.loading || !props.records.length);
 const summaryCellAttrs = computed(() => ({ role: 'cell', 'aria-colspan': uColumns.columns.value.length }));
 

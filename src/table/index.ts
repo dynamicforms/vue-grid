@@ -10,7 +10,14 @@ export * from './columns-filtering';
 export * from './columns-sorting';
 export { default as DfGrid } from './df-grid.vue';
 export { type GridClickEvent } from './df-grid-mouse-events';
-export { type GridEmit, type GridEmits, type GridProps, type GridRecordCount, type RowIndex } from './df-grid-types';
+export {
+  type GridEmit,
+  type GridEmits,
+  type GridProps,
+  type GridRecordCount,
+  type GridSlots,
+  type RowIndex,
+} from './df-grid-types';
 export { type SelectionMode } from './selection';
 export { default as DfGridHeader } from './df-grid-header.vue';
 export { GridCard, SortingIndicator } from './helpers';
