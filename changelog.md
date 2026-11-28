@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Requires `@dynamicforms/vue-forms` `^3.0.0-alpha.5`.
+- Requires `@dynamicforms/vue-forms` `^3.0.0-alpha.5` and `vue-cached-icon` `^3.2.3`.
 
 ### Fixed
 
