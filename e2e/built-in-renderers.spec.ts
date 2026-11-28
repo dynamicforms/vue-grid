@@ -4,7 +4,7 @@
  * Every cell of a built-in renderer fills its grid area, and a swatch, a link or the framed `null` keeps its own size
  * inside it. In the `-fast` variants the element is the cell itself. Runs against `docs/examples/built-in-renderers.md`.
  */
-import { expect, type Locator, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from './test';
 
 // a column of the demo has its field as a CSS class; the `null` columns are `int-<nullHandler>`, `null` in row 1
 const grid = (page: Page, field: string) =>

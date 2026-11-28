@@ -9,7 +9,7 @@
  * single-line layout is picked for is found with the header alone and again with records, and the
  * second is clearly wider.
  */
-import { expect, Page, test } from '@playwright/test';
+import { expect, Page, test } from './test';
 
 import { waitForGridSettled } from './grid-settled';
 

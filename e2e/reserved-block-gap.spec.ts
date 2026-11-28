@@ -9,7 +9,7 @@
  * amount) by `rowsPerRecord * row-gap`, computed from the consumer's own resolved `row-gap`. None
  * of this can be verified in JSDOM, which has no layout engine.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 async function gapAboveFirstRow(page: import('@playwright/test').Page): Promise<number> {
   await page.waitForSelector('.df-grid.card[data-idx]', { timeout: 10_000 });

@@ -18,7 +18,7 @@
  * it can be verified in JSDOM (no layout engine). `docs/examples/renderers` is `table-renderers.vue`,
  * a real single-row layout with no explicit `grid-column` on any cell.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 test.describe('single-row layout: column auto-placement', () => {
   test('cells land in the declared track list, not newly-created implicit columns', async ({ page }) => {

@@ -6,7 +6,7 @@
  * scrolls only vertically. A header column therefore stays above its body column at any
  * horizontal scroll position.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 import { waitForGridSettled } from './grid-settled';
 

@@ -16,7 +16,7 @@
  * own rect, not the bare viewport. None of this can be verified in JSDOM, which has no layout
  * engine.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 test.describe('recently-added top insert', () => {
   test('a row visible before the insert stays in the same place within the scroller', async ({ page }) => {

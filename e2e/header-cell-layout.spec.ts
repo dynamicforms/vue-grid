@@ -13,7 +13,7 @@
  *
  * Fonts and layout are only resolved in a real browser, so none of it can be asserted in JSDOM.
  */
-import { expect, Page, test } from '@playwright/test';
+import { expect, Page, test } from './test';
 
 async function openDemo(page: Page) {
   await page.goto('/examples/table');

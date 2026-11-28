@@ -15,7 +15,7 @@
  *
  * None of this can be verified in JSDOM, which has no layout engine.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 test.describe('summary bar visibility', () => {
   test('the no-data message renders within the clipped body area, not past it', async ({ page }) => {

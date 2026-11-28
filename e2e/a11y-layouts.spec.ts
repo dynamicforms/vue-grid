@@ -10,7 +10,7 @@
  * The grid is stretched to the window, so the viewport width selects the layout; the demo's footer names the active
  * one.
  */
-import { expect, Page, test } from '@playwright/test';
+import { expect, Page, test } from './test';
 
 import { ariaRows } from './a11y-helpers';
 import { waitForGridSettled } from './grid-settled';

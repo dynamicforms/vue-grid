@@ -28,7 +28,7 @@
  * `wheel` event's browser-native scroll handling. Hence a real browser.
  */
 
-import { expect, Page, test } from '@playwright/test';
+import { expect, Page, test } from './test';
 
 import { longPressUntilSelection, waitForGridSettled, waitForScrollSettled } from './grid-settled';
 

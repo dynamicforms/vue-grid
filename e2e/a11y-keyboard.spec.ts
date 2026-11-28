@@ -9,7 +9,7 @@
  * Every key press goes through the keyboard; the mouse is not used except to enter selection mode, which is a mouse
  * or touch gesture.
  */
-import { expect, Locator, Page, test } from '@playwright/test';
+import { expect, Locator, Page, test } from './test';
 
 import { A11Y_DEMO_RECORDS, ariaRows, openA11yDemo, recordRows } from './a11y-helpers';
 import { waitForGridSettled } from './grid-settled';

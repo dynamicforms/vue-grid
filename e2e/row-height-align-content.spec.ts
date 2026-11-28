@@ -7,7 +7,7 @@
  * an equal share of the leftover space instead of leaving it below the last row. None of this can
  * be verified in JSDOM, which has no layout engine.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 test.describe('sparse rows do not stretch to fill the container', () => {
   test('a row keeps its natural height in a container much taller than its content', async ({ page }) => {
