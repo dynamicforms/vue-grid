@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { omit } from 'lodash-es';
-import { computed, nextTick, ref, toRefs, useAttrs } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, toRefs, useAttrs } from 'vue';
 
 import { RendererOptionsMap, RenderersMap, RowValue } from '../cell-renderers';
 import { ColumnDefinition } from '../columns';
@@ -42,7 +42,7 @@ import { computeLineHeightPx, lineCountFromHeights, median } from './shadow-metr
 // shared grid's own class — also applies here. The shadow only measures correctly if it gets the
 // exact same `display:grid`/`grid-template-columns` declaration the real grid gets; without it
 // this element is never actually a grid, `grid-template-columns` computed-styles as `none`
-// forever, and `checkShadowGridColumns` below retries on every animation frame indefinitely.
+// forever, and `checkShadowGridColumns` below gives up without a measurement.
 // Vue's default attrs fallthrough would put a caller-supplied `class` on the component root
 // (`.df-grid-shadow-clip`) instead, which only positions and clips — it carries no layout class
 // of its own, so every caller-supplied layout would measure identically. `inheritAttrs: false`
@@ -80,26 +80,36 @@ const shadowGridRef = ref<HTMLElement | null>(null);
 const attrs = useAttrs();
 const wrapperAttrs = computed(() => omit(attrs, 'class'));
 
-// Resolves once a valid measurement has actually been emitted, retrying across animation frames
-// in the meantime — the caller doesn't need its own knowledge of the "none" race to await
-// completion.
-function checkShadowGridColumns(): Promise<void> {
-  // istanbul ignore next — shadowGridRef.value is always set when the component is mounted;
-  // the null branch is a defensive guard that cannot be triggered through normal component usage.
-  if (!shadowGridRef.value) return Promise.resolve();
+// Frames `checkShadowGridColumns` waits for `grid-template-columns` to stop reading "none"
+const MAX_MEASURE_FRAMES = 10;
 
+let unmounted = false;
+onBeforeUnmount(() => {
+  unmounted = true;
+});
+
+// Resolves once a valid measurement has been emitted, retrying across animation frames in the
+// meantime. Resolves without emitting when the component unmounts or the grid is still not laid out
+// after MAX_MEASURE_FRAMES frames.
+function checkShadowGridColumns(): Promise<void> {
   return new Promise((resolve) => {
+    let frames = 0;
     const attempt = () => {
-      const computedStyle = window.getComputedStyle(shadowGridRef.value!);
+      const gridEl = shadowGridRef.value;
+      if (unmounted || !gridEl) {
+        resolve();
+        return;
+      }
+      const computedStyle = window.getComputedStyle(gridEl);
       const columnWidths = computedStyle.getPropertyValue('grid-template-columns');
 
-      // `grid-template-columns` reads back as its initial value, "none", for the one frame
-      // between the element existing in the DOM and the stylesheet rule that makes it a grid
-      // taking effect. Emitting that would hand every `onmeasure` listener a value none of them
-      // can use meaningfully — retrying here, once, on the next frame is cheaper than every
-      // listener re-deriving "was this reading valid" for itself.
+      // `grid-template-columns` reads back as its initial value, "none", until the stylesheet rule
+      // that makes the element a grid takes effect (one frame in a browser, never in jsdom).
+      // Listeners cannot use that value, so it is not emitted.
       if (!columnWidths || columnWidths === 'none') {
-        requestAnimationFrame(attempt);
+        frames += 1;
+        if (frames > MAX_MEASURE_FRAMES) resolve();
+        else requestAnimationFrame(attempt);
         return;
       }
 
@@ -110,7 +120,7 @@ function checkShadowGridColumns(): Promise<void> {
       // box rather than growing it, which a min-content box is defined never to allow. `scrollWidth`
       // reflects the actual required width regardless of that mis-sizing, so it's used as a floor.
       const styleWidth = Number.parseFloat(computedStyle.getPropertyValue('width').replace('px', ''));
-      const totalWidth = Math.ceil(Math.max(styleWidth, shadowGridRef.value!.scrollWidth));
+      const totalWidth = Math.ceil(Math.max(styleWidth, gridEl.scrollWidth));
       const fieldGroups = groupCellsByField();
 
       if (props.sizeTo === 'min-content') {

@@ -12,7 +12,7 @@
  *    totalWidth and grid-template-columns from the computed style. When the computed style
  *    still reads back "none" (the grid CSS rule not applied to the element yet), the emit is
  *    withheld and retried on the next animation frame instead of handing listeners a value they
- *    cannot use.
+ *    cannot use. Retries stop after a bounded number of frames and when the component unmounts.
  *
  * 3. **containerEl expose** — the exposed getter returns the measured grid element (a `.df-grid
  *    .shadow-grid` child of the component's root, not the root itself — the root only exists to
@@ -233,14 +233,37 @@ describe('ShadowGrid', () => {
   // -------------------------------------------------------------------------
   describe('onmeasure retry when grid-template-columns reads back as "none"', () => {
     let pendingFrame: FrameRequestCallback | null;
+    let frameQueue: FrameRequestCallback[];
 
     beforeEach(() => {
       pendingFrame = null;
+      frameQueue = [];
       vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
         pendingFrame = cb;
-        return 1;
+        frameQueue.push(cb);
+        return frameQueue.length;
       });
     });
+
+    // Runs queued frames (and the frames they request) until none is left or `limit` have run
+    function runFrames(limit = 1000): number {
+      let ran = 0;
+      while (frameQueue.length && ran < limit) {
+        frameQueue.shift()!(0);
+        ran += 1;
+      }
+      return ran;
+    }
+
+    // Like the browser's getComputedStyle: throws for anything that is not an Element
+    function alwaysNone() {
+      computedStyleSpy.mockImplementation((el: Element) => {
+        if (!(el instanceof Element)) {
+          throw new TypeError("Failed to execute 'getComputedStyle': parameter 1 is not of type 'Element'.");
+        }
+        return { getPropertyValue: (prop: string) => (prop === 'width' ? '600px' : 'none') } as CSSStyleDeclaration;
+      });
+    }
 
     afterEach(() => {
       vi.unstubAllGlobals();
@@ -266,6 +289,48 @@ describe('ShadowGrid', () => {
       const events = wrapper.emitted('onmeasure') as any[][];
       expect(events).toBeTruthy();
       expect(events[0][0].columnWidths).toBe('200px 200px 200px');
+    });
+
+    it('stops retrying after a bounded number of frames and resolves without emitting', async () => {
+      alwaysNone();
+      const wrapper = mountShadowGrid();
+      await nextTick();
+      await nextTick();
+
+      let resolved = false;
+      (wrapper.vm as any).reMeasure().then(() => {
+        resolved = true;
+      });
+      const ran = runFrames();
+      await Promise.resolve();
+
+      expect(ran).toBeLessThan(1000);
+      expect(frameQueue).toHaveLength(0);
+      expect(resolved).toBe(true);
+      expect(wrapper.emitted('onmeasure')).toBeFalsy();
+    });
+
+    it('stops retrying and resolves when the component unmounts during a retry', async () => {
+      alwaysNone();
+      const wrapper = mountShadowGrid();
+      await nextTick();
+      await nextTick();
+
+      let resolved = false;
+      (wrapper.vm as any).reMeasure().then(() => {
+        resolved = true;
+      });
+      expect(frameQueue.length).toBeGreaterThan(0);
+      wrapper.unmount();
+      const callsAtUnmount = computedStyleSpy.mock.calls.length;
+
+      expect(() => runFrames()).not.toThrow();
+      await Promise.resolve();
+
+      expect(computedStyleSpy.mock.calls.length).toBe(callsAtUnmount);
+      expect(frameQueue).toHaveLength(0);
+      expect(resolved).toBe(true);
+      expect(wrapper.emitted('onmeasure')).toBeFalsy();
     });
   });
 
