@@ -18,7 +18,7 @@
  *    slower "server" reply overwriting the newer filter's already-correct, already-displayed
  *    result. A generation token now makes a response a no-op once a newer request has started.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 test.describe('server-side demo', () => {
   test('rows keep their natural height once enough are loaded to need scrolling', async ({ page }) => {

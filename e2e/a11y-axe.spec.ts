@@ -6,7 +6,7 @@
  * docs site around it does not take part.
  */
 import AxeBuilder from '@axe-core/playwright';
-import { expect, Page, test } from '@playwright/test';
+import { expect, Page, test } from './test';
 
 import { openA11yDemo } from './a11y-helpers';
 import { waitForGridSettled } from './grid-settled';

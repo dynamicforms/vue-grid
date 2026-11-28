@@ -8,7 +8,7 @@
  * would sit on top of real cell content and intercept clicks meant for it — a `postRender`-injected
  * button, say. None of this can be verified in JSDOM, which has no layout/paint engine.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 test.describe('row-anchor stacking', () => {
   test('a click on cell content hits the cell, not the row-anchor', async ({ page }) => {

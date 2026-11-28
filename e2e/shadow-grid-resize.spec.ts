@@ -18,7 +18,7 @@
  * nothing to measure. Hence a real browser.
  */
 
-import { expect, Page, test } from '@playwright/test';
+import { expect, Page, test } from './test';
 
 function shadowGridCount(page: Page): Promise<number> {
   return page.evaluate(() => document.querySelectorAll('.df-grid.shadow-grid').length);

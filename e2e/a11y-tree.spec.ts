@@ -17,7 +17,7 @@
  * descendant where it is, so the body rowgroup precedes the header rows in it: the reading order is asserted on
  * Chromium's own tree, read over CDP, and on the `aria-owns` list. Firefox's and WebKit's own trees are not read.
  */
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 import {
   A11Y_DEMO_RECORDS,

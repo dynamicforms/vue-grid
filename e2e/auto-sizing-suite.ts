@@ -32,7 +32,7 @@
  * (overlay-like, 0 px reserved), and the classic-scrollbar spec re-enables them (15 px).
  */
 
-import { expect, Page, test } from '@playwright/test';
+import { expect, Page, test } from './test';
 
 import { longPressUntilSelection, waitForGridSettled } from './grid-settled';
 

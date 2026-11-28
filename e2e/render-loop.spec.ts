@@ -43,7 +43,7 @@
  * automatically; navigate to /examples/table to see the 10 000-row demo.
  */
 
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 import { longPressUntilSelection, waitForGridSettled } from './grid-settled';
 

@@ -9,7 +9,7 @@
  * same suite with classic (space-reserving) scrollbars.
  */
 
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 import { autoSizingSuite } from './auto-sizing-suite';
 
