@@ -58,7 +58,7 @@
   "homepage": "https://docs.velis.si/dynamicforms/vue-grid",
   "peerDependencies": {
     "@dynamicforms/translatable": "^0.3.0",
-    "@dynamicforms/vue-forms": "^3.0.0-alpha.3",
+    "@dynamicforms/vue-forms": "^3.0.0-alpha.5",
     "@dynamicforms/vuetify-inputs": "^0.16.5",
     "@mdi/font": "^7.4.47",
     "date-fns": "^4.1.0",
